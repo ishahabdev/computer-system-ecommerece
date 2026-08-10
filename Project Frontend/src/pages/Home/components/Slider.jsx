@@ -1,6 +1,6 @@
-import React from "react";
+import React, { useState } from "react";
 import Typography from "../../../components/common/Typography";
-import { Navigation, Pagination, A11y, Autoplay } from "swiper/modules";
+import { Navigation, A11y } from "swiper/modules";
 import { Swiper, SwiperSlide } from "swiper/react";
 
 import "swiper/css";
@@ -10,41 +10,47 @@ import "swiper/css/pagination";
 import img1 from "../../../assets/homePIc/home1.png";
 import img2 from "../../../assets/homePIc/home2.png";
 import img3 from "../../../assets/homePIc/home3.png";
+import arrowIcon from "../../../assets/icons/arrowIcon.svg";
 
 const data = [
   {
     id: 1,
     img: img1,
     small: "Hot Sale",
-    title: "Gaming PC Complete Setup",
-    desc: "Powerful performance with the latest components for the ultimate gaming experience.",
+    titleLine1: "Gaming Pc",
+    titleLine2: "Complete Setup",
   },
   {
     id: 2,
     img: img2,
     small: "New Arrival",
-    title: "High Performance Laptop",
-    desc: "Slim, fast and ready for work or play — built for productivity on the go.",
+    titleLine1: "High Performance",
+    titleLine2: "Laptop",
   },
   {
     id: 3,
     img: img3,
     small: "Best Deal",
-    title: "Office PC Bundle",
-    desc: "Everything you need to get the job done, in one affordable bundle.",
+    titleLine1: "Office Pc",
+    titleLine2: "Bundle",
   },
 ];
 
 const Slider = () => {
+ 
+  const [prevEl, setPrevEl] = useState(null);
+  const [nextEl, setNextEl] = useState(null);
+
   return (
-    <div className="bg-white border-b border-gray-100">
+    <div className="bg-[#F8F8F8] border-b border-gray-100 relative">
       <Swiper
-        modules={[Navigation, Pagination, A11y, Autoplay]}
+        modules={[Navigation, A11y]}
         spaceBetween={0}
         slidesPerView={1}
-        navigation
-        pagination={{ clickable: true }}
-        autoplay={{ delay: 4000, disableOnInteraction: false }}
+        navigation={{
+          prevEl,
+          nextEl,
+        }}
         loop
       >
         {data.map((item) => (
@@ -52,37 +58,27 @@ const Slider = () => {
             <div className="flex items-center justify-between w-full px-40 py-16">
               {/* TEXT SIDE */}
               <div className="max-w-xl">
-                <Typography
-                  varient="small"
-                  className="uppercase tracking-widest text-[#007BFF] font-semibold"
-                >
+                <Typography varient="p" style="text[#000000]">
                   {item.small}
                 </Typography>
 
-               <div className="w-46 bg-red-500">
-                 <Typography
-                  // varient="h1"
-                  style="font-bold text-4xl text-gray-900 mt-3 leading-[55px] not-italic"
-                >
-                  {item.title}
+                <Typography varient="h1" style="font-proxima font-bold pb-4">
+                  {item.titleLine1}
+                  <br />
+                  {item.titleLine2}
                 </Typography>
 
-               </div>
-                <Typography varient="p" className="text-gray-500 mt-4">
-                  {item.desc}
-                </Typography>
-
-                <button className="mt-8 px-8 py-3 bg-[#007BFF] text-white font-semibold rounded-md hover:bg-[#0056b3] transition-colors">
+                <Typography btn="primary" size="xl">
                   Explore
-                </button>
+                </Typography>
               </div>
 
               {/* IMAGE SIDE */}
               <div>
                 <img
                   src={item.img}
-                  alt={item.title}
-                  className="w-[500px] h-[350px] object-contain"
+                  alt={`${item.titleLine1} ${item.titleLine2}`}
+                  className="w-[700px] h-[450px] object-contain"
                 />
               </div>
             </div>
@@ -90,29 +86,30 @@ const Slider = () => {
         ))}
       </Swiper>
 
-      {/* SWIPER THEME (MATCHES HEADER #007BFF) */}
+      {/* Previous button */}
+      <button
+        ref={setPrevEl}
+        aria-label="Previous slide"
+        className="absolute left-8 top-1/2  -translate-y-1/2 z-10  flex items-center justify-center "
+      >
+        <img src={arrowIcon} alt="Previous" className="w-14 h-8" />
+
+      </button>
+
+      {/* Next button */}
+      <button
+        ref={setNextEl}
+        aria-label="Next slide"
+        className="absolute right-8 top-1/2 -translate-y-1/2 z-10 w-20 flex items-center justify-center "
+      >
+        <img src={arrowIcon} alt="Next" className="w-14 h-8 rotate-180" />
+      </button>
+
+      {/* Default Swiper arrows hidden */}
       <style>{`
         .swiper-button-next,
         .swiper-button-prev {
-          color: #007BFF;
-        }
-        .swiper-button-next:hover,
-        .swiper-button-prev:hover {
-          color: #0056b3;
-        }
-        .swiper-pagination-bullet {
-          background: #c9c9c9;
-          opacity: 1;
-          width: 30px;
-          height: 4px;
-          border-radius: 4px;
-        }
-        .swiper-pagination-bullet-active {
-          background: #007BFF;
-          width: 40px;
-        }
-        .swiper-pagination {
-          bottom: 16px;
+          display: none;
         }
       `}</style>
     </div>

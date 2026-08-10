@@ -1,10 +1,10 @@
 
 import img1 from '../../assets/homePIc/home1.png'
 import img2 from '../../assets/homePIc/home2.png'
-import img3 from '../../assets/homePIc/home2.png'
-import img4 from '../../assets/homePIc/home2.png'
-import img5 from '../../assets/homePIc/home2.png'
-import img6 from '../../assets/homePIc/home2.png'
+import img3 from '../../assets/homePIc/home3.png'
+import img4 from '../../assets/homePIc/home4.png'
+import img5 from '../../assets/homePIc/home5.png'
+import img6 from '../../assets/homePIc/home6.png'
 
 
 export const ProductDetails = [
@@ -51,6 +51,21 @@ export const ProductDetails = [
     title:"G502 wireless",
     price:999,
     currency:"$"
-   }
+   },
+   { id : 8,
+   img : img4 ,
+   category :"Laptop",
+   title:"G502 wireless",
+   price:999,
+   currency:"$"
+  },
+   { id : 7,
+    img : img1,
+    category :"Desktop",
+    title:"High End Gaming Pc",
+    price:1800,
+    currency:"$"
+    
+   },
    
 ]
