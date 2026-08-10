@@ -1,6 +1,6 @@
 import React from "react";
-import Typography from "../common/Typography";
-import Customimg from "../../assets/homePIc/homeCustom1.png";
+import Typography from "../../../components/common/Typography";
+import Customimg from "../../../assets/homePIc/homeCustom1.png";
 
 function Custom() {
   return (

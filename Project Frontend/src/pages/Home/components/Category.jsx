@@ -1,6 +1,6 @@
 import React, { useState } from "react";
-import Typography from "../common/Typography";
-import { ProductDetails } from "../../assets/constants/constant";
+import Typography from "../../../components/common/Typography";
+import { ProductDetails } from "../../../components/constants/constant";
 import { FaStar } from "react-icons/fa";
 import { FaRegStarHalfStroke } from "react-icons/fa6";
 import { FaRegHeart, FaHeart } from "react-icons/fa";

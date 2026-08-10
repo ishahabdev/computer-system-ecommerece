@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
-import InputField from "./home/input";
+
 
 const API = "http://localhost:9000/v1/user/";
 

@@ -2,7 +2,7 @@ import React from "react";
 import Typography from "./common/Typography";
 import { AiFillInstagram } from "react-icons/ai";
 import { FaYoutube, FaFacebookF, FaTwitter } from "react-icons/fa";
-import { menus } from "../assets/constants/menus";
+import { menus } from "./constants/menus";
 import { Link } from "react-router-dom";
 
 const Footer = () => {

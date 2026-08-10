@@ -1,9 +1,9 @@
 import React from "react";
-import img1 from "../../assets/homePIc/homeflash1.png";
-import img2 from "../../assets/homePIc/homeflash2.png";
-import img3 from "../../assets/homePIc/homeflash3.png";
-import img4 from "../../assets/homePIc/homeflash4.png";
-import Typography from './../common/Typography';
+import img1 from "../../../assets/homePIc/homeflash1.png";
+import img2 from "../../../assets/homePIc/homeflash2.png";
+import img3 from "../../../assets/homePIc/homeflash3.png";
+import img4 from "../../../assets/homePIc/homeflash4.png";
+import Typography from '../../../components/common/Typography';
 
 const Flash = () => {
   const produst = [

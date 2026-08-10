@@ -1,5 +1,5 @@
 import React from "react";
-import Typography from "./../common/Typography";
+import Typography from "../../../components/common/Typography";
 import { Navigation, Pagination, A11y, Autoplay } from "swiper/modules";
 import { Swiper, SwiperSlide } from "swiper/react";
 
@@ -7,9 +7,9 @@ import "swiper/css";
 import "swiper/css/navigation";
 import "swiper/css/pagination";
 
-import img1 from "../../assets/homePIc/home1.png";
-import img2 from "../../assets/homePIc/home2.png";
-import img3 from "../../assets/homePIc/home3.png";
+import img1 from "../../../assets/homePIc/home1.png";
+import img2 from "../../../assets/homePIc/home2.png";
+import img3 from "../../../assets/homePIc/home3.png";
 
 const data = [
   {
@@ -59,13 +59,15 @@ const Slider = () => {
                   {item.small}
                 </Typography>
 
-                <Typography
-                  varient="h1"
-                  className="font-bold text-gray-900 mt-3 text-[45px] leading-[55px] not-italic"
+               <div className="w-46 bg-red-500">
+                 <Typography
+                  // varient="h1"
+                  style="font-bold text-4xl text-gray-900 mt-3 leading-[55px] not-italic"
                 >
                   {item.title}
                 </Typography>
 
+               </div>
                 <Typography varient="p" className="text-gray-500 mt-4">
                   {item.desc}
                 </Typography>

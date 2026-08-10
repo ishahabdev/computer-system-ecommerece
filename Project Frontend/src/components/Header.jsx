@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { menus } from '../assets/constants/menus'
+import { menus } from "./constants/menus";
 import Typography from './common/Typography'
 import { FaRegHeart, FaCaretDown } from "react-icons/fa";
 import { BsTruck } from "react-icons/bs";
@@ -122,7 +122,7 @@ const Header = () => {
             key={menu.id}
             to={menu.pathName}
           >
-            {menu.pathValue}
+            {menu.pathValue} 
           </Link>
         ))}
 
