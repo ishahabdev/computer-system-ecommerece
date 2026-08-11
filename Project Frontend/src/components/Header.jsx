@@ -24,19 +24,21 @@ const Header = () => {
   const [navOpen, setNavOpen] = useState(false);
 
   return (
-    <header className="bg-white w-full">
+    <header className="bg-white w-full" role="banner">
       {/* TOP BAR */}
       <div className="hidden md:flex justify-between items-center px-4 lg:px-10 xl:px-20 py-2 text-sm">
         <div className="flex gap-4 lg:gap-8 items-center">
           <div className="flex items-center gap-1 text-gray-700">
-            <select className="bg-transparent focus:outline-none cursor-pointer" defaultValue="EN">
+            <label htmlFor="language-select" className="sr-only">Select Language</label>
+            <select id="language-select" className="bg-transparent focus:outline-none cursor-pointer" defaultValue="EN">
               {language.map((item) => (
                 <option key={item} value={item}>{item}</option>
               ))}
             </select>
           </div>
           <div className="flex items-center gap-1 text-gray-700">
-            <select className="bg-transparent focus:outline-none cursor-pointer" defaultValue="USD">
+            <label htmlFor="currency-select" className="sr-only">Select Currency</label>
+            <select id="currency-select" className="bg-transparent focus:outline-none cursor-pointer" defaultValue="USD">
               {currency.map((item) => (
                 <option key={item} value={item}>{item}</option>
               ))}
@@ -52,10 +54,12 @@ const Header = () => {
           <Link
             to="/wishlist"
             className="flex items-center gap-1.5 text-gray-700 hover:text-red-500 transition-colors"
+            title="View your wishlist"
           >
             <FaRegHeart
               onClick={() => setWishlisted(!wishlisted)}
               className={`cursor-pointer ${wishlisted ? "text-red-500" : ""}`}
+              aria-label="Wishlist"
             />
             <span>Wishlist</span>
           </Link>
@@ -67,15 +71,16 @@ const Header = () => {
         <button
           className="md:hidden text-gray-800 text-2xl"
           onClick={() => setNavOpen(!navOpen)}
-          aria-label="Toggle menu"
+          aria-label="Toggle navigation menu"
+          aria-expanded={navOpen}
         >
           {navOpen ? <FaTimes /> : <FaBars />}
         </button>
 
         <div className="shrink-0">
-          <h3 className="font-black text-[#007BFF] text-xl sm:text-2xl lg:text-3xl">
+          <Link to="/" className="font-black text-[#007BFF] text-xl sm:text-2xl lg:text-3xl" title="Go to homepage">
             LOGO HERE
-          </h3>
+          </Link>
         </div>
 
         <div className="hidden sm:flex justify-center flex-1">
@@ -87,17 +92,23 @@ const Header = () => {
             <input
               className="flex-1 min-w-0 bg-transparent px-3 py-2.5 text-sm placeholder-gray-400 focus:outline-none"
               type="text"
-              placeholder="Search..."
+              placeholder="Search products, computer systems..."
+              aria-label="Search products"
             />
-            <button className="bg-[#007BFF] text-white px-4 sm:px-5 py-2.5 shrink-0" aria-label="Search">
+            <button className="bg-[#007BFF] text-white px-4 sm:px-5 py-2.5 shrink-0 hover:bg-blue-700 transition-colors" title="Search">
               <IoMdSearch className="text-lg" />
+              <span className="sr-only">Search</span>
             </button>
           </div>
         </div>
 
         <div className="flex gap-3 sm:gap-6 items-center text-gray-800 text-xl sm:text-2xl lg:text-[26px]">
-          <IoCartOutline className="cursor-pointer" />
-          <FaRegUserCircle className="cursor-pointer" />
+          <Link to="/cart" title="View shopping cart" aria-label="Shopping cart">
+            <IoCartOutline className="cursor-pointer hover:text-[#007BFF] transition-colors" />
+          </Link>
+          <Link to="/dashboard" title="View user account" aria-label="User account">
+            <FaRegUserCircle className="cursor-pointer hover:text-[#007BFF] transition-colors" />
+          </Link>
         </div>
       </div>
 
@@ -108,25 +119,28 @@ const Header = () => {
             className="flex-1 min-w-0 bg-transparent px-3 py-2.5 text-sm placeholder-gray-400 focus:outline-none"
             type="text"
             placeholder="Search..."
+            aria-label="Search products"
           />
-          <button className="bg-[#007BFF] text-white px-4 py-2.5 shrink-0" aria-label="Search">
+          <button className="bg-[#007BFF] text-white px-4 py-2.5 shrink-0 hover:bg-blue-700 transition-colors" title="Search">
             <IoMdSearch className="text-lg" />
+            <span className="sr-only">Search</span>
           </button>
         </div>
       </div>
 
       {/* NAVBAR - desktop */}
-      <nav className="hidden md:flex justify-evenly px-4 lg:px-20 text-white bg-[#2196F3] p-4">
+      <nav className="hidden md:flex justify-evenly px-4 lg:px-20 text-white bg-[#2196F3] p-4" role="navigation" aria-label="Main navigation">
         {menus.map((menu) => (
           <NavLink
             key={menu.id}
             to={menu.pathName}
             end={menu.pathName === "/"}
             className={({ isActive }) =>
-              `relative hover:opacity-80 text-sm lg:text-base pb-2 ${
+              `relative hover:opacity-80 text-sm lg:text-base pb-2 transition-opacity ${
                 isActive ? "font-semibold" : ""
               }`
             }
+            title={`Go to ${menu.pathValue}`}
           >
             {({ isActive }) => (
               <>
@@ -142,14 +156,15 @@ const Header = () => {
 
       {/* NAVBAR - mobile dropdown */}
       {navOpen && (
-        <nav className="md:hidden flex flex-col text-white bg-[#2196F3] px-4 py-2">
+        <nav className="md:hidden flex flex-col text-white bg-[#2196F3] px-4 py-2" role="navigation" aria-label="Mobile navigation">
           {menus.map((menu) => (
             <NavLink
               key={menu.id}
               to={menu.pathName}
               end={menu.pathName === "/"}
-              className="relative flex items-center justify-between py-2 border-b border-white/20 last:border-none"
+              className="relative flex items-center justify-between py-2 border-b border-white/20 last:border-none hover:opacity-80 transition-opacity"
               onClick={() => setNavOpen(false)}
+              title={`Go to ${menu.pathValue}`}
             >
               {({ isActive }) => (
                 <>

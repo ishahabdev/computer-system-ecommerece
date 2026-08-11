@@ -1,8 +1,8 @@
 import React from "react";
-import img1 from "../../../assets/homePIc/homeflash1.png";
-import img2 from "../../../assets/homePIc/homeflash2.png";
-import img3 from "../../../assets/homePIc/homeflash3.png";
-import img4 from "../../../assets/homePIc/homeflash4.png";
+import img1 from "../../../assets/homePIc/homeflash1.webp";
+import img2 from "../../../assets/homePIc/homeflash2.webp";
+import img3 from "../../../assets/homePIc/homeflash3.webp";
+import img4 from "../../../assets/homePIc/homeflash4.webp";
 import Typography from "../../../components/common/Typography";
 
 const Flash = () => {
@@ -87,7 +87,7 @@ const Flash = () => {
             <div className="w-[110px] sm:w-[130px] lg:w-[155px] h-full flex items-center justify-center pr-2 sm:pr-3">
               <img
                 src={item.image}
-                alt={item.title}
+                alt={`${item.title} - Flash sale computer product`}
                 className="max-w-full max-h-[110px] sm:max-h-[125px] lg:max-h-[145px] object-contain"
               />
             </div>
@@ -99,7 +99,7 @@ const Flash = () => {
       <div className="w-full mt-6 sm:mt-7 rounded-md bg-[#F8F8F8] overflow-hidden">
         <img
           src={img4}
-          alt="MacBook Pro"
+          alt="MacBook Pro and high-end computer equipment - Flash sale featured product"
           className="w-full h-auto object-cover"
         />
       </div>

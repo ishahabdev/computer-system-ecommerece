@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import storebanner from "../../assets/storepics/storebanner.png";
+import storebanner from "../../assets/storepics/storebanner.webp";
 import Sidebar from "./components/Sidebar";
 import ProductGrid from "./components/ProductGrid";
 import { Link } from "react-router-dom";

@@ -1,0 +1,23 @@
+# Robots.txt for Computer System eCommerce
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /private
+Disallow: /user/account
+Allow: /api/public
+
+# Specific rules for search engines
+User-agent: Googlebot
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+# Crawl delay (in seconds)
+Crawl-delay: 1
+
+# Sitemap location
+Sitemap: https://computersystemecommerce.com/sitemap.xml
+
+# Prefer HTTPS
+Strict-Transport-Security: max-age=31536000; includeSubDomains

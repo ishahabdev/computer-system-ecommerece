@@ -2,18 +2,118 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>computer-system-ecommerece</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    
+    <!-- Primary Meta Tags -->
+    <title>Computer System eCommerce - High-Performance PC Components & Accessories</title>
+    <meta name="title" content="Computer System eCommerce - High-Performance PC Components & Accessories" />
+    <meta name="description" content="Shop premium computer systems, gaming PCs, laptops, and accessories. Best prices on desktop computers, gaming setups, and tech peripherals." />
+    <meta name="keywords" content="computer systems, gaming PC, laptops, desktop computers, PC accessories, PC components, gaming laptops, computer hardware" />
+    <meta name="author" content="Computer System eCommerce" />
+    <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
+    <meta name="canonical" content="https://computersystemecommerce.com/" />
+    <meta name="language" content="English" />
+    <meta name="revisit-after" content="7 days" />
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://computersystemecommerce.com/" />
+    <meta property="og:title" content="Computer System eCommerce - High-Performance PC Components & Accessories" />
+    <meta property="og:description" content="Shop premium computer systems, gaming PCs, laptops, and accessories. Best prices on desktop computers, gaming setups, and tech peripherals." />
+    <meta property="og:image" content="https://computersystemecommerce.com/og-image.png" />
+    <meta property="og:site_name" content="Computer System eCommerce" />
+    <meta property="og:locale" content="en_US" />
+    
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:url" content="https://computersystemecommerce.com/" />
+    <meta name="twitter:title" content="Computer System eCommerce - High-Performance PC Components & Accessories" />
+    <meta name="twitter:description" content="Shop premium computer systems, gaming PCs, laptops, and accessories. Best prices on desktop computers, gaming setups, and tech peripherals." />
+    <meta name="twitter:image" content="https://computersystemecommerce.com/og-image.png" />
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/favicon.svg" />
+    
+    <!-- Preconnect for Performance (connects to origins we'll use) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Nunito+Sans:opsz,wght@6..12,400;6..12,600;6..12,700;6..12,800&display=swap"
-      rel="stylesheet"
-    />
+    <link rel="dns-prefetch" href="https://api.example.com" />
+    
+    <!-- Preload critical resources for LCP and font loading -->
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Nunito+Sans:opsz,wght@6..12,400;6..12,600;6..12,700;6..12,800&display=swap" as="style" />
+    <link rel="preload" as="font" href="https://fonts.gstatic.com/s/nunitosans/v14/ga4gM0Zq_x5L8aI8-MrmwvDW0n84Gl-I7s0RJdAFHb4.woff2" type="font/woff2" crossorigin />
+    
+    <!-- Inline critical styles for above-the-fold content -->
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      html {
+        font-size: 16px;
+      }
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        line-height: 1.5;
+        color: #22262A;
+      }
+      #root {
+        display: block;
+        min-height: 100vh;
+      }
+      header {
+        background-color: #fff;
+        width: 100%;
+        position: sticky;
+        top: 0;
+        z-index: 100;
+      }
+      main {
+        display: block;
+      }
+      footer {
+        background-color: #F8F8F8;
+        width: 100%;
+      }
+    </style>
+    
+    <!-- Load Google Fonts asynchronously -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito+Sans:opsz,wght@6..12,400;6..12,600;6..12,700;6..12,800&display=swap" media="print" onload="this.media='all'; this.onload=null;" />
+    <noscript>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito+Sans:opsz,wght@6..12,400;6..12,600;6..12,700;6..12,800&display=swap" />
+    </noscript>
+    
+    <!-- Structured Data (Schema.org) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "OnlineStore",
+      "name": "Computer System eCommerce",
+      "url": "https://computersystemecommerce.com",
+      "logo": "https://computersystemecommerce.com/logo.png",
+      "description": "Premium computer systems, gaming PCs, laptops, and accessories",
+      "telephone": "+1-XXX-XXX-XXXX",
+      "address": {
+        "@type": "PostalAddress",
+        "streetAddress": "123 Tech Street",
+        "addressLocality": "Tech City",
+        "postalCode": "12345",
+        "addressCountry": "US"
+      },
+      "sameAs": [
+        "https://www.facebook.com/computersystem",
+        "https://www.twitter.com/computersystem",
+        "https://www.instagram.com/computersystem"
+      ]
+    }
+    </script>
   </head>
   <body>
     <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
+    <!-- Main app script with defer for non-blocking load -->
+    <script type="module" src="/src/main.jsx" defer></script>
   </body>
 </html>

@@ -6,7 +6,7 @@ import { FiChevronRight } from "react-icons/fi";
 import { FaFacebookF, FaTwitter, FaTruck } from "react-icons/fa";
 import { useCart } from "react-use-cart";
 import { getProductById, products } from "./data";
-import adImage from "../../assets/homePIc/homeflash1.png";
+import adImage from "../../assets/homePIc/homeflash1.webp";
 
 const ProductDetail = () => {
   const { id } = useParams();
@@ -103,7 +103,7 @@ const ProductDetail = () => {
           <div className="bg-[#F8F8F8] rounded-md flex items-center justify-center p-6 h-[260px] sm:h-[320px] lg:h-[380px]">
             <img
               src={gallery[mainImage]}
-              alt={product.title}
+              alt={`${product.title} - Product image ${mainImage + 1}`}
               className="max-w-full max-h-full object-contain"
             />
           </div>
@@ -121,7 +121,7 @@ const ProductDetail = () => {
               >
                 <img
                   src={img}
-                  alt=""
+                  alt={`Product thumbnail - view option ${index + 1}`}
                   className="max-w-full max-h-full object-contain"
                 />
               </button>
@@ -296,7 +296,7 @@ const ProductDetail = () => {
                   <div className="w-16 h-16 sm:w-[72px] sm:h-[72px] bg-[#F8F8F8] rounded-md flex items-center justify-center shrink-0 p-1.5">
                     <img
                       src={item.img}
-                      alt={item.title}
+                      alt={`${item.title} - Computer product thumbnail`}
                       className="max-w-full max-h-full object-contain"
                     />
                   </div>
@@ -330,7 +330,7 @@ const ProductDetail = () => {
             </p>
             <img
               src={adImage}
-              alt="Advertisement"
+              alt="Featured computer equipment - Advertisement"
               className="h-24 mx-auto object-contain"
             />
             <p className="font-semibold text-sm mt-3">Product Name</p>
@@ -357,7 +357,7 @@ const ProductDetail = () => {
                 <div className="h-[90px] sm:h-[110px] flex items-center justify-center">
                   <img
                     src={item.img}
-                    alt={item.title}
+                    alt={`${item.title} - Computer product`}
                     className="max-w-full max-h-full object-contain"
                   />
                 </div>

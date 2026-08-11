@@ -1,10 +1,10 @@
 
-import img1 from '../../assets/homePIc/home1.png'
-import img2 from '../../assets/homePIc/home2.png'
-import img3 from '../../assets/homePIc/home3.png'
-import img4 from '../../assets/homePIc/home4.png'
-import img5 from '../../assets/homePIc/home5.png'
-import img6 from '../../assets/homePIc/home6.png'
+import img1 from '../../assets/homePIc/home1.webp'
+import img2 from '../../assets/homePIc/home2.webp'
+import img3 from '../../assets/homePIc/home3.webp'
+import img4 from '../../assets/homePIc/home4.webp'
+import img5 from '../../assets/homePIc/home5.webp'
+import img6 from '../../assets/homePIc/home6.webp'
 
 
 export const ProductDetails = [

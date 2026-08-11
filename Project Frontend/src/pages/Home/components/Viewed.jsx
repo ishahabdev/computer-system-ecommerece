@@ -1,15 +1,15 @@
 import React from "react";
-import img1 from "../../../assets/homePIc/homeview1.png";
-import img2 from "../../../assets/homePIc/homeview2.png";
-import img3 from "../../../assets/homePIc/homeview3.png";
+import img1 from "../../../assets/homePIc/homeview1.webp";
+import img2 from "../../../assets/homePIc/homeview2.webp";
+import img3 from "../../../assets/homePIc/homeview3.webp";
 import Typography from "../../../components/common/Typography";
-import img4 from "../../../assets/homePIc/home5.png";
-import img5 from "../../../assets/homePIc/home4.png";
-import img6 from "../../../assets/homePIc/home3.png";
-import img8 from "../../../assets/homePIc/homeview5.png";
-import img9 from "../../../assets/homePIc/homeview7.png";
-import img10 from "../../../assets/homePIc/homeview4.png";
-import img11 from "../../../assets/homePIc/homeview6.png";
+import img4 from "../../../assets/homePIc/home5.webp";
+import img5 from "../../../assets/homePIc/home4.webp";
+import img6 from "../../../assets/homePIc/home3.webp";
+import img8 from "../../../assets/homePIc/homeview5.webp";
+import img9 from "../../../assets/homePIc/homeview7.webp";
+import img10 from "../../../assets/homePIc/homeview4.webp";
+import img11 from "../../../assets/homePIc/homeview6.webp";
 import { FaStar } from "react-icons/fa";
 import { FaRegStarHalfStroke } from "react-icons/fa6";
 
@@ -58,7 +58,7 @@ function Viewed() {
           >
             <img
               src={item.img}
-              alt={item.title}
+              alt={`${item.title} - Special offer icon`}
               className="w-[50px] h-[55px] mb-4 mx-auto object-contain"
             />
 
@@ -91,7 +91,7 @@ function Viewed() {
               <img
                 src={card.image}
                 className="block mx-auto my-1 h-[100px] w-[100px] sm:h-[130px] sm:w-[130px] lg:h-[150px] lg:w-[150px] object-contain"
-                alt=""
+                alt={`${card.title} - ${card.category} product`}
               />
 
               <Typography varient="p" style="my-1 text-sm sm:text-base">

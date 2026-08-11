@@ -1,6 +1,6 @@
 import React from "react";
 import Typography from "../../../components/common/Typography";
-import Customimg from "../../../assets/homePIc/homeCustom1.png";
+import Customimg from "../../../assets/homePIc/homeCustom1.webp";
 
 function Custom() {
   return (
@@ -20,7 +20,7 @@ function Custom() {
         <img
           className="w-full max-w-[280px] sm:max-w-[380px] md:max-w-[460px] lg:w-[558px] lg:max-w-none h-auto md:h-[300px] lg:h-[395px] my-4 md:my-10 object-contain"
           src={Customimg}
-          alt="not"
+          alt="Build your custom gaming PC - Computer system configuration service"
         />
       </div>
     </div>

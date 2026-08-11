@@ -7,9 +7,9 @@ import "swiper/css";
 import "swiper/css/navigation";
 import "swiper/css/pagination";
 
-import img1 from "../../../assets/homePIc/home1.png";
-import img2 from "../../../assets/homePIc/home2.png";
-import img3 from "../../../assets/homePIc/home3.png";
+import img1 from "../../../assets/homePIc/home1.webp";
+import img2 from "../../../assets/homePIc/home2.webp";
+import img3 from "../../../assets/homePIc/home3.webp";
 import arrowIcon from "../../../assets/icons/arrowIcon.svg";
 
 const data = [
@@ -80,8 +80,11 @@ const Slider = () => {
               <div className="order-1 md:order-2 w-full md:w-auto flex justify-center">
                 <img
                   src={item.img}
-                  alt={`${item.titleLine1} ${item.titleLine2}`}
+                  alt={`${item.titleLine1} ${item.titleLine2} - Featured computer system`}
                   className="w-full max-w-[260px] sm:max-w-[360px] md:max-w-[420px] lg:max-w-[560px] xl:max-w-[700px] h-auto md:h-[300px] lg:h-[380px] xl:h-[450px] object-contain"
+                  fetchpriority="high"
+                  loading="eager"
+                  decoding="sync"
                 />
               </div>
             </div>
