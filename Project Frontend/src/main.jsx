@@ -6,8 +6,8 @@ import { CartProvider } from "react-use-cart";
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    <App />
-     <CartProvider>{/* render app/cart here */}</CartProvider>,
-    
+    <CartProvider>
+      <App />
+    </CartProvider>
   </StrictMode>,
 )

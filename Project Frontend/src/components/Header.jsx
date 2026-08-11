@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { NavLink } from "react-router-dom";
+import { Link, NavLink } from "react-router-dom";
 import { FaRegHeart, FaRegUserCircle, FaBars, FaTimes } from "react-icons/fa";
 import { BsTruck } from "react-icons/bs";
 import { IoMdSearch } from "react-icons/io";
@@ -9,11 +9,11 @@ import { IoChevronDown } from "react-icons/io5";
 const menus = [
   { id: 1, pathName: "/", pathValue: "Home" },
   { id: 2, pathName: "/store", pathValue: "Store" },
-  { id: 3, pathName: "/mouse", pathValue: "Mouse" },
-  { id: 4, pathName: "/keyboard", pathValue: "Keyboard" },
+  { id: 3, pathName: "/store?category=Mouses", pathValue: "Mouse" },
+  { id: 4, pathName: "/store?category=Keyboards", pathValue: "Keyboard" },
   { id: 5, pathName: "/accessories", pathValue: "Accessories" },
-  { id: 6, pathName: "/about-us", pathValue: "About Us" },
-  { id: 7, pathName: "/contact-us", pathValue: "Contact Us" },
+  { id: 6, pathName: "/about", pathValue: "About Us" },
+  { id: 7, pathName: "/contact", pathValue: "Contact Us" },
 ];
 
 const language = ["EN", "UR", "JP", "ZH"];
@@ -49,13 +49,16 @@ const Header = () => {
             <BsTruck />
             <span>Track order</span>
           </div>
-          <div className="flex items-center gap-1.5 text-gray-700">
+          <Link
+            to="/wishlist"
+            className="flex items-center gap-1.5 text-gray-700 hover:text-red-500 transition-colors"
+          >
             <FaRegHeart
               onClick={() => setWishlisted(!wishlisted)}
               className={`cursor-pointer ${wishlisted ? "text-red-500" : ""}`}
             />
             <span>Wishlist</span>
-          </div>
+          </Link>
         </div>
       </div>
 

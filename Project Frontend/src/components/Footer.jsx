@@ -82,7 +82,7 @@ const Footer = () => {
               type="submit"
               className="bg-[#2196F3] text-white text-sm px-4 py-2 rounded-r-sm hover:bg-[#1a7fd1] transition-colors whitespace-nowrap"
             >
-              Subcribe
+              Subscribe
             </button>
           </form>
         </div>
@@ -94,9 +94,9 @@ const Footer = () => {
           © 2023 WQsoftwares Inc. All rights reserved.
         </p>
         <div className="flex items-center gap-5">
-          {socials.map(({ id, Icon, href, label }) => (
-            <a key={id} href={href} aria-label={label} className="text-gray-800 hover:text-[#2196F3]">
-              <Icon size={18} />
+          {socials.map((social) => (
+            <a key={social.id} href={social.href} aria-label={social.label} className="text-gray-800 hover:text-[#2196F3]">
+              <social.Icon size={18} />
             </a>
           ))}
         </div>
