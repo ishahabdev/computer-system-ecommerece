@@ -37,7 +37,6 @@ const data = [
 ];
 
 const Slider = () => {
- 
   const [prevEl, setPrevEl] = useState(null);
   const [nextEl, setNextEl] = useState(null);
 
@@ -55,17 +54,21 @@ const Slider = () => {
       >
         {data.map((item) => (
           <SwiperSlide key={item.id}>
-            <div className="flex items-center justify-between w-full px-40 py-16">
+            <div className="flex flex-col md:flex-row items-center justify-between w-full gap-8 md:gap-4 px-6 sm:px-10 md:px-16 lg:px-28 xl:px-40 py-10 sm:py-12 md:py-14 lg:py-16 text-center md:text-left">
               {/* TEXT SIDE */}
-              <div className="max-w-xl">
+              <div className="max-w-xl order-2 md:order-1">
                 <Typography varient="p" style="text[#000000]">
                   {item.small}
                 </Typography>
 
-                <Typography varient="h1" style="font-proxima font-bold pb-4">
-                  {item.titleLine1}
-                  <br />
-                  {item.titleLine2}
+                <Typography
+                  varient="h1"
+                  style="font-proxima font-bold py-4 pb-4 text-2xl sm:text-3xl md:text-4xl lg:text-5xl"
+                >
+                  <span className="block leading-tight">{item.titleLine1}</span>
+                  <span className="block mt-2 leading-tight">
+                    {item.titleLine2}
+                  </span>
                 </Typography>
 
                 <Typography btn="primary" size="xl">
@@ -74,11 +77,11 @@ const Slider = () => {
               </div>
 
               {/* IMAGE SIDE */}
-              <div>
+              <div className="order-1 md:order-2 w-full md:w-auto flex justify-center">
                 <img
                   src={item.img}
                   alt={`${item.titleLine1} ${item.titleLine2}`}
-                  className="w-[700px] h-[450px] object-contain"
+                  className="w-full max-w-[260px] sm:max-w-[360px] md:max-w-[420px] lg:max-w-[560px] xl:max-w-[700px] h-auto md:h-[300px] lg:h-[380px] xl:h-[450px] object-contain"
                 />
               </div>
             </div>
@@ -90,19 +93,26 @@ const Slider = () => {
       <button
         ref={setPrevEl}
         aria-label="Previous slide"
-        className="absolute left-8 top-1/2  -translate-y-1/2 z-10  flex items-center justify-center "
+        className="hidden sm:flex absolute left-2 md:left-4 lg:left-8 top-1/2 -translate-y-1/2 z-10 items-center justify-center"
       >
-        <img src={arrowIcon} alt="Previous" className="w-14 h-8" />
-
+        <img
+          src={arrowIcon}
+          alt="Previous"
+          className="w-8 h-5 sm:w-10 sm:h-6 lg:w-14 lg:h-8"
+        />
       </button>
 
       {/* Next button */}
       <button
         ref={setNextEl}
         aria-label="Next slide"
-        className="absolute right-8 top-1/2 -translate-y-1/2 z-10 w-20 flex items-center justify-center "
+        className="hidden sm:flex absolute right-2 md:right-4 lg:right-8 top-1/2 -translate-y-1/2 z-10 items-center justify-center"
       >
-        <img src={arrowIcon} alt="Next" className="w-14 h-8 rotate-180" />
+        <img
+          src={arrowIcon}
+          alt="Next"
+          className="w-8 h-5 sm:w-10 sm:h-6 lg:w-14 lg:h-8 rotate-180"
+        />
       </button>
 
       {/* Default Swiper arrows hidden */}

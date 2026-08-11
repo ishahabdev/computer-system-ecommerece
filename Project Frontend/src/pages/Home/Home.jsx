@@ -8,7 +8,7 @@ import Viewed from './components/Viewed'
 
 const Home = () => {
   return (
-    <div>
+    <div className='w-7xl'>
       <Slider />
       <Cards />
       <Category />

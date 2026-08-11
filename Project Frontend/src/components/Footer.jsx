@@ -1,111 +1,107 @@
 import React from "react";
-import Typography from "./common/Typography";
 import { AiFillInstagram } from "react-icons/ai";
 import { FaYoutube, FaFacebookF, FaTwitter } from "react-icons/fa";
-import { menus } from "./constants/menus";
-import { Link } from "react-router-dom";
+
+const usefulLinks = [
+  { id: 1, label: "Home", href: "#" },
+  { id: 2, label: "Store", href: "#" },
+  { id: 3, label: "Accessories", href: "#" },
+  { id: 4, label: "About Us", href: "#" },
+];
+
+const offerLinks = [
+  { id: 1, label: "About Us", href: "#" },
+  { id: 2, label: "Infomation", href: "#" },
+  { id: 3, label: "Privacy Policy", href: "#" },
+  { id: 4, label: "Terms & Conditions", href: "#" },
+];
+
+const socials = [
+  { id: 1, Icon: AiFillInstagram, href: "#", label: "Instagram" },
+  { id: 2, Icon: FaYoutube, href: "#", label: "YouTube" },
+  { id: 3, Icon: FaFacebookF, href: "#", label: "Facebook" },
+  { id: 4, Icon: FaTwitter, href: "#", label: "Twitter" },
+];
 
 const Footer = () => {
-  let footerArr = ["About Us", "Information", "Privacy Policy", "Terms & Condition"];
-
   return (
-    <div className="bg-[#F8F8F8]">
-
-      <div className="mx-24 flex justify-between">
-
-        {/* LEFT */}
-        <div className="w-[30%]">
-          <Typography style="font-semibold text-[#2196F3]" varient="h6">
-            Store Name
-          </Typography>
-
-          <Typography varient="small">
-            Lorem Ipsum is simply dummy text of the printing and typesetting industry.
-          </Typography>
-        </div>
-
-        {/* LINKS */}
-        <div className="flex gap-10">
-
-          <div>
-            <Typography style="font-semibold" varient="h6">
-              Useful Links
-            </Typography>
-
-            <div className="flex flex-col gap-2">
-              {menus?.slice(0, 4).map((menu) => (
-                <Link
-                  key={menu.id}   // ✅ FIXED
-                  className="text-[14px]"
-                  to={menu.pathName}
-                >
-                  {menu.pathValue}
-                </Link>
-              ))}
-            </div>
-          </div>
-
-          {/* OFFERS */}
-          <div>
-            <Typography style="font-semibold" varient="h6">
-              Our Offers
-            </Typography>
-
-            {footerArr.map((item, index) => (
-              <div key={index}>   {/* ✅ FIXED */}
-                <Typography varient="small">
-                  {item}
-                </Typography>
-              </div>
-            ))}
-          </div>
-
-        </div>
-
-        {/* SUBSCRIBE */}
+    <footer className="bg-[#F8F8F8] w-full">
+      <div className=" mx-auto px-6 md:px-36 py-14 grid grid-cols-1 md:grid-cols-4 gap-10">
+        {/* Store info */}
         <div>
-          <Typography style="text-[#2196F3]" varient="p">
-            Subscribe to our emails
-          </Typography>
+          <h3 className="text-[#2196F3] font-semibold text-lg mb-3">Store Name</h3>
+          <p className="text-sm text-[#000000] leading-relaxed">
+            Lorem Ipsum is simply dummy text of the printing and typesetting
+            industry. Lorem Ipsum has been the industry's standard dummy text
+            ever since the 1500s, when an unknown printer took a galley of type.
+          </p>
+        </div>
 
-          <Typography style="font-semibold" varient="h3">
-            For latest News & Updates
-          </Typography>
+        {/* Useful links */}
+        <div>
+          <h3 className="font-semibold text-lg mb-3">Userful Links</h3>
+          <ul className="flex flex-col gap-2">
+            {usefulLinks.map((item) => (
+              <li key={item.id}>
+                <a href={item.href} className="text-sm text-[#000000] hover:text-[#2196F3]">
+                  {item.label}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
 
-          <div className="flex justify-center">
+        {/* Our offers */}
+        <div>
+          <h3 className="font-semibold text-lg mb-3">Our Offers</h3>
+          <ul className="flex flex-col gap-2">
+            {offerLinks.map((item) => (
+              <li key={item.id}>
+                <a href={item.href} className="text-sm text-[#000000] hover:text-[#2196F3]">
+                  {item.label}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        {/* Subscribe */}
+        <div>
+          <p className="text-[#2196F3] text-sm mb-1">Subscribe to our emails</p>
+          <h3 className="font-semibold text-lg mb-4">For latest News & Updates</h3>
+          <form
+            onSubmit={(e) => e.preventDefault()}
+            className="flex w-full max-w-xs"
+          >
             <input
-              type="text"
-              className="border-2 w-56 rounded-sm"
+              type="email"
               placeholder="Enter your Email"
+              className="flex-1 min-w-0 border border-gray-300 rounded-l-sm px-3 py-2 text-sm bg-white focus:outline-none"
             />
-
-            <Typography
-              style="inline-block rounded-sm w-26 text-[10px] mr-6"
-              varient="small"
-              btn="primary"
+            <button
+              type="submit"
+              className="bg-[#2196F3] text-white text-sm px-4 py-2 rounded-r-sm hover:bg-[#1a7fd1] transition-colors whitespace-nowrap"
             >
-              Subscribe
-            </Typography>
-          </div>
+              Subcribe
+            </button>
+          </form>
         </div>
-
       </div>
 
-      {/* BOTTOM */}
-      <div className="flex justify-between pt-10 mx-24 pb-6">
-        <Typography varient="small">
+      {/* Bottom bar */}
+      <div className="max-w-6xl mx-auto px-6 md:px-10 pb-6 flex flex-col-reverse md:flex-row items-center justify-between gap-4 border-t border-gray-200 pt-6">
+          <p className="text-xs text-[#000000]">
           © 2023 WQsoftwares Inc. All rights reserved.
-        </Typography>
-
-        <div className="flex text-[20px] gap-6">
-          <AiFillInstagram />
-          <FaYoutube />
-          <FaFacebookF />
-          <FaTwitter />
+        </p>
+        <div className="flex items-center gap-5">
+          {socials.map(({ id, Icon, href, label }) => (
+            <a key={id} href={href} aria-label={label} className="text-gray-800 hover:text-[#2196F3]">
+              <Icon size={18} />
+            </a>
+          ))}
         </div>
       </div>
-
-    </div>
+    </footer>
   );
 };
 

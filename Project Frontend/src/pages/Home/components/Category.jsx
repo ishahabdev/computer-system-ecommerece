@@ -42,22 +42,22 @@ const Category = () => {
       : ProductDetails.filter((card) => activeCategoryObj.match.includes(card.category));
 
   return (
-    <div className="px-36 p-4 mt-10">
+    <div className="px-4 sm:px-6 md:px-10 lg:px-20 xl:px-36 p-4 mt-6 sm:mt-8 md:mt-10">
       <div className="flex items-center justify-between">
-        <Typography style="font-semibold" varient="h3">
+        <Typography style="font-semibold text-xl sm:text-2xl md:text-3xl" varient="h3">
           Categories
         </Typography>
       </div>
 
       {/* Filter buttons */}
-      <div className="flex gap-8  mt-4  flex-wrap">
+      <div className="flex gap-3 sm:gap-4 md:gap-6 lg:gap-8 mt-4 flex-wrap">
         {categories.map((item) => {
           const isActive = activeCategory === item.id;
           return (
             <button
               key={item.id}
               onClick={() => setActiveCategory(item.id)}
-              className={`flex items-center gap-2 px-10 h-14 rounded-md border text-sm font-medium transition-colors ${
+              className={`flex items-center gap-2 px-4 sm:px-6 md:px-8 lg:px-10 h-10 sm:h-12 lg:h-14 rounded-md border text-xs sm:text-sm font-medium transition-colors whitespace-nowrap ${
                 isActive
                   ? "bg-[#2196F3] text-white border-[#2196F3]"
                   : "bg-white text-gray-700 border-gray-200 hover:bg-gray-50"
@@ -71,43 +71,43 @@ const Category = () => {
       </div>
 
       {/* Product grid — ab filteredProducts use ho raha hai */}
-      <div className="grid grid-cols-4 gap-6 w-full mt-10">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6 w-full mt-6 sm:mt-8 md:mt-10">
         {filteredProducts.map((card) => (
           <div
             key={card.id}
-            className={`group rounded-lg p-3 relative transition-colors ${
+            className={`group rounded-lg p-2.5 sm:p-3 relative transition-colors ${
               liked[card.id] ? "bg-[#EAF4FF]" : "bg-[#F8F8F8] hover:bg-[#EAF4FF]"
             }`}
           >
             {card.isNew && (
               <Typography
                 varient="small"
-                style="bg-[#2196F3] text-white px-2 rounded-[20px] absolute top-3 left-3 z-10"
+                style="bg-[#2196F3] text-white px-2 rounded-[20px] absolute top-2 left-2 sm:top-3 sm:left-3 z-10"
               >
                 New
               </Typography>
             )}
 
             <div
-              className={`absolute top-3 right-3 flex flex-col gap-2 z-10 transition-opacity ${
-                liked[card.id] ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+              className={`absolute top-2 right-2 sm:top-3 sm:right-3 flex flex-col gap-1.5 sm:gap-2 z-10 transition-opacity ${
+                liked[card.id] ? "opacity-100" : "opacity-0 group-hover:opacity-100 md:opacity-0"
               }`}
             >
               {liked[card.id] ? (
                 <FaHeart
                   onClick={() => toggleLike(card.id)}
-                  className="text-red-600 bg-white rounded-full text-[18px] p-1.5 w-8 h-8 cursor-pointer shadow-sm"
+                  className="text-red-600 bg-white rounded-full text-[16px] sm:text-[18px] p-1.5 w-7 h-7 sm:w-8 sm:h-8 cursor-pointer shadow-sm"
                 />
               ) : (
                 <FaRegHeart
                   onClick={() => toggleLike(card.id)}
-                  className="text-[#2196F3] bg-white rounded-full text-[18px] p-1.5 w-8 h-8 cursor-pointer shadow-sm"
+                  className="text-[#2196F3] bg-white rounded-full text-[16px] sm:text-[18px] p-1.5 w-7 h-7 sm:w-8 sm:h-8 cursor-pointer shadow-sm"
                 />
               )}
-              <IoCartOutline className="text-[#2196F3] bg-white rounded-full text-[18px] p-1.5 w-8 h-8 cursor-pointer shadow-sm" />
+              <IoCartOutline className="text-[#2196F3] bg-white rounded-full text-[16px] sm:text-[18px] p-1.5 w-7 h-7 sm:w-8 sm:h-8 cursor-pointer shadow-sm" />
             </div>
 
-            <div className="w-full h-[150px] flex items-center justify-center py-4">
+            <div className="w-full h-[110px] sm:h-[130px] md:h-[150px] flex items-center justify-center py-3 sm:py-4">
               <img
                 className="max-w-full max-h-full object-contain"
                 src={card.img}
@@ -116,11 +116,11 @@ const Category = () => {
             </div>
 
             <Typography varient="small">{card.category}</Typography>
-            <Typography varient="p" style="font-bold">
+            <Typography varient="p" style="font-bold text-sm sm:text-base">
               {card.title}
             </Typography>
 
-            <div className="flex text-[#FFC107] mt-2 text-sm">
+            <div className="flex text-[#FFC107] mt-2 text-xs sm:text-sm">
               <FaStar />
               <FaStar />
               <FaStar />
@@ -128,7 +128,7 @@ const Category = () => {
               <FaRegStarHalfStroke />
             </div>
 
-            <Typography varient="p" style="text-[#2196F3] font-semibold mt-1">
+            <Typography varient="p" style="text-[#2196F3] font-semibold mt-1 text-sm sm:text-base">
               {card.currency} {card.price}
             </Typography>
           </div>
