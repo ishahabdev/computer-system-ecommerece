@@ -97,9 +97,18 @@ const ProductGrid = ({ products }) => {
       </div>
 
       {/* Grid */}
-      {pageItems.length === 0 ? (
-        <div className="bg-white border border-gray-100 rounded-lg p-12 text-center text-gray-400">
-          No products match your filters.
+      {sorted.length === 0 ? (
+        <div className="bg-gray-50 border border-gray-200 rounded-lg p-12 text-center">
+          <p className="text-lg font-semibold text-gray-700 mb-2">No products found</p>
+          <p className="text-sm text-gray-500 mb-6">
+            Try adjusting your filters or search terms
+          </p>
+          <button
+            onClick={() => window.location.href = '/store'}
+            className="bg-[#2196F3] hover:bg-[#1a7fd1] text-white text-sm font-semibold px-6 py-2.5 rounded-md transition-colors"
+          >
+            Clear All Filters
+          </button>
         </div>
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 md:gap-5">

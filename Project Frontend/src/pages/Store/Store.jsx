@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import storebanner from "../../assets/storepics/storebanner.webp";
 import Sidebar from "./components/Sidebar";
@@ -12,37 +12,56 @@ import {
   PRICE_MIN,
   PRICE_MAX,
 } from "./data";
+import { usePageSEO } from '../../hooks/usePageSEO';
+import { PAGE_SEO } from '../../utils/seo';
 
 const Store = () => {
+  usePageSEO(PAGE_SEO.store.title, PAGE_SEO.store.description);
   const [searchParams] = useSearchParams();
   const [activeCategory, setActiveCategory] = useState(null);
   const [priceRange, setPriceRange] = useState([PRICE_MIN, PRICE_MAX]);
   const [selectedBrands, setSelectedBrands] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
 
   const queryCategory = searchParams.get("category");
+  const querySearch = searchParams.get("search");
 
-  // Reset filters when the URL category changes (adjusting state during render)
-  const [prevCategory, setPrevCategory] = useState(queryCategory);
-  if (queryCategory !== prevCategory) {
-    setPrevCategory(queryCategory);
+  // Reset filters when URL parameters change
+  React.useEffect(() => {
     setActiveCategory(queryCategory);
+    setSearchTerm(querySearch || "");
     setPriceRange([PRICE_MIN, PRICE_MAX]);
     setSelectedBrands([]);
-  }
+  }, [queryCategory, querySearch]);
 
   const filteredProducts = useMemo(() => {
     return products.filter((product) => {
+      // Category filter
       if (activeCategory && product.category !== activeCategory) return false;
+      
+      // Price filter
       if (product.price < priceRange[0] || product.price > priceRange[1])
         return false;
+      
+      // Brand filter
       if (
         selectedBrands.length > 0 &&
         !selectedBrands.includes(product.brand)
       )
         return false;
+      
+      // Search filter
+      if (searchTerm) {
+        const search = searchTerm.toLowerCase();
+        const matchesTitle = product.title.toLowerCase().includes(search);
+        const matchesCategory = product.category.toLowerCase().includes(search);
+        const matchesBrand = product.brand.toLowerCase().includes(search);
+        if (!matchesTitle && !matchesCategory && !matchesBrand) return false;
+      }
+      
       return true;
     });
-  }, [activeCategory, priceRange, selectedBrands]);
+  }, [activeCategory, priceRange, selectedBrands, searchTerm]);
 
   const handleBrandToggle = (brand) => {
     setSelectedBrands((prev) =>
@@ -73,6 +92,14 @@ const Store = () => {
         </Link>
         <FiChevronRight className="text-xs" />
         <span className="text-gray-900 font-medium">Store</span>
+        {(activeCategory || searchTerm) && (
+          <>
+            <FiChevronRight className="text-xs" />
+            <span className="text-gray-900 font-medium">
+              {searchTerm ? `Search: "${searchTerm}"` : activeCategory}
+            </span>
+          </>
+        )}
       </nav>
 
       {/* Main layout */}

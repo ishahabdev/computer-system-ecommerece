@@ -25,7 +25,7 @@ export const AuthProvider = ({ children }) => {
         setIsAuthenticated(true)
       }
     } catch (error) {
-      console.error("Failed to load user from localStorage:", error)
+      // Failed to load user from localStorage - silent fail
     } finally {
       setIsLoading(false)
     }

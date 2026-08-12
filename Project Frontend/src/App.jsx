@@ -7,6 +7,7 @@ import NotFound from "./pages/NotFound"
 import { CartProvider } from "./context/CartContext"
 import { WishlistProvider } from "./context/WishlistContext"
 import { AuthProvider } from "./context/AuthContext"
+import { ToastProvider } from "./context/ToastContext"
 
 // Lazy load route components for code splitting
 const Home = lazy(() => import("./pages/Home/Home"))
@@ -45,6 +46,7 @@ function App(){
    <AuthProvider>
    <CartProvider>
    <WishlistProvider>
+   <ToastProvider>
    <BrowserRouter>
     <Header />
     <main role="main">
@@ -71,6 +73,7 @@ function App(){
     </main>
     <Footer />
    </BrowserRouter>
+   </ToastProvider>
    </WishlistProvider>
    </CartProvider>
    </AuthProvider>

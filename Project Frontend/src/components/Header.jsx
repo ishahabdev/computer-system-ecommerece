@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, NavLink } from "react-router-dom";
+import { Link, NavLink, useNavigate } from "react-router-dom";
 import { FaRegHeart, FaRegUserCircle, FaBars, FaTimes, FaHeart } from "react-icons/fa";
 import { BsTruck } from "react-icons/bs";
 import { IoMdSearch } from "react-icons/io";
@@ -13,8 +13,8 @@ import { useAuth } from "../context/AuthContext";
 const menus = [
   { id: 1, pathName: "/", pathValue: "Home" },
   { id: 2, pathName: "/store", pathValue: "Store" },
-  { id: 3, pathName: "/mouse", pathValue: "Mouse" },
-  { id: 4, pathName: "keyboard", pathValue: "Keyboard" },
+  { id: 3, pathName: "/store?category=Mouse", pathValue: "Mouse" },
+  { id: 4, pathName: "/store?category=Keyboard", pathValue: "Keyboard" },
   { id: 5, pathName: "/accessories", pathValue: "Accessories" },
   { id: 6, pathName: "/about", pathValue: "About Us" },
   { id: 7, pathName: "/contact", pathValue: "Contact Us" },
@@ -26,9 +26,11 @@ const currency = ["USD", "PKR", "YUAN", "INR"];
 const Header = () => {
   const [navOpen, setNavOpen] = useState(false);
   const [cartDropdownOpen, setCartDropdownOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const { cartItems } = useCart();
   const { wishlistItems, toggleWishlist } = useWishlist();
   const { isAuthenticated, user, logout } = useAuth();
+  const navigate = useNavigate();
 
   const handleCartIconClick = () => {
     setCartDropdownOpen(!cartDropdownOpen);
@@ -36,6 +38,14 @@ const Header = () => {
 
   const handleCartDropdownClose = () => {
     setCartDropdownOpen(false);
+  };
+
+  const handleSearch = (e) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      navigate(`/store?search=${encodeURIComponent(searchQuery.trim())}`);
+      setSearchQuery("");
+    }
   };
 
   return (
@@ -123,7 +133,7 @@ const Header = () => {
         </div>
 
         <div className="hidden sm:flex justify-center flex-1">
-          <div className="flex items-center w-full max-w-xl bg-white border border-gray-200 rounded-md overflow-hidden">
+          <form onSubmit={handleSearch} className="flex items-center w-full max-w-xl bg-white border border-gray-200 rounded-md overflow-hidden">
             <div className="hidden lg:flex items-center gap-1 px-4 text-gray-700 text-sm cursor-pointer whitespace-nowrap border-r border-gray-200">
               <span>All Categories</span>
               <IoChevronDown className="text-gray-500" />
@@ -131,14 +141,20 @@ const Header = () => {
             <input
               className="flex-1 min-w-0 bg-transparent px-3 py-2.5 text-sm placeholder-gray-400 focus:outline-none"
               type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search products, computer systems..."
               aria-label="Search products"
             />
-            <button className="bg-[#2196F3] text-white px-4 sm:px-5 py-2.5 shrink-0 hover:bg-[#1a7fd1] transition-all duration-200 rounded-r-md" title="Search">
+            <button 
+              type="submit"
+              className="bg-[#2196F3] text-white px-4 sm:px-5 py-2.5 shrink-0 hover:bg-[#1a7fd1] transition-all duration-200 rounded-r-md" 
+              title="Search"
+            >
               <IoMdSearch className="text-lg" />
               <span className="sr-only">Search</span>
             </button>
-          </div>
+          </form>
         </div>
 
         <div className="flex gap-3 sm:gap-6 items-center text-gray-800 text-xl sm:text-2xl lg:text-[26px] relative">
@@ -178,18 +194,24 @@ const Header = () => {
 
       {/* Mobile search */}
       <div className="sm:hidden px-4 pb-4">
-        <div className="flex items-center w-full bg-white border border-gray-200 rounded-md overflow-hidden">
+        <form onSubmit={handleSearch} className="flex items-center w-full bg-white border border-gray-200 rounded-md overflow-hidden">
           <input
             className="flex-1 min-w-0 bg-transparent px-3 py-2.5 text-sm placeholder-gray-400 focus:outline-none"
             type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search..."
             aria-label="Search products"
           />
-          <button className="bg-[#2196F3] text-white px-4 py-2.5 shrink-0 hover:bg-[#1a7fd1] transition-all duration-200 rounded-r-md" title="Search">
+          <button 
+            type="submit"
+            className="bg-[#2196F3] text-white px-4 py-2.5 shrink-0 hover:bg-[#1a7fd1] transition-all duration-200 rounded-r-md" 
+            title="Search"
+          >
             <IoMdSearch className="text-lg" />
             <span className="sr-only">Search</span>
           </button>
-        </div>
+        </form>
       </div>
 
       {/* NAVBAR - desktop */}

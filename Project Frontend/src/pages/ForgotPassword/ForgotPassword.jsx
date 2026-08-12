@@ -57,9 +57,9 @@ const ForgotPassword = () => {
     sessionStorage.setItem("resetCode", code)
     sessionStorage.setItem("resetEmail", values.email)
     
-    // In production, send email here
-    console.log(`Verification code for ${values.email}: ${code}`)
-    alert(`Demo: Your verification code is ${code}`) // Remove in production
+    // In production, this would send verification email
+    // For demo purposes, show the code to user
+    alert(`Demo: Your verification code is ${code}`)
     
     setEmail(values.email)
     setStep(2)
@@ -134,7 +134,7 @@ const ForgotPassword = () => {
     const code = Math.floor(100000 + Math.random() * 900000).toString()
     sessionStorage.setItem("resetCode", code)
     
-    console.log(`New verification code for ${email}: ${code}`)
+    // For demo purposes, show the new code
     alert(`Demo: Your new verification code is ${code}`)
     
     setResendTimer(60)

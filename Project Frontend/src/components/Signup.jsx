@@ -15,7 +15,7 @@ const SignupForm = () => {
       const res = await axios.get(API);
       setUsers(res.data.data || []);
     } catch (err) {
-      console.log("GET ERROR:", err);
+      // Error loading users
     }
   };
 
@@ -27,7 +27,7 @@ const SignupForm = () => {
   const createUser = async (values, { resetForm, setSubmitting }) => {
     try {
       setSubmitting(true);
-      console.log("SENDING DATA:", values);
+      // Submit data to API
       
       const res = await axios.post(API, values, {
         headers: {
@@ -35,11 +35,11 @@ const SignupForm = () => {
         },
       });
       
-      console.log("RESPONSE:", res.data);
+      // Success - refresh user list
       resetForm();
       getUsers();
     } catch (err) {
-      console.log("POST ERROR:", err.response?.data || err.message);
+      // Error submitting form
       alert(err.response?.data?.message || "Error creating user");
     } finally {
       setSubmitting(false);

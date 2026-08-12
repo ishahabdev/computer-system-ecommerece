@@ -5,6 +5,9 @@ import * as Yup from "yup"
 import { HiOutlineLockClosed } from "react-icons/hi2"
 import { IoEyeOutline, IoEyeOffOutline } from "react-icons/io5"
 import { useAuth } from "../../context/AuthContext"
+import { usePageSEO } from '../../hooks/usePageSEO'
+import { PAGE_SEO } from '../../utils/seo'
+import { useToast } from '../../context/ToastContext'
 
 const SigninSchema = Yup.object().shape({
   email: Yup.string()
@@ -16,9 +19,11 @@ const SigninSchema = Yup.object().shape({
 })
 
 const Signin = () => {
+  usePageSEO(PAGE_SEO.signin.title, PAGE_SEO.signin.description, PAGE_SEO.signin.noIndex);
   const navigate = useNavigate()
   const location = useLocation()
   const { signin } = useAuth()
+  const toast = useToast()
   const [authError, setAuthError] = useState("")
   const [showPassword, setShowPassword] = useState(false)
 
@@ -33,6 +38,7 @@ const Signin = () => {
     })
 
     if (result.success) {
+      toast.success('Welcome back! Successfully signed in.');
       // Redirect to the page they tried to visit or home
       navigate(from, { replace: true })
     } else {
