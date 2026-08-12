@@ -41,9 +41,10 @@ export default function Contact() {
   usePageSEO(PAGE_SEO.contact.title, PAGE_SEO.contact.description);
   const [submitSuccess, setSubmitSuccess] = useState(false);
 
+  // Frontend-only: logs the submitted form values to the browser console.
   const handleSubmit = (values, { setSubmitting, resetForm }) => {
     setTimeout(() => {
-      // Form submitted - in production this would send to backend
+      console.log("Contact form submitted:", values);
       setSubmitSuccess(true);
       resetForm();
       setSubmitting(false);
@@ -57,7 +58,6 @@ export default function Contact() {
 
   return (
     <div className="min-h-screen bg-white font-sans">
-     
 
       {/* Contact content */}
       <section className="px-6 sm:px-10 py-10 max-w-6xl mx-auto">

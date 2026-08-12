@@ -21,9 +21,9 @@ const Wishlist = lazy(() => import("./pages/Wishlist/Wishlist"))
 const Cart = lazy(() => import("./pages/Cart/Cart"))
 const Checkout = lazy(() => import("./pages/Checkout/Checkout"))
 const OrderConfirmation = lazy(() => import("./pages/OrderConfirmation/OrderConfirmation"))
-const Signin = lazy(() => import("./pages/Signin/Signin"))
-const Signup = lazy(() => import("./pages/Signup/Signup"))
-const ForgotPassword = lazy(() => import("./pages/ForgotPassword/ForgotPassword"))
+const Signin = lazy(() => import("./pages/Auth/Signin"))
+const Signup = lazy(() => import("./pages/Auth/Signup"))
+const ForgotPassword = lazy(() => import("./pages/Auth/ForgotPassword"))
 const TrackOrder = lazy(() => import("./pages/TrackOrder/TrackOrder"))
 
 

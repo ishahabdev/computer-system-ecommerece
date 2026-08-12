@@ -1,4 +1,7 @@
 import React from "react";
+import { Link } from "react-router-dom";
+import { FaRegHeart, FaHeart } from "react-icons/fa";
+import { IoCartOutline } from "react-icons/io5";
 import img1 from "../../../assets/homePIc/homeview1.webp";
 import img2 from "../../../assets/homePIc/homeview2.webp";
 import img3 from "../../../assets/homePIc/homeview3.webp";
@@ -12,8 +15,15 @@ import img10 from "../../../assets/homePIc/homeview4.webp";
 import img11 from "../../../assets/homePIc/homeview6.webp";
 import { FaStar } from "react-icons/fa";
 import { FaRegStarHalfStroke } from "react-icons/fa6";
+import { useCart } from "../../../context/CartContext";
+import { useWishlist } from "../../../context/WishlistContext";
+import { useToast } from "../../../context/ToastContext";
 
 function Viewed() {
+  const { addToCart } = useCart();
+  const { toggleWishlist, isInWishlist } = useWishlist();
+  const toast = useToast();
+
   let icon = <FaStar />;
   let viewArr = [
     {
@@ -37,15 +47,46 @@ function Viewed() {
   ];
 
   let viedCards = [
-    { id: 1, image: img9, category: "AirBuds", title: "G502 wireless", price: 1800, currency: "$", pic: icon, tag: "New" },
-    { id: 2, image: img5, category: "Mouse", title: "Smooth cursor", price: 200, currency: "$", pic: icon, tag: "New" },
-    { id: 3, image: img4, category: "Keyboard", title: "Smoot Buttons", price: 300, currency: "$", pic: icon, tag: "New" },
-    { id: 4, image: img10, category: "AirBuds", title: " Long battery", price: 99, currency: "$", pic: icon, tag: "New" },
-    { id: 5, image: img8, category: "Laptop", title: "High speed", price: 999, currency: "$", pic: icon, tag: "New" },
-    { id: 6, image: img11, category: "Speaker", title: " wireless Loud", price: 250, currency: "$", pic: icon, tag: "New" },
-    { id: 7, image: img5, category: "Mouse", title: "Fast clicks", price: 150, currency: "$", pic: icon, tag: "New" },
-    { id: 8, image: img6, category: "Laptop", title: "  Slim design ", price: 850, currency: "$", pic: icon, tag: "New" },
+    { id: "viewed-1", image: img9, category: "AirBuds", title: "G502 wireless", price: 1800, currency: "$", pic: icon, tag: "New", brand: "Logitech" },
+    { id: "viewed-2", image: img5, category: "Mouse", title: "Smooth cursor", price: 200, currency: "$", pic: icon, tag: "New", brand: "Razer" },
+    { id: "viewed-3", image: img4, category: "Keyboard", title: "Smoot Buttons", price: 300, currency: "$", pic: icon, tag: "New", brand: "Corsair" },
+    { id: "viewed-4", image: img10, category: "AirBuds", title: " Long battery", price: 99, currency: "$", pic: icon, tag: "New", brand: "Sony" },
+    { id: "viewed-5", image: img8, category: "Laptop", title: "High speed", price: 999, currency: "$", pic: icon, tag: "New", brand: "Dell" },
+    { id: "viewed-6", image: img11, category: "Speaker", title: " wireless Loud", price: 250, currency: "$", pic: icon, tag: "New", brand: "JBL" },
+    { id: "viewed-7", image: img5, category: "Mouse", title: "Fast clicks", price: 150, currency: "$", pic: icon, tag: "New", brand: "Logitech" },
+    { id: "viewed-8", image: img6, category: "Laptop", title: "  Slim design ", price: 850, currency: "$", pic: icon, tag: "New", brand: "HP" },
   ];
+
+  const handleAddToCart = (e, card) => {
+    e.preventDefault();
+    e.stopPropagation();
+    addToCart({
+      id: card.id,
+      title: card.title,
+      price: card.price,
+      currency: card.currency,
+      image: card.image,
+      imagePath: card.image,
+      category: card.category,
+    }, 1);
+    toast.success(`${card.title} added to cart!`);
+  };
+
+  const handleToggleWishlist = (e, card) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const isInList = isInWishlist(card.id);
+    toggleWishlist({
+      id: card.id,
+      title: card.title,
+      price: card.price,
+      currency: card.currency,
+      img: card.image,
+      category: card.category,
+      brand: card.brand
+    });
+    toast.success(isInList ? 'Removed from wishlist' : 'Added to wishlist!');
+  };
 
   return (
     <div className="px-4 sm:px-6 md:px-10 lg:px-20 xl:px-36">
@@ -84,13 +125,36 @@ function Viewed() {
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-10">
         {viedCards?.map((card) => {
           return (
-            <div
+            <Link
               key={card.id}
-              className="relative my-4 sm:my-6 h-[260px] sm:h-[300px] lg:h-[330px] w-full content-center px-3 sm:px-4 bg-[#F8F8F8]"
+              to={`/store/product/${card.id}`}
+              className="group relative my-4 sm:my-6 h-[260px] sm:h-[300px] lg:h-[330px] w-full content-center px-3 sm:px-4 bg-[#F8F8F8] rounded-md hover:shadow-lg transition-all"
             >
+              {/* Action buttons */}
+              <div className="absolute top-2 right-2 flex flex-col gap-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
+                <button
+                  onClick={(e) => handleToggleWishlist(e, card)}
+                  className="w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-sm hover:bg-gray-50 transition-colors"
+                  aria-label={isInWishlist(card.id) ? "Remove from wishlist" : "Add to wishlist"}
+                >
+                  {isInWishlist(card.id) ? (
+                    <FaHeart className="text-red-500 text-sm" />
+                  ) : (
+                    <FaRegHeart className="text-gray-600 text-sm" />
+                  )}
+                </button>
+                <button
+                  onClick={(e) => handleAddToCart(e, card)}
+                  className="w-8 h-8 bg-[#2196F3] text-white rounded-full flex items-center justify-center shadow-sm hover:bg-[#1a7fd1] transition-colors"
+                  aria-label="Add to cart"
+                >
+                  <IoCartOutline className="text-base" />
+                </button>
+              </div>
+
               <img
                 src={card.image}
-                className="block mx-auto my-1 h-[100px] w-[100px] sm:h-[130px] sm:w-[130px] lg:h-[150px] lg:w-[150px] object-contain"
+                className="block mx-auto my-1 h-[100px] w-[100px] sm:h-[130px] sm:w-[130px] lg:h-[150px] lg:w-[150px] object-contain group-hover:scale-105 transition-transform"
                 alt={`${card.title} - ${card.category} product`}
               />
 
@@ -113,7 +177,7 @@ function Viewed() {
               >
                 {card.tag}
               </Typography>
-            </div>
+            </Link>
           );
         })}
       </div>
