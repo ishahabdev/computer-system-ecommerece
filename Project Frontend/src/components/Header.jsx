@@ -13,8 +13,8 @@ import { useAuth } from "../context/AuthContext";
 const menus = [
   { id: 1, pathName: "/", pathValue: "Home" },
   { id: 2, pathName: "/store", pathValue: "Store" },
-  { id: 3, pathName: "/store?category=Mouses", pathValue: "Mouse" },
-  { id: 4, pathName: "/store?category=Keyboards", pathValue: "Keyboard" },
+  { id: 3, pathName: "/mouse", pathValue: "Mouse" },
+  { id: 4, pathName: "keyboard", pathValue: "Keyboard" },
   { id: 5, pathName: "/accessories", pathValue: "Accessories" },
   { id: 6, pathName: "/about", pathValue: "About Us" },
   { id: 7, pathName: "/contact", pathValue: "Contact Us" },
@@ -62,10 +62,14 @@ const Header = () => {
         </div>
 
         <div className="flex gap-4 lg:gap-8 items-center">
-          <div className="flex items-center gap-1.5 text-gray-700">
+          <Link
+            to="/track-order"
+            className="flex items-center gap-1.5 text-gray-700 hover:text-[#2196F3] transition-colors"
+            title="Track your order"
+          >
             <BsTruck />
             <span>Track order</span>
-          </div>
+          </Link>
           <Link
             to="/wishlist"
             className="flex items-center gap-1.5 text-gray-700 hover:text-red-500 transition-colors"
@@ -157,8 +161,17 @@ const Header = () => {
             isOpen={cartDropdownOpen}
             onClose={handleCartDropdownClose}
           />
-          <Link to="/dashboard" title="View user account" aria-label="User account">
-            <FaRegUserCircle className="cursor-pointer hover:text-[#007BFF] transition-colors" />
+          <Link to="/dashboard" title="View user account" aria-label="User account" className="relative">
+            {isAuthenticated && user ? (
+              <div className="relative cursor-pointer hover:opacity-80 transition-opacity group">
+                <FaRegUserCircle className="text-gray-800" />
+                <div className="absolute -bottom-1 -right-1 bg-[#2196F3] text-white text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center border-2 border-white">
+                  {user.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()}
+                </div>
+              </div>
+            ) : (
+              <FaRegUserCircle className="cursor-pointer hover:text-[#007BFF] transition-colors" />
+            )}
           </Link>
         </div>
       </div>

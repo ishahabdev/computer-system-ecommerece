@@ -1,12 +1,21 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { HiOutlineLockClosed } from "react-icons/hi2";
 import { IoInformationCircleOutline } from "react-icons/io5";
 import { useCart } from "../../context/CartContext";
+import { useAuth } from "../../context/AuthContext";
 
 const Checkout = () => {
   const navigate = useNavigate();
   const { cartItems, getCartSummary, clearCart } = useCart();
+  const { isAuthenticated } = useAuth();
+
+  // Redirect to signin if not authenticated
+  useEffect(() => {
+    if (!isAuthenticated) {
+      navigate("/signin", { state: { from: "/checkout" } });
+    }
+  }, [isAuthenticated, navigate]);
 
   // ---- Address form state ----
   const [address, setAddress] = useState("House no 7, Achini Payan, Ring Road");
@@ -92,6 +101,7 @@ const Checkout = () => {
         month: "long",
         day: "numeric",
       }),
+      createdAt: new Date().toISOString(),
       estimatedDelivery: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toLocaleDateString(
         "en-US",
         { year: "numeric", month: "long", day: "numeric" }
@@ -107,6 +117,12 @@ const Checkout = () => {
       zipCode,
       status: "Confirmed",
     };
+
+    // Save order to localStorage for tracking
+    const ordersJSON = localStorage.getItem("orders")
+    const orders = ordersJSON ? JSON.parse(ordersJSON) : []
+    orders.push(orderData)
+    localStorage.setItem("orders", JSON.stringify(orders))
 
     // Clear the cart
     clearCart();

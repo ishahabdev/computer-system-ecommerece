@@ -2,7 +2,8 @@ import { useState } from "react"
 import { Link, useNavigate, useLocation } from "react-router-dom"
 import { Formik, Form, Field, ErrorMessage } from "formik"
 import * as Yup from "yup"
-import { HiOutlineLockClosed, HiOutlineEye, HiOutlineEyeSlash } from "react-icons/hi2"
+import { HiOutlineLockClosed } from "react-icons/hi2"
+import { IoEyeOutline, IoEyeOffOutline } from "react-icons/io5"
 import { useAuth } from "../../context/AuthContext"
 
 const SignupSchema = Yup.object().shape({
@@ -32,11 +33,11 @@ const Signup = () => {
 
   const handleSubmit = async (values, { setSubmitting }) => {
     setAuthError("")
-
-    const result = signup({
+    
+    const result = signup({ 
       name: values.name,
-      email: values.email,
-      password: values.password
+      email: values.email, 
+      password: values.password 
     })
 
     if (result.success) {
@@ -45,17 +46,16 @@ const Signup = () => {
     } else {
       setAuthError(result.error)
     }
-
+    
     setSubmitting(false)
   }
 
-  const inputClass =
-    "w-full bg-gray-50 text-sm text-gray-600 placeholder-gray-400 rounded-md px-4 py-3 outline-none focus:ring-2 focus:ring-[#2196F3]/40 transition"
-  const labelClass = "block text-sm font-medium text-gray-800 mb-2"
+  const inputClass = "w-full bg-gray-50 text-sm text-gray-600 placeholder-gray-400 rounded-md px-4 py-3 outline-none focus:ring-2 focus:ring-[#2196F3]/40 transition"
+  const labelClass = "block text-sm font-medium text-gray-700 mb-2"
   const errorClass = "text-xs text-red-600 mt-1"
 
   return (
-    <main className="bg-white  flex justify-center min-h-screen">
+    <main className="bg-white min-h-screen">
       {/* Breadcrumb bar */}
       <div className="bg-gray-50">
         <div className="px-4 sm:px-6 md:px-10 lg:px-20 xl:px-36 py-3">
@@ -64,17 +64,21 @@ const Signup = () => {
               Home
             </Link>
             <span className="text-gray-400">/</span>
-            <span className="text-gray-600">Sign up</span>
+            <span className="text-gray-600">signup</span>
           </nav>
         </div>
       </div>
 
       <div className="px-4 sm:px-6 md:px-10 lg:px-20 xl:px-36 py-8 md:py-12">
-        <div className="max-w-md">
+        <div className="max-w-md mx-auto">
           {/* Header */}
-          <div className="mb-8 pb-6 border-b border-gray-100">
-            <h1 className="text-3xl font-bold text-[#22262A] mb-2">Sign Up</h1>
-            <p className="text-sm text-gray-500">Upgrade your tech game with us!</p>
+          <div className="text-center mb-8">
+            <h1 className="text-2xl font-bold text-[#22262A] uppercase tracking-wide mb-2">
+              Create Account
+            </h1>
+            <p className="text-sm text-gray-600">
+              Upgrade your tech game with us
+            </p>
           </div>
 
           {/* Auth error message */}
@@ -103,13 +107,13 @@ const Signup = () => {
                 {/* Name Field */}
                 <div>
                   <label htmlFor="name" className={labelClass}>
-                    Name
+                    Full Name
                   </label>
                   <Field
                     id="name"
                     name="name"
                     type="text"
-                    placeholder="Name"
+                    placeholder="John Doe"
                     className={`${inputClass} ${
                       errors.name && touched.name ? "ring-2 ring-red-500/40" : ""
                     }`}
@@ -120,7 +124,7 @@ const Signup = () => {
                 {/* Email Field */}
                 <div>
                   <label htmlFor="email" className={labelClass}>
-                    Email
+                    Email Address
                   </label>
                   <Field
                     id="email"
@@ -144,21 +148,21 @@ const Signup = () => {
                       id="password"
                       name="password"
                       type={showPassword ? "text" : "password"}
-                      placeholder="Minimum 6 characters"
-                      className={`${inputClass} pr-11 ${
+                      placeholder="••••••••"
+                      className={`${inputClass} pr-10 ${
                         errors.password && touched.password ? "ring-2 ring-red-500/40" : ""
                       }`}
                     />
                     <button
                       type="button"
-                      onClick={() => setShowPassword((prev) => !prev)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                      aria-label={showPassword ? "Hide password" : "Show password"}
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                      tabIndex="-1"
                     >
                       {showPassword ? (
-                        <HiOutlineEye className="text-lg" />
+                        <IoEyeOffOutline className="text-xl" />
                       ) : (
-                        <HiOutlineEyeSlash className="text-lg" />
+                        <IoEyeOutline className="text-xl" />
                       )}
                     </button>
                   </div>
@@ -175,23 +179,21 @@ const Signup = () => {
                       id="confirmPassword"
                       name="confirmPassword"
                       type={showConfirmPassword ? "text" : "password"}
-                      placeholder="Re-enter your password"
-                      className={`${inputClass} pr-11 ${
-                        errors.confirmPassword && touched.confirmPassword
-                          ? "ring-2 ring-red-500/40"
-                          : ""
+                      placeholder="••••••••"
+                      className={`${inputClass} pr-10 ${
+                        errors.confirmPassword && touched.confirmPassword ? "ring-2 ring-red-500/40" : ""
                       }`}
                     />
                     <button
                       type="button"
-                      onClick={() => setShowConfirmPassword((prev) => !prev)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                      aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                      tabIndex="-1"
                     >
                       {showConfirmPassword ? (
-                        <HiOutlineEye className="text-lg" />
+                        <IoEyeOffOutline className="text-xl" />
                       ) : (
-                        <HiOutlineEyeSlash className="text-lg" />
+                        <IoEyeOutline className="text-xl" />
                       )}
                     </button>
                   </div>
@@ -213,11 +215,21 @@ const Signup = () => {
           {/* Sign in link */}
           <div className="mt-6 text-center">
             <p className="text-sm text-gray-600">
-              Already have account?{" "}
-              <Link to="/signin" state={{ from }} className="text-[#2196F3] hover:underline font-medium">
+              Already have an account?{" "}
+              <Link 
+                to="/signin" 
+                state={{ from }}
+                className="text-[#2196F3] hover:underline font-medium"
+              >
                 Sign in
               </Link>
             </p>
+          </div>
+
+          {/* Security note */}
+          <div className="mt-8 flex items-center justify-center gap-1.5 text-xs text-gray-500">
+            <HiOutlineLockClosed className="text-sm" />
+            <span>Your information is secure and encrypted</span>
           </div>
         </div>
       </div>

@@ -22,6 +22,8 @@ const Checkout = lazy(() => import("./pages/Checkout/Checkout"))
 const OrderConfirmation = lazy(() => import("./pages/OrderConfirmation/OrderConfirmation"))
 const Signin = lazy(() => import("./pages/Signin/Signin"))
 const Signup = lazy(() => import("./pages/Signup/Signup"))
+const ForgotPassword = lazy(() => import("./pages/ForgotPassword/ForgotPassword"))
+const TrackOrder = lazy(() => import("./pages/TrackOrder/TrackOrder"))
 
 
 // Loading fallback component
@@ -61,6 +63,8 @@ function App(){
           <Route path="/order-confirmation" element={<OrderConfirmation />} />
           <Route path="/signin" element={<Signin />} />
           <Route path="/signup" element={<Signup />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/track-order" element={<TrackOrder />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Suspense>

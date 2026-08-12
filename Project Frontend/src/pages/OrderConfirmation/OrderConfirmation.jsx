@@ -2,18 +2,23 @@ import React, { useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { IoCartOutline } from "react-icons/io5";
 import { FaCheck } from "react-icons/fa";
+import { useAuth } from "../../context/AuthContext";
 
 const OrderConfirmation = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
 
-  // Strictly gate this page behind real order data (e.g. coming from a
-  // successful checkout/payment) — direct visits with no order get redirected.
+  // Require authentication AND order data
   useEffect(() => {
+    if (!isAuthenticated) {
+      navigate("/signin", { state: { from: "/order-confirmation" } });
+      return;
+    }
     if (!location.state?.order) {
       navigate("/store");
     }
-  }, [location.state, navigate]);
+  }, [isAuthenticated, location.state, navigate]);
 
   const orderData = location.state?.order;
 

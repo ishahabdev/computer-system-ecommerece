@@ -3,6 +3,7 @@ import { Link, useNavigate, useLocation } from "react-router-dom"
 import { Formik, Form, Field, ErrorMessage } from "formik"
 import * as Yup from "yup"
 import { HiOutlineLockClosed } from "react-icons/hi2"
+import { IoEyeOutline, IoEyeOffOutline } from "react-icons/io5"
 import { useAuth } from "../../context/AuthContext"
 
 const SigninSchema = Yup.object().shape({
@@ -19,6 +20,7 @@ const Signin = () => {
   const location = useLocation()
   const { signin } = useAuth()
   const [authError, setAuthError] = useState("")
+  const [showPassword, setShowPassword] = useState(false)
 
   const from = location.state?.from || "/"
 
@@ -111,18 +113,40 @@ const Signin = () => {
 
                 {/* Password Field */}
                 <div>
-                  <label htmlFor="password" className={labelClass}>
-                    Password
-                  </label>
-                  <Field
-                    id="password"
-                    name="password"
-                    type="password"
-                    placeholder="Enter your password"
-                    className={`${inputClass} ${
-                      errors.password && touched.password ? "ring-2 ring-red-500/40" : ""
-                    }`}
-                  />
+                  <div className="flex items-center justify-between mb-2">
+                    <label htmlFor="password" className={labelClass.replace("mb-2", "")}>
+                      Password
+                    </label>
+                    <Link
+                      to="/forgot-password"
+                      className="text-xs text-[#2196F3] hover:underline font-medium"
+                    >
+                      Forgot Password?
+                    </Link>
+                  </div>
+                  <div className="relative">
+                    <Field
+                      id="password"
+                      name="password"
+                      type={showPassword ? "text" : "password"}
+                      placeholder="Enter your password"
+                      className={`${inputClass} pr-10 ${
+                        errors.password && touched.password ? "ring-2 ring-red-500/40" : ""
+                      }`}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                      tabIndex="-1"
+                    >
+                      {showPassword ? (
+                        <IoEyeOffOutline className="text-xl" />
+                      ) : (
+                        <IoEyeOutline className="text-xl" />
+                      )}
+                    </button>
+                  </div>
                   <ErrorMessage name="password" component="div" className={errorClass} />
                 </div>
 
