@@ -6,6 +6,7 @@ import Footer from "./components/Footer"
 import NotFound from "./pages/NotFound"
 import { CartProvider } from "./context/CartContext"
 import { WishlistProvider } from "./context/WishlistContext"
+import { AuthProvider } from "./context/AuthContext"
 
 // Lazy load route components for code splitting
 const Home = lazy(() => import("./pages/Home/Home"))
@@ -19,6 +20,8 @@ const Wishlist = lazy(() => import("./pages/Wishlist/Wishlist"))
 const Cart = lazy(() => import("./pages/Cart/Cart"))
 const Checkout = lazy(() => import("./pages/Checkout/Checkout"))
 const OrderConfirmation = lazy(() => import("./pages/OrderConfirmation/OrderConfirmation"))
+const Signin = lazy(() => import("./pages/Signin/Signin"))
+const Signup = lazy(() => import("./pages/Signup/Signup"))
 
 
 // Loading fallback component
@@ -37,6 +40,7 @@ const Loading = () => (
 
 function App(){
   return (
+   <AuthProvider>
    <CartProvider>
    <WishlistProvider>
    <BrowserRouter>
@@ -55,6 +59,8 @@ function App(){
           <Route path="/cart" element={<Cart />} />
           <Route path="/checkout" element={<Checkout />} />
           <Route path="/order-confirmation" element={<OrderConfirmation />} />
+          <Route path="/signin" element={<Signin />} />
+          <Route path="/signup" element={<Signup />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Suspense>
@@ -63,6 +69,7 @@ function App(){
    </BrowserRouter>
    </WishlistProvider>
    </CartProvider>
+   </AuthProvider>
   )
 }
 

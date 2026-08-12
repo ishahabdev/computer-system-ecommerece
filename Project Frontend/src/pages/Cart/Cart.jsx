@@ -3,11 +3,13 @@ import { Link, useNavigate } from "react-router-dom";
 import { FaMinus, FaPlus } from "react-icons/fa6";
 import { IoClose } from "react-icons/io5";
 import { useCart } from "../../context/CartContext";
+import { useAuth } from "../../context/AuthContext";
 import Checkout from "../Checkout/Checkout.jsx"
 
 const Cart = () => {
   const navigate = useNavigate();
   const { cartItems, removeFromCart, updateQuantity, getCartSummary } = useCart();
+  const { isAuthenticated } = useAuth();
 
   const [couponCode, setCouponCode] = useState("");
   const [couponApplied, setCouponApplied] = useState(false);
@@ -33,8 +35,14 @@ const Cart = () => {
 
 
   const handleCheckout = () => {
-  navigate("/Checkout");
-};
+    if (!isAuthenticated) {
+      // Redirect to signin with intended destination
+      navigate("/signin", { state: { from: "/checkout" } });
+    } else {
+      // User is authenticated, proceed to checkout
+      navigate("/checkout");
+    }
+  };
   const cartSummary = getCartSummary();
   const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.qty, 0);
   const hasItems = cartItems.length > 0;

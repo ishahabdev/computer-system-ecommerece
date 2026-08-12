@@ -8,6 +8,7 @@ import { IoChevronDown } from "react-icons/io5";
 import CartDropdown from "./CartDropdown";
 import { useCart } from "../context/CartContext";
 import { useWishlist } from "../context/WishlistContext";
+import { useAuth } from "../context/AuthContext";
 
 const menus = [
   { id: 1, pathName: "/", pathValue: "Home" },
@@ -27,6 +28,7 @@ const Header = () => {
   const [cartDropdownOpen, setCartDropdownOpen] = useState(false);
   const { cartItems } = useCart();
   const { wishlistItems, toggleWishlist } = useWishlist();
+  const { isAuthenticated, user, logout } = useAuth();
 
   const handleCartIconClick = () => {
     setCartDropdownOpen(!cartDropdownOpen);
@@ -76,6 +78,26 @@ const Header = () => {
             )}
             <span>Wishlist {wishlistItems.length > 0 && `(${wishlistItems.length})`}</span>
           </Link>
+          {isAuthenticated ? (
+            <div className="flex items-center gap-3">
+              <span className="text-gray-700 text-sm">Welcome, {user?.name?.split(' ')[0]}</span>
+              <button
+                onClick={logout}
+                className="text-gray-700 hover:text-[#2196F3] text-sm font-medium transition-colors"
+                title="Sign out of your account"
+              >
+                Logout
+              </button>
+            </div>
+          ) : (
+            <Link
+              to="/signin"
+              className="text-gray-700 hover:text-[#2196F3] text-sm font-medium transition-colors"
+              title="Sign in to your account"
+            >
+              Sign In
+            </Link>
+          )}
         </div>
       </div>
 
