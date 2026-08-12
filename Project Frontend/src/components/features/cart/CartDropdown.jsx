@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { MdDeleteOutline } from "react-icons/md";
-import { useCart } from "../context/CartContext";
+import { useCart } from "../../../context/CartContext";
 
 const MAX_PREVIEW_ITEMS = 3;
 
@@ -203,11 +203,11 @@ const CartDropdown = ({
         )}
 
         {!hasItems && (
-          <div className="px-4 py-3 border-t border-gray-200 bg-gradient-to-r from-blue-50 to-white rounded-b-xl">
+          <div className="px-4 py-3 border-t border-gray-200 bg-gradient-to-r from-white to-gray-50">
             <Link
               to="/store"
               onClick={handleContinueShopping}
-              className="block text-center bg-gradient-to-r from-[#2196F3] to-[#1a7fd1] hover:shadow-lg text-white text-xs font-bold py-2.5 rounded-lg transition-all duration-200"
+              className="block text-center bg-[#2196F3] hover:bg-[#1a7fd1] text-white text-xs font-bold py-2.5 rounded transition-colors duration-200"
               title="Continue shopping"
             >
               Start Shopping

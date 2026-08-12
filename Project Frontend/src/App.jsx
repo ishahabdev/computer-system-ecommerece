@@ -1,9 +1,12 @@
 import { BrowserRouter, Route, Routes } from "react-router"
 import { Suspense, lazy } from "react"
 
-import Header from "./components/Header"
-import Footer from "./components/Footer"
+// Layout components
+import Header from "./components/layout/Header"
+import Footer from "./components/layout/Footer"
 import NotFound from "./pages/NotFound"
+
+// Context providers
 import { CartProvider } from "./context/CartContext"
 import { WishlistProvider } from "./context/WishlistContext"
 import { AuthProvider } from "./context/AuthContext"
@@ -11,20 +14,20 @@ import { ToastProvider } from "./context/ToastContext"
 
 // Lazy load route components for code splitting
 const Home = lazy(() => import("./pages/Home/Home"))
-const Store = lazy(() => import("./pages/Store/Store"))
-const ProductDetail = lazy(() => import("./pages/Store/ProductDetail"))
-const Accessories = lazy(() => import("./pages/Accessories/Accessories"))
-const About = lazy(() => import("./pages/About/About"))
-const Contact = lazy(() => import("./pages/Contact/Contact"))
+const Store = lazy(() => import("./pages/Shop/Store"))
+const ProductDetail = lazy(() => import("./pages/Shop/ProductDetail"))
+const Accessories = lazy(() => import("./pages/Static/Accessories"))
+const About = lazy(() => import("./pages/Static/About"))
+const Contact = lazy(() => import("./pages/Static/Contact"))
 const Dashboard = lazy(() => import("./pages/Dashbaord/Dashboard"))
 const Wishlist = lazy(() => import("./pages/Wishlist/Wishlist"))
 const Cart = lazy(() => import("./pages/Cart/Cart"))
 const Checkout = lazy(() => import("./pages/Checkout/Checkout"))
-const OrderConfirmation = lazy(() => import("./pages/OrderConfirmation/OrderConfirmation"))
+const OrderConfirmation = lazy(() => import("./pages/Order/OrderConfirmation"))
 const Signin = lazy(() => import("./pages/Auth/Signin"))
 const Signup = lazy(() => import("./pages/Auth/Signup"))
 const ForgotPassword = lazy(() => import("./pages/Auth/ForgotPassword"))
-const TrackOrder = lazy(() => import("./pages/TrackOrder/TrackOrder"))
+const TrackOrder = lazy(() => import("./pages/Order/TrackOrder"))
 
 
 // Loading fallback component

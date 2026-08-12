@@ -5,10 +5,10 @@ import { BsTruck } from "react-icons/bs";
 import { IoMdSearch } from "react-icons/io";
 import { IoCartOutline } from "react-icons/io5";
 import { IoChevronDown } from "react-icons/io5";
-import CartDropdown from "./CartDropdown";
-import { useCart } from "../context/CartContext";
-import { useWishlist } from "../context/WishlistContext";
-import { useAuth } from "../context/AuthContext";
+import CartDropdown from "../features/cart/CartDropdown";
+import { useCart } from "../../context/CartContext";
+import { useWishlist } from "../../context/WishlistContext";
+import { useAuth } from "../../context/AuthContext";
 
 const menus = [
   { id: 1, pathName: "/", pathValue: "Home" },
