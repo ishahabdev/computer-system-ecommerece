@@ -1,38 +1,24 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import { FiShoppingCart } from "react-icons/fi";
 import { FaRegHeart } from "react-icons/fa6";
-import { useCart } from "react-use-cart";
-import { products } from "../Store/data";
+import { IoClose } from "react-icons/io5";
+import { useCart } from "../../context/CartContext";
+import { useWishlist } from "../../context/WishlistContext";
 
 const Wishlist = () => {
-  const { addItem } = useCart();
+  const { addToCart } = useCart();
+  const { wishlistItems, removeFromWishlist, clearWishlist } = useWishlist();
   const [addedIds, setAddedIds] = useState({});
 
-  // Seed the wishlist with sample items (mouse + laptop) for the demo flow.
-  const seed = [
-    {
-      ...products.find((p) => p.category === "Mouses"),
-      brand: "Razer Inc",
-      status: "available",
-    },
-    {
-      ...products.find((p) => p.category === "Laptops"),
-      brand: "Lenovo",
-      status: "outofstock",
-    },
-  ].filter(Boolean);
-
-  const [items, setItems] = useState(seed);
-
   const handleAddToCart = (item) => {
-    addItem({
+    addToCart({
       id: item.id,
-      name: item.title,
+      title: item.title,
       price: item.price,
-      image: item.img,
+      currency: item.currency,
+      image: item.image || "🛍️",
       category: item.category,
-    });
+    }, 1);
     setAddedIds((prev) => ({ ...prev, [item.id]: true }));
     setTimeout(
       () => setAddedIds((prev) => ({ ...prev, [item.id]: false })),
@@ -40,14 +26,21 @@ const Wishlist = () => {
     );
   };
 
+  const handleRemoveItem = (id) => {
+    removeFromWishlist(id);
+  };
+
   const handleDeleteAll = () => {
-    setItems([]);
+    clearWishlist();
   };
 
   return (
-    <div className="bg-white px-4 sm:px-6 md:px-10 lg:px-20 xl:px-32 py-6 md:py-10">
+    <div className="bg-gradient-to-br from-gray-50 via-white to-blue-50 min-h-screen px-4 sm:px-6 md:px-10 lg:px-20 xl:px-32 py-6 md:py-10">
       {/* Breadcrumb */}
-      <nav className="flex items-center gap-2 text-sm text-gray-500 mb-8" aria-label="Breadcrumb">
+      <nav
+        className="flex items-center gap-2 text-sm text-gray-500 mb-6"
+        aria-label="Breadcrumb"
+      >
         <Link to="/" className="hover:text-blue-500 transition-colors">
           Home
         </Link>
@@ -55,111 +48,104 @@ const Wishlist = () => {
         <span className="text-gray-900 font-medium">Wishlist</span>
       </nav>
 
-      <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-[#22262A] mb-6">
-        Wishlist
-      </h1>
-
-      {items.length === 0 ? (
-        <div className="bg-[#F8F8F8] rounded-lg p-12 text-center">
+      {wishlistItems.length === 0 ? (
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">
           <FaRegHeart className="mx-auto text-gray-300 text-5xl mb-4" />
-          <p className="text-gray-500 mb-6">Your wishlist is empty.</p>
+          <p className="text-gray-600 mb-2 font-semibold text-lg">Your wishlist is empty.</p>
+          <p className="text-gray-500 mb-6">Add items by clicking the heart icon on products.</p>
           <Link
             to="/store"
-            className="inline-block bg-[#2196F3] text-white text-sm font-semibold px-8 py-3 rounded-md hover:bg-[#1a7fd1] transition-colors"
+            className="inline-block bg-gradient-to-r from-[#2196F3] to-[#1a7fd1] text-white text-sm font-semibold px-8 py-3 rounded-lg hover:shadow-lg transition-all duration-200 transform hover:scale-105"
           >
             Browse Products
           </Link>
         </div>
       ) : (
         <>
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse">
+          <div className="mb-6 flex items-center justify-between">
+            <h1 className="text-2xl md:text-3xl font-bold text-[#22262A]">My Wishlist</h1>
+            <p className="text-sm text-gray-500">{wishlistItems.length} item{wishlistItems.length !== 1 ? 's' : ''}</p>
+          </div>
+
+          <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white shadow-sm">
+            <table className="w-full">
               <thead>
-                <tr className="bg-[#F8F8F8] text-left text-xs sm:text-sm font-semibold text-gray-600 uppercase tracking-wide">
-                  <th className="py-3.5 px-4 border border-gray-200 w-[55%]">
-                    Product
-                  </th>
-                  <th className="py-3.5 px-4 border border-gray-200">
-                    Price
-                  </th>
-                  <th className="py-3.5 px-4 border border-gray-200">
-                    Status
-                  </th>
-                  <th className="py-3.5 px-4 border border-gray-200">
-                    Action
-                  </th>
+                <tr className="text-left text-xs font-bold text-gray-800 uppercase tracking-wide border-b border-gray-200">
+                  <th className="py-3 pr-3 w-8"></th>
+                  <th className="py-3 pr-4">Product</th>
+                  <th className="py-3 px-4">Price</th>
+                  <th className="py-3 px-4">Status</th>
+                  <th className="py-3 px-4">Action</th>
                 </tr>
               </thead>
               <tbody>
-                {items.map((item) => (
-                  <tr key={item.id} className="hover:bg-gray-50 transition-colors">
+                {wishlistItems.map((item) => (
+                  <tr
+                    key={item.id}
+                    className="border-b border-gray-100 hover:bg-gray-50/60 transition-colors"
+                  >
+                    {/* Remove */}
+                    <td className="py-5 pr-3 align-middle">
+                      <button
+                        onClick={() => handleRemoveItem(item.id)}
+                        aria-label="Remove item"
+                        className="w-5 h-5 flex items-center justify-center rounded-full text-gray-400 hover:text-red-500 hover:bg-gray-100 transition-colors"
+                      >
+                        <IoClose size={14} />
+                      </button>
+                    </td>
+
                     {/* Product */}
-                    <td className="py-4 px-4 border border-gray-200">
+                    <td className="py-5 pr-4 align-middle">
                       <div className="flex items-center gap-3 sm:gap-4">
-                        <div className="w-14 h-14 sm:w-16 sm:h-16 bg-[#F8F8F8] rounded-md flex items-center justify-center shrink-0 p-1.5">
-                          <img
-                            src={item.img}
-                            alt={item.title}
-                            className="max-w-full max-h-full object-contain"
-                          />
+                        <div className="w-12 h-12 sm:w-14 sm:h-14 flex items-center justify-center shrink-0 bg-[#F8F8F8] rounded border border-gray-100">
+                          {item.imagePath ? (
+                            <img
+                              src={item.imagePath}
+                              alt={item.title}
+                              className="max-w-full max-h-full object-contain"
+                              onError={(e) => {
+                                e.target.style.display = 'none';
+                              }}
+                            />
+                          ) : (
+                            <span className="text-2xl">{item.image || "🛍️"}</span>
+                          )}
                         </div>
-                        <div className="min-w-0">
-                          <Link
-                            to={`/store/product/${item.id}`}
-                            className="font-semibold text-sm sm:text-base text-[#22262A] leading-snug hover:text-[#2196F3] transition-colors block line-clamp-1"
-                          >
-                            {item.title}
-                          </Link>
-                          <p className="text-xs text-gray-400 mt-0.5">
-                            {item.brand}
-                          </p>
-                        </div>
+                        <Link
+                          to={`/store/product/${item.id}`}
+                          className="font-semibold text-sm sm:text-base text-[#22262A] leading-snug hover:text-[#2196F3] transition-colors"
+                        >
+                          {item.title}
+                        </Link>
                       </div>
                     </td>
 
                     {/* Price */}
-                    <td className="py-4 px-4 border border-gray-200 text-sm sm:text-base font-semibold text-[#22262A] whitespace-nowrap">
+                    <td className="py-5 px-4 align-middle text-sm sm:text-base font-semibold text-[#22262A] whitespace-nowrap">
                       {item.currency}
                       {item.price}
                     </td>
 
                     {/* Status */}
-                    <td className="py-4 px-4 border border-gray-200">
-                      <span
-                        className={`inline-block text-xs font-medium px-2.5 py-1 rounded-md ${
-                          item.status === "available"
-                            ? "bg-green-50 text-green-600"
-                            : "bg-red-50 text-red-500"
-                        }`}
-                      >
-                        {item.status === "available"
-                          ? "Available"
-                          : "Out of stock"}
+                    <td className="py-5 px-4 align-middle whitespace-nowrap">
+                      <span className="text-sm font-semibold text-[#22262A]">
+                        Available
                       </span>
                     </td>
 
                     {/* Action */}
-                    <td className="py-4 px-4 border border-gray-200">
-                      {item.status === "available" ? (
-                        <button
-                          onClick={() => handleAddToCart(item)}
-                          className={`flex items-center gap-1.5 text-xs sm:text-sm font-semibold px-4 sm:px-5 py-2 rounded-md whitespace-nowrap transition-colors ${
-                            addedIds[item.id]
-                              ? "bg-green-600 text-white"
-                              : "bg-[#2196F3] text-white hover:bg-[#1a7fd1]"
-                          }`}
-                        >
-                          <FiShoppingCart />
-                          {addedIds[item.id] ? "Added ✓" : "Add to cart"}
-                        </button>
-                      ) : (
-                        <Link
-                          to={`/store/product/${item.id}`}
-                          className="inline-block text-xs sm:text-sm font-semibold px-4 sm:px-5 py-2 rounded-md border border-gray-300 text-gray-700 hover:border-[#2196F3] hover:text-[#2196F3] transition-colors whitespace-nowrap"
-                        >
-                          View Product
-                        </Link>
-                      )}
+                    <td className="py-5 px-4 align-middle whitespace-nowrap">
+                      <button
+                        onClick={() => handleAddToCart(item)}
+                        className={`text-sm font-semibold transition-all ${
+                          addedIds[item.id]
+                            ? "text-green-600"
+                            : "text-[#2196F3] hover:text-[#1a7fd1]"
+                        }`}
+                      >
+                        {addedIds[item.id] ? "Added ✓" : "Add to cart"}
+                      </button>
                     </td>
                   </tr>
                 ))}
@@ -168,10 +154,10 @@ const Wishlist = () => {
           </div>
 
           {/* Delete all */}
-          <div className="flex justify-end mt-5">
+          <div className="flex justify-end mt-6">
             <button
               onClick={handleDeleteAll}
-              className="bg-red-500 hover:bg-red-600 text-white text-sm font-semibold px-6 py-2.5 rounded-md transition-colors"
+              className="bg-gradient-to-r from-red-500 to-red-600 hover:shadow-lg text-white text-sm font-semibold px-6 py-2.5 rounded-lg transition-all duration-200 transform hover:scale-105"
             >
               Delete All Items
             </button>

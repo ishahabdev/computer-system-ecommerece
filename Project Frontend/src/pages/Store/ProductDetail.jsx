@@ -1,20 +1,23 @@
 import React, { useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useNavigate } from "react-router-dom";
 import { FaStar } from "react-icons/fa";
 import { FaMinus, FaPlus, FaCheck } from "react-icons/fa6";
 import { FiChevronRight } from "react-icons/fi";
 import { FaFacebookF, FaTwitter, FaTruck } from "react-icons/fa";
-import { useCart } from "react-use-cart";
+import { useCart } from "../../context/CartContext";
+import { useWishlist } from "../../context/WishlistContext";
 import { getProductById, products } from "./data";
 import adImage from "../../assets/homePIc/homeflash1.webp";
 
 const ProductDetail = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [quantity, setQuantity] = useState(1);
   const [added, setAdded] = useState(false);
   const [activeTab, setActiveTab] = useState("information");
   const [mainImage, setMainImage] = useState(0);
-  const { addItem } = useCart();
+  const { addToCart } = useCart();
+  const { toggleWishlist, isInWishlist } = useWishlist();
 
   const product = getProductById(id);
 
@@ -54,17 +57,30 @@ const ProductDetail = () => {
   const oldPrice = Math.round(product.price * 1.2);
 
   const handleAddToCart = () => {
-    for (let i = 0; i < quantity; i += 1) {
-      addItem({
-        id: product.id,
-        name: product.title,
-        price: product.price,
-        image: product.img,
-        category: product.category,
-      });
-    }
+    addToCart({
+      id: product.id,
+      title: product.title,
+      price: product.price,
+      currency: product.currency,
+      image: product.img,
+      imagePath: product.img,
+      category: product.category,
+    }, quantity);
     setAdded(true);
     setTimeout(() => setAdded(false), 1500);
+  };
+
+  const handleBuyNow = () => {
+    addToCart({
+      id: product.id,
+      title: product.title,
+      price: product.price,
+      currency: product.currency,
+      image: product.img,
+      imagePath: product.img,
+      category: product.category,
+    }, quantity);
+    navigate("/checkout");
   };
 
   const renderStars = (count = 5) => {
@@ -198,7 +214,9 @@ const ProductDetail = () => {
               </button>
             </div>
 
-            <button className="bg-[#006CE4] text-white text-sm font-semibold px-6 py-2.5 rounded-sm hover:bg-[#1a7fd1] transition-colors">
+            <button 
+              onClick={handleBuyNow}
+              className="bg-[#006CE4] text-white text-sm font-semibold px-6 py-2.5 rounded-sm hover:bg-[#1a7fd1] transition-colors">
               Buy Now
             </button>
 

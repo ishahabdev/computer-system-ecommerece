@@ -2,26 +2,42 @@ import React, { useState } from "react";
 import { FaStar, FaRegHeart, FaHeart } from "react-icons/fa";
 import { FaRegStarHalfStroke } from "react-icons/fa6";
 import { IoCartOutline } from "react-icons/io5";
-import { useCart } from "react-use-cart";
+import { useCart } from "../../../context/CartContext";
+import { useWishlist } from "../../../context/WishlistContext";
 import { Link } from "react-router-dom";
 
 const DECIMAL_RATING = 4.5;
 
 const StoreProductCard = ({ product }) => {
-  const [liked, setLiked] = useState(false);
   const [added, setAdded] = useState(false);
-  const { addItem } = useCart();
+  const { addToCart } = useCart();
+  const { isInWishlist, toggleWishlist } = useWishlist();
 
-  const handleAddToCart = () => {
-    addItem({
+  const handleAddToCart = (e) => {
+    e?.preventDefault();
+    addToCart({
       id: product.id,
-      name: product.title,
+      title: product.title,
       price: product.price,
-      image: product.img,
+      currency: product.currency,
+      image: product.img || "🛍️",
       category: product.category,
-    });
+    }, 1);
     setAdded(true);
     setTimeout(() => setAdded(false), 1500);
+  };
+
+  const handleToggleWishlist = (e) => {
+    e?.preventDefault();
+    toggleWishlist({
+      id: product.id,
+      title: product.title,
+      price: product.price,
+      currency: product.currency,
+      image: product.img,
+      imagePath: product.img, // Keep the image file path
+      category: product.category,
+    });
   };
 
   const stars = [];
@@ -44,18 +60,18 @@ const StoreProductCard = ({ product }) => {
 
       <div
         className={`absolute top-2 right-2 sm:top-3 sm:right-3 flex flex-col gap-1.5 z-10 ${
-          liked ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+          isInWishlist(product.id) ? "opacity-100" : "opacity-0 group-hover:opacity-100"
         }`}
       >
         <button
           onClick={(e) => {
             e.preventDefault();
-            setLiked(!liked);
+            handleToggleWishlist(e);
           }}
           aria-label="Toggle wishlist"
           className="bg-white rounded-full p-1.5 shadow-sm hover:scale-105 transition-transform"
         >
-          {liked ? (
+          {isInWishlist(product.id) ? (
             <FaHeart className="text-red-600 text-sm sm:text-base" />
           ) : (
             <FaRegHeart className="text-[#2196F3] text-sm sm:text-base" />
@@ -64,7 +80,7 @@ const StoreProductCard = ({ product }) => {
         <button
           onClick={(e) => {
             e.preventDefault();
-            handleAddToCart();
+            handleAddToCart(e);
           }}
           aria-label="Add to cart"
           className="bg-white rounded-full p-1.5 shadow-sm hover:scale-105 transition-transform"
@@ -101,7 +117,7 @@ const StoreProductCard = ({ product }) => {
       <button
         onClick={(e) => {
           e.preventDefault();
-          handleAddToCart();
+          handleAddToCart(e);
         }}
         className={`mt-2.5 w-full py-1.5 rounded-md text-xs sm:text-sm font-medium transition-colors ${
           added

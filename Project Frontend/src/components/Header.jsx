@@ -1,10 +1,13 @@
 import { useState } from "react";
 import { Link, NavLink } from "react-router-dom";
-import { FaRegHeart, FaRegUserCircle, FaBars, FaTimes } from "react-icons/fa";
+import { FaRegHeart, FaRegUserCircle, FaBars, FaTimes, FaHeart } from "react-icons/fa";
 import { BsTruck } from "react-icons/bs";
 import { IoMdSearch } from "react-icons/io";
 import { IoCartOutline } from "react-icons/io5";
 import { IoChevronDown } from "react-icons/io5";
+import CartDropdown from "./CartDropdown";
+import { useCart } from "../context/CartContext";
+import { useWishlist } from "../context/WishlistContext";
 
 const menus = [
   { id: 1, pathName: "/", pathValue: "Home" },
@@ -20,11 +23,21 @@ const language = ["EN", "UR", "JP", "ZH"];
 const currency = ["USD", "PKR", "YUAN", "INR"];
 
 const Header = () => {
-  const [wishlisted, setWishlisted] = useState(false);
   const [navOpen, setNavOpen] = useState(false);
+  const [cartDropdownOpen, setCartDropdownOpen] = useState(false);
+  const { cartItems } = useCart();
+  const { wishlistItems, toggleWishlist } = useWishlist();
+
+  const handleCartIconClick = () => {
+    setCartDropdownOpen(!cartDropdownOpen);
+  };
+
+  const handleCartDropdownClose = () => {
+    setCartDropdownOpen(false);
+  };
 
   return (
-    <header className="bg-white w-full" role="banner">
+    <header className="bg-white w-full shadow-sm" role="banner">
       {/* TOP BAR */}
       <div className="hidden md:flex justify-between items-center px-4 lg:px-10 xl:px-20 py-2 text-sm">
         <div className="flex gap-4 lg:gap-8 items-center">
@@ -56,12 +69,12 @@ const Header = () => {
             className="flex items-center gap-1.5 text-gray-700 hover:text-red-500 transition-colors"
             title="View your wishlist"
           >
-            <FaRegHeart
-              onClick={() => setWishlisted(!wishlisted)}
-              className={`cursor-pointer ${wishlisted ? "text-red-500" : ""}`}
-              aria-label="Wishlist"
-            />
-            <span>Wishlist</span>
+            {wishlistItems.length > 0 ? (
+              <FaHeart className="text-red-500" />
+            ) : (
+              <FaRegHeart />
+            )}
+            <span>Wishlist {wishlistItems.length > 0 && `(${wishlistItems.length})`}</span>
           </Link>
         </div>
       </div>
@@ -78,7 +91,7 @@ const Header = () => {
         </button>
 
         <div className="shrink-0">
-          <Link to="/" className="font-black text-[#007BFF] text-xl sm:text-2xl lg:text-3xl" title="Go to homepage">
+          <Link to="/" className="font-black text-[#2196F3] text-xl sm:text-2xl lg:text-3xl hover:opacity-80 transition-opacity" title="Go to homepage">
             LOGO HERE
           </Link>
         </div>
@@ -95,17 +108,33 @@ const Header = () => {
               placeholder="Search products, computer systems..."
               aria-label="Search products"
             />
-            <button className="bg-[#007BFF] text-white px-4 sm:px-5 py-2.5 shrink-0 hover:bg-blue-700 transition-colors" title="Search">
+            <button className="bg-[#2196F3] text-white px-4 sm:px-5 py-2.5 shrink-0 hover:bg-[#1a7fd1] transition-all duration-200 rounded-r-md" title="Search">
               <IoMdSearch className="text-lg" />
               <span className="sr-only">Search</span>
             </button>
           </div>
         </div>
 
-        <div className="flex gap-3 sm:gap-6 items-center text-gray-800 text-xl sm:text-2xl lg:text-[26px]">
-          <Link to="/cart" title="View shopping cart" aria-label="Shopping cart">
-            <IoCartOutline className="cursor-pointer hover:text-[#007BFF] transition-colors" />
-          </Link>
+        <div className="flex gap-3 sm:gap-6 items-center text-gray-800 text-xl sm:text-2xl lg:text-[26px] relative">
+          <button
+            onClick={handleCartIconClick}
+            title="Toggle shopping cart dropdown"
+            aria-label="Shopping cart"
+            aria-expanded={cartDropdownOpen}
+            aria-haspopup="dialog"
+            className="relative hover:text-[#007BFF] transition-colors"
+          >
+            <IoCartOutline className="cursor-pointer" />
+            {cartItems.length > 0 && (
+              <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                {cartItems.length}
+              </span>
+            )}
+          </button>
+          <CartDropdown
+            isOpen={cartDropdownOpen}
+            onClose={handleCartDropdownClose}
+          />
           <Link to="/dashboard" title="View user account" aria-label="User account">
             <FaRegUserCircle className="cursor-pointer hover:text-[#007BFF] transition-colors" />
           </Link>
@@ -121,7 +150,7 @@ const Header = () => {
             placeholder="Search..."
             aria-label="Search products"
           />
-          <button className="bg-[#007BFF] text-white px-4 py-2.5 shrink-0 hover:bg-blue-700 transition-colors" title="Search">
+          <button className="bg-[#2196F3] text-white px-4 py-2.5 shrink-0 hover:bg-[#1a7fd1] transition-all duration-200 rounded-r-md" title="Search">
             <IoMdSearch className="text-lg" />
             <span className="sr-only">Search</span>
           </button>

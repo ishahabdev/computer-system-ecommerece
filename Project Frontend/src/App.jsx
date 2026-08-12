@@ -4,6 +4,8 @@ import { Suspense, lazy } from "react"
 import Header from "./components/Header"
 import Footer from "./components/Footer"
 import NotFound from "./pages/NotFound"
+import { CartProvider } from "./context/CartContext"
+import { WishlistProvider } from "./context/WishlistContext"
 
 // Lazy load route components for code splitting
 const Home = lazy(() => import("./pages/Home/Home"))
@@ -15,6 +17,9 @@ const Contact = lazy(() => import("./pages/Contact/Contact"))
 const Dashboard = lazy(() => import("./pages/Dashbaord/Dashboard"))
 const Wishlist = lazy(() => import("./pages/Wishlist/Wishlist"))
 const Cart = lazy(() => import("./pages/Cart/Cart"))
+const Checkout = lazy(() => import("./pages/Checkout/Checkout"))
+const OrderConfirmation = lazy(() => import("./pages/OrderConfirmation/OrderConfirmation"))
+
 
 // Loading fallback component
 const Loading = () => (
@@ -32,7 +37,8 @@ const Loading = () => (
 
 function App(){
   return (
-   <div>
+   <CartProvider>
+   <WishlistProvider>
    <BrowserRouter>
     <Header />
     <main role="main">
@@ -47,14 +53,16 @@ function App(){
           <Route path="/wishlist" element={<Wishlist />} />
           <Route path="/store/product/:id" element={<ProductDetail />} />
           <Route path="/cart" element={<Cart />} />
+          <Route path="/checkout" element={<Checkout />} />
+          <Route path="/order-confirmation" element={<OrderConfirmation />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Suspense>
     </main>
     <Footer />
    </BrowserRouter>
-
-   </div>
+   </WishlistProvider>
+   </CartProvider>
   )
 }
 
