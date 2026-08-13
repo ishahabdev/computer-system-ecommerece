@@ -1,4 +1,5 @@
 import { DataTypes } from "sequelize";
+
 import { database } from "../config/database.js";
 
 const User = database.define("User", {
@@ -7,11 +8,7 @@ const User = database.define("User", {
     primaryKey: true,
     autoIncrement: true,
   },
-  firstName: {
-    type: DataTypes.STRING,
-    allowNull: false,
-  },
-  lastName: {
+  name: {
     type: DataTypes.STRING,
     allowNull: false,
   },
@@ -24,11 +21,7 @@ const User = database.define("User", {
     type: DataTypes.STRING,
     allowNull: false,
   },
-  role: {
-    type: DataTypes.STRING,
-    defaultValue: "user",
-    allowNull: false,
-  },
+
 }, {
   timestamps: true,
 });
