@@ -179,12 +179,19 @@ const Header = () => {
           />
           <Link to="/dashboard" title="View user account" aria-label="User account" className="relative">
             {isAuthenticated && user ? (
-              <div className="relative cursor-pointer hover:opacity-80 transition-opacity group">
-                <FaRegUserCircle className="text-gray-800" />
-                <div className="absolute -bottom-1 -right-1 bg-[#2196F3] text-white text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center border-2 border-white">
+              user.profilePicture ? (
+                <div className="w-8 h-8 rounded-full overflow-hidden border-2 border-[#2196F3] hover:opacity-80 transition-opacity">
+                  <img 
+                    src={user.profilePicture} 
+                    alt={user.name}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              ) : (
+                <div className="w-8 h-8 rounded-full bg-[#2196F3] text-white text-sm font-bold flex items-center justify-center hover:opacity-80 transition-opacity cursor-pointer">
                   {user.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()}
                 </div>
-              </div>
+              )
             ) : (
               <FaRegUserCircle className="cursor-pointer hover:text-[#007BFF] transition-colors" />
             )}

@@ -107,13 +107,40 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem("currentUser")
   }
 
+  // Update profile picture
+  const updateProfilePicture = (pictureUrl) => {
+    try {
+      if (!user) return { success: false, error: "No user logged in" }
+
+      // Update current user state
+      const updatedUser = { ...user, profilePicture: pictureUrl }
+      setUser(updatedUser)
+      localStorage.setItem("currentUser", JSON.stringify(updatedUser))
+
+      // Update in users array
+      const usersJSON = localStorage.getItem("users")
+      const users = usersJSON ? JSON.parse(usersJSON) : []
+      const userIndex = users.findIndex(u => u.id === user.id)
+      
+      if (userIndex !== -1) {
+        users[userIndex] = { ...users[userIndex], profilePicture: pictureUrl }
+        localStorage.setItem("users", JSON.stringify(users))
+      }
+
+      return { success: true, user: updatedUser }
+    } catch (error) {
+      return { success: false, error: error.message }
+    }
+  }
+
   const value = {
     user,
     isAuthenticated,
     isLoading,
     signup,
     signin,
-    logout
+    logout,
+    updateProfilePicture
   }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

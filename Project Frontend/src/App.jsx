@@ -32,10 +32,10 @@ const TrackOrder = lazy(() => import("./pages/Order/TrackOrder"))
 
 // Loading fallback component
 const Loading = () => (
-  <div style={{ 
-    display: "flex", 
-    justifyContent: "center", 
-    alignItems: "center", 
+  <div style={{
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
     minHeight: "400px",
     fontSize: "18px",
     color: "#666"
@@ -44,44 +44,43 @@ const Loading = () => (
   </div>
 )
 
-function App(){
+function App() {
   return (
-   <AuthProvider>
-   <CartProvider>
-   <WishlistProvider>
-   <ToastProvider>
-   <BrowserRouter>
-    <Header />
-    <main role="main">
-      <Suspense fallback={<Loading />}>
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/store" element={<Store />} />
-          <Route path="/accessories" element={<Accessories />} />
-          <Route path="/about" element={<About />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/contact" element={<Contact />} />
-          <Route path="/wishlist" element={<Wishlist />} />
-          <Route path="/store/product/:id" element={<ProductDetail />} />
-          <Route path="/cart" element={<Cart />} />
-          <Route path="/checkout" element={<Checkout />} />
-          <Route path="/order-confirmation" element={<OrderConfirmation />} />
-          <Route path="/signin" element={<Signin />} />
-          <Route path="/signup" element={<Signup />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/track-order" element={<TrackOrder />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </Suspense>
-    </main>
-    <Footer />
-   </BrowserRouter>
-   </ToastProvider>
-   </WishlistProvider>
-   </CartProvider>
-   </AuthProvider>
+    <AuthProvider>
+      <CartProvider>
+        <WishlistProvider>
+          <ToastProvider>
+            <BrowserRouter>
+              <Header />
+              <main role="main">
+                <Suspense fallback={<Loading />}>
+                  <Routes>
+                    <Route path="/" element={<Home />} />
+                    <Route path="/store" element={<Store />} />
+                    <Route path="/accessories" element={<Accessories />} />
+                    <Route path="/about" element={<About />} />
+                    <Route path="/dashboard" element={<Dashboard />} />
+                    <Route path="/contact" element={<Contact />} />
+                    <Route path="/wishlist" element={<Wishlist />} />
+                    <Route path="/store/product/:id" element={<ProductDetail />} />
+                    <Route path="/cart" element={<Cart />} />
+                    <Route path="/checkout" element={<Checkout />} />
+                    <Route path="/order-confirmation" element={<OrderConfirmation />} />
+                    <Route path="/signin" element={<Signin />} />
+                    <Route path="/signup" element={<Signup />} />
+                    <Route path="/forgot-password" element={<ForgotPassword />} />
+                    <Route path="/track-order" element={<TrackOrder />} />
+                    <Route path="*" element={<NotFound />} />
+                  </Routes>
+                </Suspense>
+              </main>
+              <Footer />
+            </BrowserRouter>
+          </ToastProvider>
+        </WishlistProvider>
+      </CartProvider>
+    </AuthProvider>
   )
 }
-
 
 export default App

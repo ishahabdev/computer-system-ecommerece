@@ -1,11 +1,151 @@
-import React from 'react';
+import React, { useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { FiLock, FiMail, FiUser } from 'react-icons/fi';
+import { FiLock, FiMail, FiUser, FiCamera, FiX } from 'react-icons/fi';
+import { useAuth } from '../../../context/AuthContext';
+import { useToast } from '../../../context/ToastContext';
 
 const SettingsTab = ({ user }) => {
+  const { updateProfilePicture } = useAuth();
+  const { showToast } = useToast();
+  const fileInputRef = useRef(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [previewImage, setPreviewImage] = useState(null);
+
+  const handleProfilePictureClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      showToast('Please select an image file', 'error');
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      showToast('Image size should be less than 5MB', 'error');
+      return;
+    }
+
+    setIsUploading(true);
+
+    try {
+      // Convert to base64
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64String = reader.result;
+        setPreviewImage(base64String);
+        
+        // Update profile picture
+        const result = updateProfilePicture(base64String);
+        
+        if (result.success) {
+          showToast('Profile picture updated successfully!', 'success');
+        } else {
+          showToast(result.error || 'Failed to update profile picture', 'error');
+          setPreviewImage(null);
+        }
+        setIsUploading(false);
+      };
+      reader.onerror = () => {
+        showToast('Failed to read image file', 'error');
+        setIsUploading(false);
+      };
+      reader.readAsDataURL(file);
+    } catch (error) {
+      showToast('Failed to upload image', 'error');
+      setIsUploading(false);
+    }
+  };
+
+  const handleRemoveProfilePicture = () => {
+    const result = updateProfilePicture(null);
+    if (result.success) {
+      setPreviewImage(null);
+      showToast('Profile picture removed', 'info');
+    } else {
+      showToast('Failed to remove profile picture', 'error');
+    }
+  };
+
+  const currentProfilePicture = previewImage || user.profilePicture;
+
   return (
     <div>
       <h2 className="text-2xl font-bold text-[#22262A] mb-6">Account Settings</h2>
+
+      {/* Profile Picture Section */}
+      <div className="bg-white border border-gray-200 rounded-lg p-6 mb-6">
+        <h3 className="text-lg font-semibold text-[#22262A] mb-4 flex items-center gap-2">
+          <FiCamera className="text-[#2196F3]" />
+          Profile Picture
+        </h3>
+        
+        <div className="flex items-center gap-6">
+          <div className="relative">
+            {currentProfilePicture ? (
+              <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-[#2196F3]">
+                <img 
+                  src={currentProfilePicture} 
+                  alt={user.name}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            ) : (
+              <div className="w-24 h-24 rounded-full bg-[#2196F3] text-white text-2xl font-bold flex items-center justify-center border-4 border-[#2196F3]">
+                {user.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()}
+              </div>
+            )}
+            
+            {isUploading && (
+              <div className="absolute inset-0 bg-black bg-opacity-50 rounded-full flex items-center justify-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-white"></div>
+              </div>
+            )}
+          </div>
+
+          <div className="flex-1">
+            <p className="text-sm text-gray-600 mb-3">
+              Upload a profile picture to personalize your account. Recommended size: 400x400px
+            </p>
+            <div className="flex gap-3">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleFileChange}
+                className="hidden"
+              />
+              <button
+                onClick={handleProfilePictureClick}
+                disabled={isUploading}
+                className="bg-[#2196F3] hover:bg-[#1a7fd1] text-white text-sm font-semibold px-4 py-2 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              >
+                <FiCamera />
+                {currentProfilePicture ? 'Change Picture' : 'Upload Picture'}
+              </button>
+              
+              {currentProfilePicture && (
+                <button
+                  onClick={handleRemoveProfilePicture}
+                  disabled={isUploading}
+                  className="bg-red-100 hover:bg-red-200 text-red-600 text-sm font-semibold px-4 py-2 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                >
+                  <FiX />
+                  Remove
+                </button>
+              )}
+            </div>
+            <p className="text-xs text-gray-500 mt-2">
+              Max file size: 5MB. Supported formats: JPG, PNG, GIF
+            </p>
+          </div>
+        </div>
+      </div>
 
       {/* Account Information */}
       <div className="bg-white border border-gray-200 rounded-lg p-6 mb-6">
