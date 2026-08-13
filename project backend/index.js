@@ -1,10 +1,10 @@
 import express from "express";
 import cors from "cors";
 
+// 👇 IMPORTANT: User model ko sync se pehle import karein
 import userRoutes from "./routes/userRoutes.js";
 import currencyRoutes from "./routes/currencyRoutes.js";
 import categoryRoutes from "./routes/categoryRoutes.js";
-
 import { connectDB } from "./config/database.js";
 
 const app = express();
@@ -20,15 +20,9 @@ app.use("/v1", categoryRoutes);
 
 async function initializeApp() {
   const dbConnected = await connectDB();
+  if (!dbConnected) process.exit(1);
 
-  if (!dbConnected) {
-    console.error("DB connection failed");
-    process.exit(1);
-  }
-
-  app.listen(port, () => {
-    console.log(`Server running on port ${port}`);
-  });
+  app.listen(port, () => console.log(`Server running on port ${port}`));
 }
 
 initializeApp();

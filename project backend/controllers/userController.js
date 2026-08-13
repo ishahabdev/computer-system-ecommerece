@@ -44,10 +44,10 @@ export const loginUser = async (req, res) => {
 
     const excludePassword = {
       id: user.id,
-      firstName: user.firstName,
-      lastName: user.lastName,
+      name: user.name,
+      
       email: user.email,
-      role: user.role,
+      
     };
 
     const token = await jwt.sign(
