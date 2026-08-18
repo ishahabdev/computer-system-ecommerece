@@ -4,6 +4,48 @@ const AuthContext = createContext(null)
 
 const API_BASE_URL = "http://localhost:9000/v1"
 
+const getUserIdentifier = (user) => {
+  const identifier = user?.id || user?._id || user?.email
+  return identifier ? String(identifier).toLowerCase() : null
+}
+
+const getProfileStorageKey = (user) => {
+  const identifier = getUserIdentifier(user)
+  return identifier ? `customer-profile:${identifier}` : null
+}
+
+const getStoredProfile = (user) => {
+  try {
+    const storageKey = getProfileStorageKey(user)
+    const storedProfile = storageKey ? localStorage.getItem(storageKey) : null
+    return storedProfile ? JSON.parse(storedProfile) : {}
+  } catch {
+    return {}
+  }
+}
+
+const getSessionUser = (user) => {
+  if (!user) return user
+  const { profilePicture, ...sessionUser } = user
+  return sessionUser
+}
+
+const persistCurrentUser = (user) => {
+  localStorage.setItem("currentUser", JSON.stringify(getSessionUser(user)))
+}
+
+const saveStoredProfile = (user) => {
+  const storageKey = getProfileStorageKey(user)
+  if (!storageKey) return
+
+  const profileFields = {
+    name: user.name,
+    phone: user.phone,
+    profilePicture: user.profilePicture
+  }
+  localStorage.setItem(storageKey, JSON.stringify(profileFields))
+}
+
 export const useAuth = () => {
   const context = useContext(AuthContext)
   if (!context) {
@@ -24,7 +66,9 @@ export const AuthProvider = ({ children }) => {
       const storedToken = localStorage.getItem("authToken")
       if (storedUser && storedToken) {
         const userData = JSON.parse(storedUser)
-        setUser(userData)
+        const mergedUser = { ...userData, ...getStoredProfile(userData) }
+        setUser(mergedUser)
+        persistCurrentUser(mergedUser)
         setIsAuthenticated(true)
       } else if (storedUser) {
         // A user profile without the JWT cannot access protected API routes.
@@ -81,13 +125,14 @@ export const AuthProvider = ({ children }) => {
 
       // Adjust this based on your actual API response shape.
       const userForState = data.user || data.data || data
+      const mergedUser = { ...userForState, ...getStoredProfile(userForState) }
 
-      setUser(userForState)
+      setUser(mergedUser)
       setIsAuthenticated(true)
-      localStorage.setItem("currentUser", JSON.stringify(userForState))
+      persistCurrentUser(mergedUser)
       if (data.token) localStorage.setItem("authToken", data.token)
 
-      return { success: true, user: userForState }
+      return { success: true, user: mergedUser }
     } catch (error) {
       return { success: false, error: error.message }
     }
@@ -108,7 +153,24 @@ export const AuthProvider = ({ children }) => {
 
       const updatedUser = { ...user, profilePicture: pictureUrl }
       setUser(updatedUser)
-      localStorage.setItem("currentUser", JSON.stringify(updatedUser))
+      saveStoredProfile(updatedUser)
+      persistCurrentUser(updatedUser)
+
+      return { success: true, user: updatedUser }
+    } catch (error) {
+      return { success: false, error: error.message }
+    }
+  }
+
+  // Update editable customer profile fields kept by the frontend account area.
+  const updateProfile = (profileUpdates) => {
+    try {
+      if (!user) return { success: false, error: "No user logged in" }
+
+      const updatedUser = { ...user, ...profileUpdates }
+      setUser(updatedUser)
+      saveStoredProfile(updatedUser)
+      persistCurrentUser(updatedUser)
 
       return { success: true, user: updatedUser }
     } catch (error) {
@@ -123,7 +185,8 @@ export const AuthProvider = ({ children }) => {
     signup,
     signin,
     logout,
-    updateProfilePicture
+    updateProfilePicture,
+    updateProfile
   }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

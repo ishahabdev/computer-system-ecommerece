@@ -8,7 +8,7 @@ import {
 import { useAuth } from "./AuthContext";
 
 const API_BASE_URL = "http://localhost:9000/v1";
-const WISHLIST_STORAGE_KEY = "wishlist";
+const WISHLIST_STORAGE_RESOURCE = "wishlist";
 const AUTH_TOKEN_KEY = "authToken";
 const LEGACY_PRODUCT_IDS = {
   "flash-1": 10001,
@@ -27,9 +27,14 @@ const LEGACY_PRODUCT_IDS = {
 
 const WishlistContext = createContext();
 
-const getStoredWishlist = () => {
+const getWishlistStorageKey = (user) => {
+  const identifier = user?.id || user?._id || user?.email;
+  return identifier ? `${WISHLIST_STORAGE_RESOURCE}:${String(identifier).toLowerCase()}` : WISHLIST_STORAGE_RESOURCE;
+};
+
+const getStoredWishlist = (user) => {
   try {
-    return JSON.parse(localStorage.getItem(WISHLIST_STORAGE_KEY) || "[]");
+    return JSON.parse(localStorage.getItem(getWishlistStorageKey(user)) || "[]");
   } catch {
     return [];
   }
@@ -44,8 +49,8 @@ export const useWishlist = () => {
 };
 
 export const WishlistProvider = ({ children }) => {
-  const { isAuthenticated } = useAuth();
-  const [wishlistItems, setWishlistItems] = useState(getStoredWishlist);
+  const { isAuthenticated, user } = useAuth();
+  const [wishlistItems, setWishlistItems] = useState([]);
   const [isWishlistLoading, setIsWishlistLoading] = useState(false);
 
   const request = useCallback(async (path, options = {}) => {
@@ -67,6 +72,10 @@ export const WishlistProvider = ({ children }) => {
   }, []);
 
   useEffect(() => {
+    setWishlistItems(getStoredWishlist(user));
+  }, [user]);
+
+  useEffect(() => {
     if (!isAuthenticated || !localStorage.getItem(AUTH_TOKEN_KEY)) return;
 
     let cancelled = false;
@@ -74,7 +83,7 @@ export const WishlistProvider = ({ children }) => {
       setIsWishlistLoading(true);
       try {
         const data = await request("/wishlist");
-        const savedItems = getStoredWishlist();
+        const savedItems = getStoredWishlist(user);
         const databaseItems = Array.isArray(data.data) ? data.data : [];
         const mergedItems = databaseItems.map((databaseItem) => {
           const savedItem = savedItems.find(
@@ -106,11 +115,11 @@ export const WishlistProvider = ({ children }) => {
     return () => {
       cancelled = true;
     };
-  }, [isAuthenticated, request]);
+  }, [isAuthenticated, request, user]);
 
   useEffect(() => {
-    localStorage.setItem(WISHLIST_STORAGE_KEY, JSON.stringify(wishlistItems));
-  }, [wishlistItems]);
+    localStorage.setItem(getWishlistStorageKey(user), JSON.stringify(wishlistItems));
+  }, [user, wishlistItems]);
 
   const addToWishlist = useCallback(
     async (product) => {

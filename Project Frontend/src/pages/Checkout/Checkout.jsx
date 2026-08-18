@@ -4,13 +4,14 @@ import { HiOutlineLockClosed } from "react-icons/hi2";
 import { IoInformationCircleOutline } from "react-icons/io5";
 import { useCart } from "../../context/CartContext";
 import { useAuth } from "../../context/AuthContext";
+import { getCustomerStorageKey, readCustomerList, writeCustomerList } from "../Dashbaord/dashboardStorage";
 
 const API_BASE_URL = "http://localhost:9000/v1";
 
 const Checkout = () => {
   const navigate = useNavigate();
-  const { cartItems, getCartSummary, clearCart } = useCart();
-  const { isAuthenticated } = useAuth();
+  const { cartItems, getCartSummary, clearCart, isCartLoading } = useCart();
+  const { isAuthenticated, user } = useAuth();
 
   // Redirect to signin if not authenticated
   useEffect(() => {
@@ -20,10 +21,25 @@ const Checkout = () => {
   }, [isAuthenticated, navigate]);
 
   // ---- Address form state ----
-  const [address, setAddress] = useState("House no 7, Achini Payan, Ring Road");
-  const [city, setCity] = useState("Peshawar");
-  const [state, setState] = useState("KP");
-  const [zipCode, setZipCode] = useState("25000");
+  const [address, setAddress] = useState("");
+  const [city, setCity] = useState("");
+  const [state, setState] = useState("");
+  const [zipCode, setZipCode] = useState("");
+
+  useEffect(() => {
+    if (!isAuthenticated || !user) return;
+
+    const savedAddresses = readCustomerList(user, "addresses");
+    const defaultAddress =
+      savedAddresses.find((savedAddress) => savedAddress.isDefault) || savedAddresses[0];
+
+    if (!defaultAddress) return;
+
+    setAddress(defaultAddress.street || "");
+    setCity(defaultAddress.city || "");
+    setState(defaultAddress.state || "");
+    setZipCode(defaultAddress.zipCode || "");
+  }, [isAuthenticated, user]);
 
   // ---- Card form state ----
   const [nameOnCard, setNameOnCard] = useState("");
@@ -92,6 +108,13 @@ const Checkout = () => {
   };
 
   const handleCheckout = async () => {
+    // Guard against placing an order before the cart has finished loading
+    // from the backend (would otherwise use incomplete/placeholder data).
+    if (isCartLoading) {
+      alert("Please wait, your cart is still loading");
+      return;
+    }
+
     if (!validateForm()) {
       alert("Please fill all required fields correctly");
       return;
@@ -156,11 +179,34 @@ const Checkout = () => {
         status: databaseOrder.status || "pending",
       };
 
-      // Retain a small local copy for existing tracking/confirmation screens.
-      const ordersJSON = localStorage.getItem("orders");
-      const orders = ordersJSON ? JSON.parse(ordersJSON) : [];
-      orders.push(orderData);
-      localStorage.setItem("orders", JSON.stringify(orders));
+      // Retain confirmed orders for this signed-in customer only.
+      const ordersStorageKey = getCustomerStorageKey(user, "orders");
+      if (ordersStorageKey) {
+        const orders = readCustomerList(user, "orders");
+        writeCustomerList(user, "orders", [...orders, orderData]);
+      }
+
+      const savedAddresses = readCustomerList(user, "addresses");
+      const checkoutAddress = {
+        id: Date.now(),
+        label: "Checkout",
+        street: address,
+        city,
+        state,
+        zipCode,
+        country: "Pakistan",
+        isDefault: savedAddresses.length === 0,
+      };
+      const alreadySaved = savedAddresses.some(
+        (savedAddress) =>
+          savedAddress.street === checkoutAddress.street &&
+          savedAddress.city === checkoutAddress.city &&
+          savedAddress.state === checkoutAddress.state &&
+          savedAddress.zipCode === checkoutAddress.zipCode
+      );
+      if (!alreadySaved) {
+        writeCustomerList(user, "addresses", [...savedAddresses, checkoutAddress]);
+      }
 
       await clearCart();
       navigate("/order-confirmation", { state: { order: orderData } });
@@ -383,10 +429,16 @@ const Checkout = () => {
 
             <button
               onClick={handleCheckout}
-              disabled={!hasItems || isPlacingOrder}
+              disabled={!hasItems || isPlacingOrder || isCartLoading}
               className="w-full bg-[#2196F3] hover:bg-[#1a7fd1] disabled:bg-gray-300 disabled:cursor-not-allowed text-white text-sm font-semibold py-3.5 rounded-md transition-colors mb-4"
             >
-              {isPlacingOrder ? "Placing order..." : hasItems ? "Check out" : "Cart is empty"}
+              {isCartLoading
+                ? "Loading cart..."
+                : isPlacingOrder
+                ? "Placing order..."
+                : hasItems
+                ? "Check out"
+                : "Cart is empty"}
             </button>
 
             <div className="flex gap-2">

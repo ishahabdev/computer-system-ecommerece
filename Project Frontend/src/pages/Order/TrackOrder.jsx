@@ -4,6 +4,7 @@ import { Formik, Form, Field, ErrorMessage } from "formik"
 import * as Yup from "yup"
 import { BsTruck, BsCheckCircleFill } from "react-icons/bs"
 import { IoCheckmarkCircle } from "react-icons/io5"
+import { useAuth } from "../../context/AuthContext"
 
 const TrackOrderSchema = Yup.object().shape({
   trackingId: Yup.string()
@@ -12,6 +13,7 @@ const TrackOrderSchema = Yup.object().shape({
 })
 
 const TrackOrder = () => {
+  const { user } = useAuth()
   const [orderData, setOrderData] = useState(null)
   const [errorMessage, setErrorMessage] = useState("")
 
@@ -19,8 +21,11 @@ const TrackOrder = () => {
     setErrorMessage("")
     setOrderData(null)
 
-    // Get all orders from localStorage
-    const ordersJSON = localStorage.getItem("orders")
+    const userIdentifier = user?.id || user?._id || user?.email
+    const ordersStorageKey = userIdentifier
+      ? `orders:${String(userIdentifier).toLowerCase()}`
+      : null
+    const ordersJSON = ordersStorageKey ? localStorage.getItem(ordersStorageKey) : null
     const orders = ordersJSON ? JSON.parse(ordersJSON) : []
 
     // Find order by tracking ID

@@ -1,7 +1,6 @@
-import React from 'react';
 import { Link } from 'react-router-dom';
 
-const OrdersTab = ({ orders, user }) => {
+const OrdersTab = ({ orders = [], onViewDetails }) => {
   return (
     <div>
       <h2 className="text-2xl font-bold text-[#22262A] mb-6">My Orders</h2>
@@ -19,15 +18,20 @@ const OrdersTab = ({ orders, user }) => {
       ) : (
         <div className="space-y-6">
           {orders.map((order, index) => (
-            <div key={index} className="border border-gray-200 rounded-lg overflow-hidden">
+            <div key={order.orderId || index} className="border border-gray-200 rounded-lg overflow-hidden">
               {/* Order Header */}
-              <div className="bg-gray-50 px-6 py-4 border-b border-gray-200">
-                <h3 className="text-lg font-semibold text-[#22262A]">
-                  Order #{order.orderId}
-                </h3>
-                <p className="text-sm text-gray-600 mt-1">
-                  {order.orderDate || new Date(order.createdAt).toLocaleDateString()}
-                </p>
+              <div className="bg-gray-50 px-6 py-4 border-b border-gray-200 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div>
+                  <h3 className="text-lg font-semibold text-[#22262A]">
+                    Order #{order.orderId}
+                  </h3>
+                  <p className="text-sm text-gray-600 mt-1">
+                    {order.orderDate || new Date(order.createdAt).toLocaleDateString()}
+                  </p>
+                </div>
+                <span className="self-start sm:self-center text-xs font-semibold uppercase tracking-wide text-[#2196F3] bg-blue-50 px-3 py-1 rounded">
+                  {order.status || "pending"}
+                </span>
               </div>
 
               {/* Products Section */}
@@ -41,22 +45,21 @@ const OrdersTab = ({ orders, user }) => {
                     </tr>
                   </thead>
                   <tbody>
-                    {order.items && order.items.map((item, itemIdx) => (
+                    {order.items?.slice(0, 3).map((item, itemIdx) => (
                       <tr key={itemIdx} className="border-b border-gray-200">
                         <td className="py-3 text-gray-700">{item.title}</td>
                         <td className="text-right py-3 text-gray-700">
-                          ${item.price * item.qty}
+                          {item.currency || "$"}{item.price * item.qty}
                         </td>
                       </tr>
                     ))}
-                    <tr className="border-b border-gray-200">
-                      <td className="py-3 text-gray-700">Subtotal</td>
-                      <td className="text-right py-3 text-gray-700">${order.subtotal}</td>
-                    </tr>
-                    <tr className="border-b border-gray-200">
-                      <td className="py-3 text-gray-700">Delivery</td>
-                      <td className="text-right py-3 text-gray-700">${order.shippingFee}</td>
-                    </tr>
+                    {(order.items?.length || 0) > 3 && (
+                      <tr className="border-b border-gray-200">
+                        <td className="py-3 text-gray-500" colSpan="2">
+                          +{order.items.length - 3} more item(s)
+                        </td>
+                      </tr>
+                    )}
                     <tr className="font-semibold">
                       <td className="py-3 text-[#22262A]">Total</td>
                       <td className="text-right py-3 text-[#22262A]">${order.total}</td>
@@ -65,39 +68,18 @@ const OrdersTab = ({ orders, user }) => {
                 </table>
               </div>
 
-              {/* Shipping Details Section */}
-              <div className="px-6 py-6 bg-gray-50 border-t border-gray-200">
-                <h4 className="text-sm font-semibold text-[#22262A] mb-4">Shipping details</h4>
-                <table className="w-full text-sm">
-                  <tbody>
-                    <tr className="border-b border-gray-200">
-                      <td className="py-2 text-gray-600 font-medium">Name</td>
-                      <td className="text-right py-2 text-gray-700">{user.name}</td>
-                    </tr>
-                    <tr className="border-b border-gray-200">
-                      <td className="py-2 text-gray-600 font-medium">Email</td>
-                      <td className="text-right py-2 text-gray-700">{user.email}</td>
-                    </tr>
-                    <tr className="border-b border-gray-200">
-                      <td className="py-2 text-gray-600 font-medium">Type</td>
-                      <td className="text-right py-2 text-gray-700">Delivery</td>
-                    </tr>
-                    <tr>
-                      <td className="py-2 text-gray-600 font-medium">Address</td>
-                      <td className="text-right py-2 text-gray-700">
-                        {order.shippingAddress}
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-
-              {/* Track Order Button */}
-              <div className="px-6 py-4 bg-white border-t border-gray-200">
+              <div className="px-6 py-4 bg-white border-t border-gray-200 flex flex-wrap gap-3">
+                <button
+                  type="button"
+                  onClick={() => onViewDetails(order)}
+                  className="bg-[#2196F3] hover:bg-[#1a7fd1] text-white text-sm font-semibold px-6 py-2 rounded transition-colors"
+                >
+                  View Details
+                </button>
                 <Link
                   to="/track-order"
                   state={{ orderId: order.orderId }}
-                  className="inline-block bg-[#2196F3] hover:bg-[#1a7fd1] text-white text-sm font-semibold px-6 py-2 rounded transition-colors"
+                  className="inline-block bg-gray-100 hover:bg-gray-200 text-gray-800 text-sm font-semibold px-6 py-2 rounded transition-colors"
                 >
                   Track Order
                 </Link>
