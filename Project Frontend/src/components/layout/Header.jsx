@@ -1,6 +1,12 @@
 import { useState } from "react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
-import { FaRegHeart, FaRegUserCircle, FaBars, FaTimes, FaHeart } from "react-icons/fa";
+import {
+  FaRegHeart,
+  FaRegUserCircle,
+  FaBars,
+  FaTimes,
+  FaHeart,
+} from "react-icons/fa";
 import { BsTruck } from "react-icons/bs";
 import { IoMdSearch } from "react-icons/io";
 import { IoCartOutline } from "react-icons/io5";
@@ -58,23 +64,39 @@ const Header = () => {
   };
 
   return (
-    <header className="bg-white w-full shadow-sm" role="banner">
+    <header className="bg-white  shadow-sm" role="banner">
       {/* TOP BAR */}
       <div className="hidden md:flex justify-between items-center px-4 lg:px-10 xl:px-20 py-2 text-sm">
         <div className="flex gap-4 lg:gap-8 items-center">
           <div className="flex items-center gap-1 text-gray-700">
-            <label htmlFor="language-select" className="sr-only">Select Language</label>
-            <select id="language-select" className="bg-transparent focus:outline-none cursor-pointer" defaultValue="EN">
+            <label htmlFor="language-select" className="sr-only">
+              Select Language
+            </label>
+            <select
+              id="language-select"
+              className="bg-transparent focus:outline-none cursor-pointer"
+              defaultValue="EN"
+            >
               {language.map((item) => (
-                <option key={item} value={item}>{item}</option>
+                <option key={item} value={item}>
+                  {item}
+                </option>
               ))}
             </select>
           </div>
           <div className="flex items-center gap-1 text-gray-700">
-            <label htmlFor="currency-select" className="sr-only">Select Currency</label>
-            <select id="currency-select" className="bg-transparent focus:outline-none cursor-pointer" defaultValue="USD">
+            <label htmlFor="currency-select" className="sr-only">
+              Select Currency
+            </label>
+            <select
+              id="currency-select"
+              className="bg-transparent focus:outline-none cursor-pointer"
+              defaultValue="USD"
+            >
               {currency.map((item) => (
-                <option key={item} value={item}>{item}</option>
+                <option key={item} value={item}>
+                  {item}
+                </option>
               ))}
             </select>
           </div>
@@ -99,28 +121,10 @@ const Header = () => {
             ) : (
               <FaRegHeart />
             )}
-            <span>Wishlist {wishlistItems.length > 0 && `(${wishlistItems.length})`}</span>
+            <span>
+              Wishlist {wishlistItems.length > 0 && `(${wishlistItems.length})`}
+            </span>
           </Link>
-          {isAuthenticated ? (
-            <div className="flex items-center gap-3">
-              <span className="text-gray-700 text-sm">Welcome, {userName || "User"}</span>
-              <button
-                onClick={logout}
-                className="text-gray-700 hover:text-[#2196F3] text-sm font-medium transition-colors"
-                title="Sign out of your account"
-              >
-                Logout
-              </button>
-            </div>
-          ) : (
-            <Link
-              to="/signin"
-              className="text-gray-700 hover:text-[#2196F3] text-sm font-medium transition-colors"
-              title="Sign in to your account"
-            >
-              Sign In
-            </Link>
-          )}
         </div>
       </div>
 
@@ -136,31 +140,38 @@ const Header = () => {
         </button>
 
         <div className="shrink-0">
-          <Link to="/" className="font-black text-[#2196F3] text-xl sm:text-2xl lg:text-3xl hover:opacity-80 transition-opacity" title="Go to homepage">
+          <Link
+            to="/"
+            className="font-black text-[#2196F3] text-xl sm:text-2xl lg:text-3xl hover:opacity-80 transition-opacity"
+            title="Go to homepage"
+          >
             LOGO HERE
           </Link>
         </div>
 
-        <div className="hidden sm:flex justify-center flex-1">
-          <form onSubmit={handleSearch} className="flex items-center w-full max-w-xl bg-white border border-gray-200 rounded-md overflow-hidden">
-            <div className="hidden lg:flex items-center gap-1 px-4 text-gray-700 text-sm cursor-pointer whitespace-nowrap border-r border-gray-200">
+        <div className="hidden sm:flex justify-center flex-1 ">
+          <form
+            onSubmit={handleSearch}
+            className="flex items-center h-14 w-full max-w-xl   border-2 border-gray-100 rounded-xl overflow-hidden"
+          >
+            <div className="hidden lg:flex items-center h-full bg-[#F8F8F8] color-black gap-1 px-4 text-gray-700 text-sm cursor-pointer whitespace-nowrap border-r border-gray-200">
               <span>All Categories</span>
-              <IoChevronDown className="text-gray-500" />
+              <IoChevronDown className="text-[#2196F3] text-xl mt-1" />
             </div>
             <input
-              className="flex-1 min-w-0 bg-transparent px-3 py-2.5 text-sm placeholder-gray-400 focus:outline-none"
+              className="flex-1 min-w-0 bg-white px-3 py-2.5 text-md placeholder-[#C2C2C2] focus:outline-none"
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search products, computer systems..."
+              placeholder="  Search..."
               aria-label="Search products"
             />
-            <button 
+            <button
               type="submit"
-              className="bg-[#2196F3] text-white px-4 sm:px-5 py-2.5 shrink-0 hover:bg-[#1a7fd1] transition-all duration-200 rounded-r-md" 
+              className="bg-[#2196F3] text-white h-full  px-2 sm:px-3 h-full shrink-0 hover:bg-[#1a7fd1] transition-all duration-200 rounded-md"
               title="Search"
             >
-              <IoMdSearch className="text-lg" />
+              <IoMdSearch className="text-3xl" />
               <span className="sr-only">Search</span>
             </button>
           </form>
@@ -186,12 +197,17 @@ const Header = () => {
             isOpen={cartDropdownOpen}
             onClose={handleCartDropdownClose}
           />
-          <Link to="/dashboard" title="View user account" aria-label="User account" className="relative">
+          <Link
+            to="/dashboard"
+            title="View user account"
+            aria-label="User account"
+            className="relative"
+          >
             {isAuthenticated && user ? (
               user.profilePicture ? (
                 <div className="w-8 h-8 rounded-full overflow-hidden border-2 border-[#2196F3] hover:opacity-80 transition-opacity">
-                  <img 
-                    src={user.profilePicture} 
+                  <img
+                    src={user.profilePicture}
                     alt={user.name}
                     className="w-full h-full object-cover"
                   />
@@ -210,7 +226,10 @@ const Header = () => {
 
       {/* Mobile search */}
       <div className="sm:hidden px-4 pb-4">
-        <form onSubmit={handleSearch} className="flex items-center w-full bg-white border border-gray-200 rounded-md overflow-hidden">
+        <form
+          onSubmit={handleSearch}
+          className="flex items-center w-full bg-white border border-gray-200 rounded-md overflow-hidden"
+        >
           <input
             className="flex-1 min-w-0 bg-transparent px-3 py-2.5 text-sm placeholder-gray-400 focus:outline-none"
             type="text"
@@ -219,9 +238,9 @@ const Header = () => {
             placeholder="Search..."
             aria-label="Search products"
           />
-          <button 
+          <button
             type="submit"
-            className="bg-[#2196F3] text-white px-4 py-2.5 shrink-0 hover:bg-[#1a7fd1] transition-all duration-200 rounded-r-md" 
+            className="bg-[#2196F3] text-white px-4 py-2.5 shrink-0 hover:bg-[#1a7fd1] transition-all duration-200 rounded-r-md"
             title="Search"
           >
             <IoMdSearch className="text-lg" />
@@ -231,7 +250,12 @@ const Header = () => {
       </div>
 
       {/* NAVBAR - desktop */}
-      <nav className="hidden md:flex justify-evenly px-4 lg:px-20 text-white bg-[#2196F3] p-4" role="navigation" aria-label="Main navigation">
+      <nav
+        className="hidden md:flex justify-evenly px-4 lg:px-20 text-white bg-[#2196F3] p-4 sticky top-0 z-10yy0"
+        role="navigation"
+        aria-label="Main navigation"
+      >
+        {" "}
         {menus.map((menu) => (
           <NavLink
             key={menu.id}
@@ -258,7 +282,11 @@ const Header = () => {
 
       {/* NAVBAR - mobile dropdown */}
       {navOpen && (
-        <nav className="md:hidden flex flex-col text-white bg-[#2196F3] px-4 py-2" role="navigation" aria-label="Mobile navigation">
+        <nav
+          className="md:hidden flex flex-col text-white bg-[#2196F3] px-4 py-2"
+          role="navigation"
+          aria-label="Mobile navigation"
+        >
           {menus.map((menu) => (
             <NavLink
               key={menu.id}
