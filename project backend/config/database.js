@@ -11,8 +11,7 @@
       await database.authenticate();
       console.log("Connection has been established successfully.");
 
-      await database.sync({ force: force });
-
+await database.sync({ alter: true });
       if (force) {
         console.log("Database synced with force: true - All tables recreated");
       } else {

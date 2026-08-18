@@ -1,10 +1,18 @@
 import User from "../model/userModel.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import otpEmailTemplate from "../utils/otp-email-template.js";
+import nodemailer from "nodemailer";
+// Temporary in-memory OTP store (production mein Redis/DB better hai)
+const otpStore = {};
 
-
-
-
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
+  },
+});
 export const loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -35,7 +43,6 @@ export const loginUser = async (req, res) => {
     const isValidPassword = await bcrypt.compare(password, user.password);
 
     if (!isValidPassword) {
-
       return res.json({
         status: false,
         message: `Password is incorrect`,
@@ -45,9 +52,8 @@ export const loginUser = async (req, res) => {
     const excludePassword = {
       id: user.id,
       name: user.name,
-      
       email: user.email,
-      
+      role: user.role,
     };
 
     const token = await jwt.sign(
@@ -69,7 +75,7 @@ export const loginUser = async (req, res) => {
     });
   }
 };
-  
+
 // CREATE USER (SIGNUP)
 export const creatUser = async (req, res) => {
   try {
@@ -107,6 +113,86 @@ export const creatUser = async (req, res) => {
       message: "internal server error",
       error: error.message,
     });
+  }
+};
+
+// PASSWORD RECOVERY: verifies that an email belongs to a registered user.
+// Sending an email/code can be added here when an email provider is configured.
+// PASSWORD RECOVERY: verifies email exists, generates OTP, and emails it
+export const requestPasswordReset = async (req, res) => {
+  try {
+    const { email } = req.body;
+    const user = await User.findOne({ where: { email } });
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "No account found with this email address",
+      });
+    }
+
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    otpStore[email] = { otp, expiresAt: Date.now() + 5 * 60 * 1000 }; // 5 min
+
+ await transporter.sendMail({
+  from: `"YourStore Support" <${process.env.EMAIL_USER}>`,
+  to: email,
+  subject: "Your OTP Code",
+  html: otpEmailTemplate(otp),   
+});
+
+    res.json({ success: true, message: "OTP sent successfully" });
+  } catch (error) {
+    res.status(500).json({ success: false, message: "internal server error", error: error.message });
+  }
+};
+// PASSWORD RECOVERY: verifies the OTP sent to the user's email
+export const verifyResetOtp = async (req, res) => {
+  try {
+    const { email, code } = req.body;
+    const record = otpStore[email];
+
+    if (!record) {
+      return res.status(400).json({ success: false, message: "No code found, please resend" });
+    }
+    if (Date.now() > record.expiresAt) {
+      delete otpStore[email];
+      return res.status(400).json({ success: false, message: "Code expired, please resend" });
+    }
+    if (record.otp !== code) {
+      return res.status(400).json({ success: false, message: "Invalid code" });
+    }
+
+    record.verified = true; // mark verified so resetPassword can check it
+    res.json({ success: true, message: "Code verified" });
+  } catch (error) {
+    res.status(500).json({ success: false, message: "internal server error" });
+  }
+};
+// PASSWORD RECOVERY: stores a newly hashed password after the client-side demo
+// verification code has been checked. Replace that demo check with a server-side
+// expiring reset token before using this flow in production.
+export const resetPassword = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    const record = otpStore[email];
+    if (!record || !record.verified) {
+      return res.status(400).json({ success: false, message: "Please verify the code first" });
+    }
+
+    const user = await User.findOne({ where: { email } });
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    user.password = await bcrypt.hash(password, 10);
+    await user.save();
+
+    delete otpStore[email]; // cleanup
+    res.json({ success: true, message: "Password updated successfully" });
+  } catch (error) {
+    res.status(500).json({ success: false, message: "internal server error" });
   }
 };
 // GET ALL USERS
@@ -153,7 +239,6 @@ export const updateUser = async (req, res) => {
     res.json({
       success: true,
       message: "User updated successfully",
-    
     });
   } catch (error) {
     res.json({
