@@ -32,7 +32,7 @@ const Signin = () => {
   const handleSubmit = async (values, { setSubmitting }) => {
     setAuthError("")
     
-    const result = signin({ 
+    const result = await signin({ 
       email: values.email, 
       password: values.password 
     })

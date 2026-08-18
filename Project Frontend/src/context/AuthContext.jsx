@@ -2,6 +2,8 @@ import { createContext, useContext, useState, useEffect } from "react"
 
 const AuthContext = createContext(null)
 
+const API_BASE_URL = "http://localhost:9000/v1"
+
 export const useAuth = () => {
   const context = useContext(AuthContext)
   if (!context) {
@@ -15,14 +17,18 @@ export const AuthProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
 
-  // Load user from localStorage on mount
+  // Load user from localStorage on mount (keeps user logged in after refresh)
   useEffect(() => {
     try {
       const storedUser = localStorage.getItem("currentUser")
-      if (storedUser) {
+      const storedToken = localStorage.getItem("authToken")
+      if (storedUser && storedToken) {
         const userData = JSON.parse(storedUser)
         setUser(userData)
         setIsAuthenticated(true)
+      } else if (storedUser) {
+        // A user profile without the JWT cannot access protected API routes.
+        localStorage.removeItem("currentUser")
       }
     } catch (error) {
       // Failed to load user from localStorage - silent fail
@@ -31,68 +37,55 @@ export const AuthProvider = ({ children }) => {
     }
   }, [])
 
-  // Signup function - creates new user account
-  const signup = ({ name, email, password }) => {
+  // Signup function - calls real backend API
+  const signup = async ({ name, email, password }) => {
     try {
-      // Get existing users from localStorage
-      const usersJSON = localStorage.getItem("users")
-      const users = usersJSON ? JSON.parse(usersJSON) : []
+      const response = await fetch(`${API_BASE_URL}/user`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ name, email, password })
+      })
 
-      // Check if email already exists
-      const existingUser = users.find(u => u.email.toLowerCase() === email.toLowerCase())
-      if (existingUser) {
-        throw new Error("An account with this email already exists")
+      const data = await response.json()
+
+      if (!response.ok || data.success === false || data.status === false) {
+        throw new Error(data.message || data.error || "Signup failed")
       }
 
-      // Create new user
-      const newUser = {
-        id: Date.now().toString(),
-        name,
-        email,
-        password, // In production, this should be hashed on the backend
-        createdAt: new Date().toISOString()
-      }
-
-      // Add to users array and save
-      users.push(newUser)
-      localStorage.setItem("users", JSON.stringify(users))
-
-      // Auto-login the new user
-      const userForState = { id: newUser.id, name: newUser.name, email: newUser.email }
-      setUser(userForState)
-      setIsAuthenticated(true)
-      localStorage.setItem("currentUser", JSON.stringify(userForState))
-
-      return { success: true, user: userForState }
+      // The signup endpoint does not issue a JWT. The user must sign in before
+      // accessing protected routes such as the database cart.
+      return { success: true, requiresSignin: true }
     } catch (error) {
       return { success: false, error: error.message }
     }
   }
 
-  // Signin function - validates credentials and logs in
-  const signin = ({ email, password }) => {
+  // Signin function - calls real backend API
+  const signin = async ({ email, password }) => {
     try {
-      // Get users from localStorage
-      const usersJSON = localStorage.getItem("users")
-      const users = usersJSON ? JSON.parse(usersJSON) : []
+      const response = await fetch(`${API_BASE_URL}/login`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ email, password })
+      })
 
-      // Find user by email
-      const foundUser = users.find(u => u.email.toLowerCase() === email.toLowerCase())
+      const data = await response.json()
 
-      if (!foundUser) {
-        throw new Error("No account found with this email address")
+      if (!response.ok || data.success === false || data.status === false) {
+        throw new Error(data.message || data.error || "Login failed")
       }
 
-      // Validate password
-      if (foundUser.password !== password) {
-        throw new Error("Incorrect password")
-      }
+      // Adjust this based on your actual API response shape.
+      const userForState = data.user || data.data || data
 
-      // Login successful
-      const userForState = { id: foundUser.id, name: foundUser.name, email: foundUser.email }
       setUser(userForState)
       setIsAuthenticated(true)
       localStorage.setItem("currentUser", JSON.stringify(userForState))
+      if (data.token) localStorage.setItem("authToken", data.token)
 
       return { success: true, user: userForState }
     } catch (error) {
@@ -105,6 +98,7 @@ export const AuthProvider = ({ children }) => {
     setUser(null)
     setIsAuthenticated(false)
     localStorage.removeItem("currentUser")
+    localStorage.removeItem("authToken")
   }
 
   // Update profile picture
@@ -112,20 +106,9 @@ export const AuthProvider = ({ children }) => {
     try {
       if (!user) return { success: false, error: "No user logged in" }
 
-      // Update current user state
       const updatedUser = { ...user, profilePicture: pictureUrl }
       setUser(updatedUser)
       localStorage.setItem("currentUser", JSON.stringify(updatedUser))
-
-      // Update in users array
-      const usersJSON = localStorage.getItem("users")
-      const users = usersJSON ? JSON.parse(usersJSON) : []
-      const userIndex = users.findIndex(u => u.id === user.id)
-      
-      if (userIndex !== -1) {
-        users[userIndex] = { ...users[userIndex], profilePicture: pictureUrl }
-        localStorage.setItem("users", JSON.stringify(users))
-      }
 
       return { success: true, user: updatedUser }
     } catch (error) {

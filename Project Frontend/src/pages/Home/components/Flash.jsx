@@ -18,7 +18,7 @@ const Flash = () => {
 
   const products = [
     {
-      id: "flash-1",
+      id: 10001,
       title: "Gaming Headset Pro",
       price: 200,
       sale: 400,
@@ -28,7 +28,7 @@ const Flash = () => {
       brand: "TechGear"
     },
     {
-      id: "flash-2",
+      id: 10002,
       title: "Wireless Mouse Elite",
       price: 200,
       sale: 400,
@@ -38,7 +38,7 @@ const Flash = () => {
       brand: "ProGaming"
     },
     {
-      id: "flash-3",
+      id: 10003,
       title: "RGB Keyboard Mechanical",
       price: 200,
       sale: 400,
@@ -48,7 +48,7 @@ const Flash = () => {
       brand: "MechKeys"
     },
     {
-      id: "flash-4",
+      id: 10004,
       title: "Gaming Monitor 144Hz",
       price: 250,
       sale: 500,

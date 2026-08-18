@@ -36,12 +36,14 @@ const Dashboard = () => {
   }
 
   // Get user initials for avatar
-  const initials = user.name
-    .split(" ")
-    .map(n => n[0])
+  const userName = typeof user.name === "string" ? user.name.trim() : ""
+  const initials = userName
+    .split(/\s+/)
+    .filter(Boolean)
+    .map(name => name[0])
     .join("")
     .substring(0, 2)
-    .toUpperCase()
+    .toUpperCase() || "U"
 
   return (
     <main className="bg-white min-h-screen">
@@ -148,10 +150,10 @@ const Dashboard = () => {
                   {/* User Info */}
                   <div>
                     <h3 className="text-xl font-bold text-[#22262A] mb-1">
-                      {user.name}
+                      {userName || "User"}
                     </h3>
                     <p className="text-sm text-gray-600 mb-4">
-                      {user.email}
+                      {user.email || "No email available"}
                     </p>
                   </div>
                 </div>

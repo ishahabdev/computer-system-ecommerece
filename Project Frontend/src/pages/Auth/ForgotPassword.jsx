@@ -4,6 +4,8 @@ import { Formik, Form, Field, ErrorMessage } from "formik"
 import * as Yup from "yup"
 import { HiOutlineLockClosed } from "react-icons/hi2"
 
+const API_BASE_URL = "http://localhost:9000/v1"
+
 const ForgotPasswordSchema = Yup.object().shape({
   email: Yup.string()
     .email("Invalid email address")
@@ -35,108 +37,7 @@ const ForgotPassword = () => {
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
 
-  // Step 1: Request verification code
-  const handleEmailSubmit = (values, { setSubmitting }) => {
-    setErrorMessage("")
-    
-    // Check if email exists
-    const usersJSON = localStorage.getItem("users")
-    const users = usersJSON ? JSON.parse(usersJSON) : []
-    const user = users.find(u => u.email.toLowerCase() === values.email.toLowerCase())
-    
-    if (!user) {
-      setErrorMessage("No account found with this email address")
-      setSubmitting(false)
-      return
-    }
-    
-    // Generate 6-digit code
-    const code = Math.floor(100000 + Math.random() * 900000).toString()
-    
-    // Store code temporarily
-    sessionStorage.setItem("resetCode", code)
-    sessionStorage.setItem("resetEmail", values.email)
-    
-    // In production, this would send verification email
-    // For demo purposes, show the code to user
-    alert(`Demo: Your verification code is ${code}`)
-    
-    setEmail(values.email)
-    setStep(2)
-    setResendTimer(60) // 60 seconds countdown
-    
-    // Start countdown
-    const timer = setInterval(() => {
-      setResendTimer(prev => {
-        if (prev <= 1) {
-          clearInterval(timer)
-          return 0
-        }
-        return prev - 1
-      })
-    }, 1000)
-    
-    setSubmitting(false)
-  }
-
-  // Step 2: Verify code
-  const handleCodeSubmit = (values, { setSubmitting }) => {
-    setErrorMessage("")
-    
-    const storedCode = sessionStorage.getItem("resetCode")
-    
-    if (values.code !== storedCode) {
-      setErrorMessage("Invalid verification code")
-      setSubmitting(false)
-      return
-    }
-    
-    setVerificationCode(values.code)
-    setStep(3)
-    setSubmitting(false)
-  }
-
-  // Step 3: Reset password
-  const handlePasswordSubmit = (values, { setSubmitting }) => {
-    setErrorMessage("")
-    
-    const storedEmail = sessionStorage.getItem("resetEmail")
-    const usersJSON = localStorage.getItem("users")
-    const users = usersJSON ? JSON.parse(usersJSON) : []
-    
-    const userIndex = users.findIndex(u => u.email.toLowerCase() === storedEmail.toLowerCase())
-    
-    if (userIndex === -1) {
-      setErrorMessage("User not found")
-      setSubmitting(false)
-      return
-    }
-    
-    // Update password
-    users[userIndex].password = values.password
-    localStorage.setItem("users", JSON.stringify(users))
-    
-    // Clear session
-    sessionStorage.removeItem("resetCode")
-    sessionStorage.removeItem("resetEmail")
-    
-    // Redirect to signin
-    alert("Password updated successfully! Please sign in with your new password.")
-    navigate("/signin")
-    
-    setSubmitting(false)
-  }
-
-  // Resend code
-  const handleResendCode = () => {
-    if (resendTimer > 0) return
-    
-    const code = Math.floor(100000 + Math.random() * 900000).toString()
-    sessionStorage.setItem("resetCode", code)
-    
-    // For demo purposes, show the new code
-    alert(`Demo: Your new verification code is ${code}`)
-    
+  const startResendTimer = () => {
     setResendTimer(60)
     const timer = setInterval(() => {
       setResendTimer(prev => {
@@ -149,11 +50,116 @@ const ForgotPassword = () => {
     }, 1000)
   }
 
+  // Step 1: Request OTP - backend generates it and emails it to the user
+  const handleEmailSubmit = async (values, { setSubmitting }) => {
+    setErrorMessage("")
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/forgot-password`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: values.email.trim() }),
+      })
+      const data = await response.json().catch(() => ({}))
+      if (!response.ok || data.success === false) {
+        throw new Error(data.message || "Unable to verify email")
+      }
+
+      sessionStorage.setItem("resetEmail", values.email.trim())
+      setEmail(values.email.trim())
+      setStep(2)
+      startResendTimer()
+    } catch (error) {
+      setErrorMessage(error.message)
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  // Step 2: Verify code - checked against backend, not sessionStorage
+  const handleCodeSubmit = async (values, { setSubmitting }) => {
+    setErrorMessage("")
+
+    try {
+      const storedEmail = sessionStorage.getItem("resetEmail")
+      if (!storedEmail) throw new Error("Session expired, please start again")
+
+      const response = await fetch(`${API_BASE_URL}/verify-code`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: storedEmail, code: values.code }),
+      })
+      const data = await response.json().catch(() => ({}))
+      if (!response.ok || data.success === false) {
+        throw new Error(data.message || "Invalid verification code")
+      }
+
+      setVerificationCode(values.code)
+      setStep(3)
+    } catch (error) {
+      setErrorMessage(error.message)
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  // Step 3: Reset password
+  const handlePasswordSubmit = async (values, { setSubmitting }) => {
+    setErrorMessage("")
+
+    try {
+      const storedEmail = sessionStorage.getItem("resetEmail")
+      if (!storedEmail) throw new Error("Password reset session expired")
+
+      const response = await fetch(`${API_BASE_URL}/reset-password`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: storedEmail, password: values.password }),
+      })
+      const data = await response.json().catch(() => ({}))
+      if (!response.ok || data.success === false) {
+        throw new Error(data.message || "Unable to update password")
+      }
+
+      sessionStorage.removeItem("resetEmail")
+      alert("Password updated successfully! Please sign in with your new password.")
+      navigate("/signin")
+    } catch (error) {
+      setErrorMessage(error.message)
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  // Resend code - asks backend to generate + email a new OTP
+  const handleResendCode = async () => {
+    if (resendTimer > 0) return
+    setErrorMessage("")
+
+    try {
+      const storedEmail = sessionStorage.getItem("resetEmail")
+      if (!storedEmail) throw new Error("Session expired, please start again")
+
+      const response = await fetch(`${API_BASE_URL}/forgot-password`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: storedEmail }),
+      })
+      const data = await response.json().catch(() => ({}))
+      if (!response.ok || data.success === false) {
+        throw new Error(data.message || "Unable to resend code")
+      }
+
+      startResendTimer()
+    } catch (error) {
+      setErrorMessage(error.message)
+    }
+  }
+
   // Change email
   const handleChangeEmail = () => {
     setStep(1)
     setEmail("")
-    sessionStorage.removeItem("resetCode")
     sessionStorage.removeItem("resetEmail")
   }
 

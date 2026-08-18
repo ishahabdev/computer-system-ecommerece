@@ -135,7 +135,7 @@ const Cart = () => {
                         <td className="py-5 pr-4 align-middle">
                           <div className="flex items-center gap-3 sm:gap-4">
                             <div className="w-12 h-12 sm:w-14 sm:h-14 flex items-center justify-center shrink-0">
-                              {typeof item.image === "string" && item.image.startsWith("http") ? (
+                              {typeof item.image === "string" && /^(https?:|\/|data:)/.test(item.image) ? (
                                 <img
                                   src={item.image}
                                   alt={item.title}

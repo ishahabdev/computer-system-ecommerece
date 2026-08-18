@@ -47,14 +47,14 @@ function Viewed() {
   ];
 
   let viedCards = [
-    { id: "viewed-1", image: img9, category: "AirBuds", title: "G502 wireless", price: 1800, currency: "$", pic: icon, tag: "New", brand: "Logitech" },
-    { id: "viewed-2", image: img5, category: "Mouse", title: "Smooth cursor", price: 200, currency: "$", pic: icon, tag: "New", brand: "Razer" },
-    { id: "viewed-3", image: img4, category: "Keyboard", title: "Smoot Buttons", price: 300, currency: "$", pic: icon, tag: "New", brand: "Corsair" },
-    { id: "viewed-4", image: img10, category: "AirBuds", title: " Long battery", price: 99, currency: "$", pic: icon, tag: "New", brand: "Sony" },
-    { id: "viewed-5", image: img8, category: "Laptop", title: "High speed", price: 999, currency: "$", pic: icon, tag: "New", brand: "Dell" },
-    { id: "viewed-6", image: img11, category: "Speaker", title: " wireless Loud", price: 250, currency: "$", pic: icon, tag: "New", brand: "JBL" },
-    { id: "viewed-7", image: img5, category: "Mouse", title: "Fast clicks", price: 150, currency: "$", pic: icon, tag: "New", brand: "Logitech" },
-    { id: "viewed-8", image: img6, category: "Laptop", title: "  Slim design ", price: 850, currency: "$", pic: icon, tag: "New", brand: "HP" },
+    { id: 11001, image: img9, category: "AirBuds", title: "G502 wireless", price: 1800, currency: "$", pic: icon, tag: "New", brand: "Logitech" },
+    { id: 11002, image: img5, category: "Mouse", title: "Smooth cursor", price: 200, currency: "$", pic: icon, tag: "New", brand: "Razer" },
+    { id: 11003, image: img4, category: "Keyboard", title: "Smoot Buttons", price: 300, currency: "$", pic: icon, tag: "New", brand: "Corsair" },
+    { id: 11004, image: img10, category: "AirBuds", title: " Long battery", price: 99, currency: "$", pic: icon, tag: "New", brand: "Sony" },
+    { id: 11005, image: img8, category: "Laptop", title: "High speed", price: 999, currency: "$", pic: icon, tag: "New", brand: "Dell" },
+    { id: 11006, image: img11, category: "Speaker", title: " wireless Loud", price: 250, currency: "$", pic: icon, tag: "New", brand: "JBL" },
+    { id: 11007, image: img5, category: "Mouse", title: "Fast clicks", price: 150, currency: "$", pic: icon, tag: "New", brand: "Logitech" },
+    { id: 11008, image: img6, category: "Laptop", title: "  Slim design ", price: 850, currency: "$", pic: icon, tag: "New", brand: "HP" },
   ];
 
   const handleAddToCart = (e, card) => {

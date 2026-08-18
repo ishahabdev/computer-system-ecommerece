@@ -34,15 +34,14 @@ const Signup = () => {
   const handleSubmit = async (values, { setSubmitting }) => {
     setAuthError("")
     
-    const result = signup({ 
+    const result = await signup({ 
       name: values.name,
       email: values.email, 
       password: values.password 
     })
 
     if (result.success) {
-      // Auto-login successful, redirect to intended page or home
-      navigate(from, { replace: true })
+      navigate("/signin", { state: { from }, replace: true })
     } else {
       setAuthError(result.error)
     }

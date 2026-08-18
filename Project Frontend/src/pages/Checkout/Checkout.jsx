@@ -5,6 +5,8 @@ import { IoInformationCircleOutline } from "react-icons/io5";
 import { useCart } from "../../context/CartContext";
 import { useAuth } from "../../context/AuthContext";
 
+const API_BASE_URL = "http://localhost:9000/v1";
+
 const Checkout = () => {
   const navigate = useNavigate();
   const { cartItems, getCartSummary, clearCart } = useCart();
@@ -37,6 +39,7 @@ const Checkout = () => {
   const [couponCode, setCouponCode] = useState("");
   const [couponApplied, setCouponApplied] = useState(false);
   const [couponDiscount, setCouponDiscount] = useState(0);
+  const [isPlacingOrder, setIsPlacingOrder] = useState(false);
 
   const cartSummary = getCartSummary();
   const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.qty, 0);
@@ -88,47 +91,84 @@ const Checkout = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleCheckout = () => {
+  const handleCheckout = async () => {
     if (!validateForm()) {
       alert("Please fill all required fields correctly");
       return;
     }
 
-    const orderData = {
-      orderId: "ORD-2024-" + Math.random().toString(36).substring(7).toUpperCase(),
-      orderDate: new Date().toLocaleDateString("en-US", {
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-      }),
-      createdAt: new Date().toISOString(),
-      estimatedDelivery: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toLocaleDateString(
-        "en-US",
-        { year: "numeric", month: "long", day: "numeric" }
-      ),
-      items: cartItems,
-      subtotal,
-      shippingFee: cartSummary.shippingFee,
-      couponDiscount,
-      total,
-      shippingAddress: address,
-      city,
-      state,
-      zipCode,
-      status: "Confirmed",
-    };
+    const token = localStorage.getItem("authToken");
+    if (!token) {
+      navigate("/signin", { state: { from: "/checkout" } });
+      return;
+    }
 
-    // Save order to localStorage for tracking
-    const ordersJSON = localStorage.getItem("orders")
-    const orders = ordersJSON ? JSON.parse(ordersJSON) : []
-    orders.push(orderData)
-    localStorage.setItem("orders", JSON.stringify(orders))
+    setIsPlacingOrder(true);
 
-    // Clear the cart
-    clearCart();
-    
-    // Navigate to confirmation page
-    navigate("/order-confirmation", { state: { order: orderData } });
+    try {
+      const response = await fetch(`${API_BASE_URL}/orders`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          products: cartItems.map((item) => ({
+            productId: item.id,
+            name: item.title,
+            quantity: item.qty,
+            price: item.price,
+          })),
+          totalAmount: total,
+          address: `${address}, ${city}, ${state} ${zipCode}`,
+        }),
+      });
+
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok || data.success === false || data.status === false) {
+        throw new Error(data.message || "Unable to place order");
+      }
+
+      const databaseOrder = data.data;
+
+      const orderData = {
+        orderId: `ORD-${databaseOrder.id}`,
+        databaseOrderId: databaseOrder.id,
+        orderDate: new Date().toLocaleDateString("en-US", {
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+        }),
+        createdAt: new Date().toISOString(),
+        estimatedDelivery: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toLocaleDateString(
+          "en-US",
+          { year: "numeric", month: "long", day: "numeric" }
+        ),
+        items: cartItems,
+        subtotal,
+        shippingFee: cartSummary.shippingFee,
+        couponDiscount,
+        total,
+        shippingAddress: address,
+        city,
+        state,
+        zipCode,
+        status: databaseOrder.status || "pending",
+      };
+
+      // Retain a small local copy for existing tracking/confirmation screens.
+      const ordersJSON = localStorage.getItem("orders");
+      const orders = ordersJSON ? JSON.parse(ordersJSON) : [];
+      orders.push(orderData);
+      localStorage.setItem("orders", JSON.stringify(orders));
+
+      await clearCart();
+      navigate("/order-confirmation", { state: { order: orderData } });
+    } catch (error) {
+      alert(error.message || "Unable to place order. Please try again.");
+    } finally {
+      setIsPlacingOrder(false);
+    }
   };
 
   const inputClass =
@@ -343,10 +383,10 @@ const Checkout = () => {
 
             <button
               onClick={handleCheckout}
-              disabled={!hasItems}
+              disabled={!hasItems || isPlacingOrder}
               className="w-full bg-[#2196F3] hover:bg-[#1a7fd1] disabled:bg-gray-300 disabled:cursor-not-allowed text-white text-sm font-semibold py-3.5 rounded-md transition-colors mb-4"
             >
-              {hasItems ? "Check out" : "Cart is empty"}
+              {isPlacingOrder ? "Placing order..." : hasItems ? "Check out" : "Cart is empty"}
             </button>
 
             <div className="flex gap-2">

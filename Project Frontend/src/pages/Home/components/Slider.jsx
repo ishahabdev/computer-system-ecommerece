@@ -82,7 +82,7 @@ const Slider = () => {
                   src={item.img}
                   alt={`${item.titleLine1} ${item.titleLine2} - Featured computer system`}
                   className="w-full max-w-[260px] sm:max-w-[360px] md:max-w-[420px] lg:max-w-[560px] xl:max-w-[700px] h-auto md:h-[300px] lg:h-[380px] xl:h-[450px] object-contain"
-                  fetchpriority="high"
+                  fetchPriority="high"
                   loading="eager"
                   decoding="sync"
                 />

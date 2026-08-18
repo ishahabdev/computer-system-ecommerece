@@ -5,7 +5,6 @@ import { Suspense, lazy } from "react"
 import Header from "./components/layout/Header"
 import Footer from "./components/layout/Footer"
 import NotFound from "./pages/NotFound"
-
 // Context providers
 import { CartProvider } from "./context/CartContext"
 import { WishlistProvider } from "./context/WishlistContext"

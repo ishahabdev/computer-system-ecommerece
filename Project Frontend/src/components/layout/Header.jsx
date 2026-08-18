@@ -31,6 +31,15 @@ const Header = () => {
   const { wishlistItems, toggleWishlist } = useWishlist();
   const { isAuthenticated, user, logout } = useAuth();
   const navigate = useNavigate();
+  const userName = typeof user?.name === "string" ? user.name.trim() : "";
+  const userInitials =
+    userName
+      .split(/\s+/)
+      .filter(Boolean)
+      .map((name) => name[0])
+      .join("")
+      .substring(0, 2)
+      .toUpperCase() || "U";
 
   const handleCartIconClick = () => {
     setCartDropdownOpen(!cartDropdownOpen);
@@ -94,7 +103,7 @@ const Header = () => {
           </Link>
           {isAuthenticated ? (
             <div className="flex items-center gap-3">
-              <span className="text-gray-700 text-sm">Welcome, {user?.name?.split(' ')[0]}</span>
+              <span className="text-gray-700 text-sm">Welcome, {userName || "User"}</span>
               <button
                 onClick={logout}
                 className="text-gray-700 hover:text-[#2196F3] text-sm font-medium transition-colors"
@@ -189,7 +198,7 @@ const Header = () => {
                 </div>
               ) : (
                 <div className="w-8 h-8 rounded-full bg-[#2196F3] text-white text-sm font-bold flex items-center justify-center hover:opacity-80 transition-opacity cursor-pointer">
-                  {user.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()}
+                  {userInitials}
                 </div>
               )
             ) : (
