@@ -1,26 +1,53 @@
-import { useState } from "react"
-import { Link } from "react-router-dom"
+import { useState, useEffect } from "react"
+import { Link, useLocation } from "react-router-dom"
 import { Formik, Form, Field, ErrorMessage } from "formik"
 import * as Yup from "yup"
 import { BsTruck, BsCheckCircleFill } from "react-icons/bs"
 import { IoCheckmarkCircle } from "react-icons/io5"
 import { useAuth } from "../../context/AuthContext"
+import { getLiveOrderStatus } from "../../pages/Dashbaord/dashboardStorage"
+
+const API_BASE_URL = "http://localhost:9000/v1"
 
 const TrackOrderSchema = Yup.object().shape({
   trackingId: Yup.string()
-    .required("Tracking ID is required")
-    .min(5, "Invalid tracking ID")
+    .trim()
+    .required("Tracking ID is required"),
 })
 
 const TrackOrder = () => {
   const { user } = useAuth()
+  const location = useLocation()
   const [orderData, setOrderData] = useState(null)
   const [errorMessage, setErrorMessage] = useState("")
+  const [isLoading, setIsLoading] = useState(false)
 
-  const handleSubmit = (values, { setSubmitting }) => {
-    setErrorMessage("")
-    setOrderData(null)
+  const findAndSetOrder = async (trackingId, isBackgroundSync = false) => {
+    if (!trackingId) return
 
+    if (!isBackgroundSync) {
+      setErrorMessage("")
+      setIsLoading(true)
+    }
+
+    const cleanId = String(trackingId).trim()
+
+    try {
+      // 1. First attempt to fetch real live order from backend
+      const response = await fetch(`${API_BASE_URL}/orders/track/${encodeURIComponent(cleanId)}`)
+      if (response.ok) {
+        const result = await response.json()
+        if (result.success && result.data) {
+          setOrderData(result.data)
+          setIsLoading(false)
+          return
+        }
+      }
+    } catch (err) {
+      console.warn("Backend track order request failed, checking local storage:", err)
+    }
+
+    // 2. Fallback to localStorage if backend is unreachable or order is only local
     const userIdentifier = user?.id || user?._id || user?.email
     const ordersStorageKey = userIdentifier
       ? `orders:${String(userIdentifier).toLowerCase()}`
@@ -28,50 +55,76 @@ const TrackOrder = () => {
     const ordersJSON = ordersStorageKey ? localStorage.getItem(ordersStorageKey) : null
     const orders = ordersJSON ? JSON.parse(ordersJSON) : []
 
-    // Find order by tracking ID
-    const order = orders.find(o => o.orderId.toUpperCase() === values.trackingId.toUpperCase())
+    const localOrder = orders.find(
+      (o) =>
+        String(o.orderId).toUpperCase() === cleanId.toUpperCase() ||
+        String(o.databaseOrderId) === cleanId.replace(/^ORD-/i, "") ||
+        String(o.id) === cleanId.replace(/^ORD-/i, "")
+    )
 
-    if (!order) {
+    if (localOrder) {
+      setOrderData(localOrder)
+    } else if (!isBackgroundSync) {
       setErrorMessage("Invalid tracking ID. Please enter your valid tracking ID")
-      setSubmitting(false)
-      return
     }
 
-    // Set order data to display
-    setOrderData(order)
+    setIsLoading(false)
+  }
+
+  // Handle tracking ID from navigation state
+  useEffect(() => {
+    if (location.state?.orderId) {
+      findAndSetOrder(location.state.orderId)
+    }
+  }, [location.state, user])
+
+  // Periodic polling every 10 seconds to keep live tracking progress updated
+  useEffect(() => {
+    if (!orderData?.orderId && !orderData?.id) return
+
+    const activeId = orderData.orderId || orderData.id
+    const interval = setInterval(() => {
+      findAndSetOrder(activeId, true)
+    }, 10000)
+
+    return () => clearInterval(interval)
+  }, [orderData?.orderId, orderData?.id])
+
+  const handleSubmit = (values, { setSubmitting }) => {
+    findAndSetOrder(values.trackingId)
     setSubmitting(false)
   }
 
-  // Calculate order status and timeline
-  // DEMO MODE: status progresses every 10 minutes instead of every day,
-  // so you can show a full order lifecycle without waiting days or
-  // needing a real courier/backend. Status is calculated live on every
-  // render based on elapsed time since orderDate - nothing needs to be
-  // stored or updated in a database, so this works the same whether
-  // there's 1 order or 10,000 orders.
+  // Calculate order status and timeline using the shared status function
   const getOrderStatus = (order) => {
     if (!order) return null
 
-    const orderDate = new Date(order.orderDate || order.createdAt)
-    const currentDate = new Date()
-    const minutesSinceOrder = Math.floor((currentDate - orderDate) / (1000 * 60))
+    const orderDate = new Date(order.createdAt || order.orderDate)
 
-    // Status timeline based on minutes since order (demo speed)
-    // Change these thresholds any time to speed up/slow down the demo
+    // Use the same shared function as the Dashboard
+    const liveStatus = getLiveOrderStatus(order)
+    
+    // Map the live status string to a step number
+    let currentStep = 1;
+    if (liveStatus === "delivered") currentStep = 4;
+    else if (liveStatus === "on delivery") currentStep = 3;
+    else if (liveStatus === "shipping") currentStep = 2;
+    else currentStep = 1;
+
     const statuses = {
-      packing: minutesSinceOrder >= 0,
-      shipping: minutesSinceOrder >= 10,     // after 10 min
-      onDelivery: minutesSinceOrder >= 20,   // after 20 min
-      delivered: minutesSinceOrder >= 30     // after 30 min
+      packing: currentStep >= 1,
+      shipping: currentStep >= 2,
+      onDelivery: currentStep >= 3,
+      delivered: currentStep >= 4
     }
 
     return {
       ...statuses,
-      currentStep: statuses.delivered ? 4 : statuses.onDelivery ? 3 : statuses.shipping ? 2 : 1,
+      currentStep,
       packingDate: orderDate.toLocaleString(),
-      shippingDate: new Date(orderDate.getTime() + 10 * 60 * 1000).toLocaleString(),
-      onDeliveryDate: new Date(orderDate.getTime() + 20 * 60 * 1000).toLocaleString(),
-      deliveryDate: order.estimatedDelivery || new Date(orderDate.getTime() + 30 * 60 * 1000).toLocaleString()
+      shippingDate: new Date(orderDate.getTime() + 1 * 60 * 1000).toLocaleString(),
+      onDeliveryDate: new Date(orderDate.getTime() + 2 * 60 * 1000).toLocaleString(),
+      deliveryDate: order.estimatedDelivery || new Date(orderDate.getTime() + 3 * 60 * 1000).toLocaleString()
     }
   }
 
@@ -140,10 +193,10 @@ const TrackOrder = () => {
 
                   <button
                     type="submit"
-                    disabled={isSubmitting}
+                    disabled={isSubmitting || isLoading}
                     className="w-full bg-[#2196F3] hover:bg-[#1a7fd1] disabled:bg-gray-300 disabled:cursor-not-allowed text-white text-sm font-semibold py-3.5 rounded-md transition-colors"
                   >
-                    {isSubmitting ? "Searching..." : "Continue"}
+                    {isLoading || isSubmitting ? "Searching..." : "Continue"}
                   </button>
                 </Form>
               )}

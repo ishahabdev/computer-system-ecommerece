@@ -31,6 +31,8 @@ const dashboardTabs = [
   { id: "change-password", label: "Change Password", icon: FiLock },
 ];
 
+const API_BASE_URL = "http://localhost:9000/v1";
+
 const Dashboard = () => {
   const navigate = useNavigate();
   const { user, isAuthenticated, logout, updateProfile, updateProfilePicture } = useAuth();
@@ -38,8 +40,7 @@ const Dashboard = () => {
   const [activeTab, setActiveTab] = useState("overview");
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [addresses, setAddresses] = useState([]);
-
-  const orders = useMemo(() => readCustomerList(user, "orders"), [user]);
+  const [orders, setOrders] = useState([]);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -50,6 +51,41 @@ const Dashboard = () => {
   useEffect(() => {
     setAddresses(readCustomerList(user, "addresses"));
     setSelectedOrder(null);
+  }, [user]);
+
+  // Fetch real orders from backend and keep synced with localStorage
+  useEffect(() => {
+    if (!user) return;
+
+    const localOrders = readCustomerList(user, "orders");
+    setOrders(localOrders);
+
+    const token = localStorage.getItem("authToken");
+    if (!token) return;
+
+    const fetchBackendOrders = async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/orders`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        if (response.ok) {
+          const result = await response.json();
+          if (result.success && Array.isArray(result.data)) {
+            setOrders(result.data);
+            writeCustomerList(user, "orders", result.data);
+          }
+        }
+      } catch (err) {
+        console.warn("Failed to fetch orders from backend:", err);
+      }
+    };
+
+    fetchBackendOrders();
+
+    const interval = setInterval(fetchBackendOrders, 15000);
+    return () => clearInterval(interval);
   }, [user]);
 
   const handleSaveAddresses = (nextAddresses) => {

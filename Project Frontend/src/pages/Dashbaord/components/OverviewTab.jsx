@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { FiHeart, FiMapPin, FiShoppingBag } from "react-icons/fi";
+import { getLiveOrderStatus } from "../dashboardStorage";
 
 const OverviewTab = ({ user, orders = [], addresses = [], wishlistItems = [], onSelectTab }) => {
   const userName = typeof user?.name === "string" ? user.name.trim() : "";
@@ -61,7 +62,7 @@ const OverviewTab = ({ user, orders = [], addresses = [], wishlistItems = [], on
             <div className="text-left sm:text-right">
               <p className="font-bold text-[#22262A]">${recentOrder.total || 0}</p>
               <span className="inline-block mt-1 text-xs font-semibold uppercase tracking-wide text-[#2196F3] bg-blue-50 px-2 py-1 rounded">
-                {recentOrder.status || "pending"}
+                {getLiveOrderStatus(recentOrder)}
               </span>
             </div>
           </div>
