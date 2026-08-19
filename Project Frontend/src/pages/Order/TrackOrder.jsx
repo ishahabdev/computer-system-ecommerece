@@ -43,28 +43,35 @@ const TrackOrder = () => {
   }
 
   // Calculate order status and timeline
+  // DEMO MODE: status progresses every 10 minutes instead of every day,
+  // so you can show a full order lifecycle without waiting days or
+  // needing a real courier/backend. Status is calculated live on every
+  // render based on elapsed time since orderDate - nothing needs to be
+  // stored or updated in a database, so this works the same whether
+  // there's 1 order or 10,000 orders.
   const getOrderStatus = (order) => {
     if (!order) return null
 
     const orderDate = new Date(order.orderDate || order.createdAt)
     const currentDate = new Date()
-    const daysSinceOrder = Math.floor((currentDate - orderDate) / (1000 * 60 * 60 * 24))
+    const minutesSinceOrder = Math.floor((currentDate - orderDate) / (1000 * 60))
 
-    // Status timeline based on days since order
+    // Status timeline based on minutes since order (demo speed)
+    // Change these thresholds any time to speed up/slow down the demo
     const statuses = {
-      packing: daysSinceOrder >= 0,
-      shipping: daysSinceOrder >= 1,
-      onDelivery: daysSinceOrder >= 2,
-      delivered: daysSinceOrder >= 5
+      packing: minutesSinceOrder >= 0,
+      shipping: minutesSinceOrder >= 10,     // after 10 min
+      onDelivery: minutesSinceOrder >= 20,   // after 20 min
+      delivered: minutesSinceOrder >= 30     // after 30 min
     }
 
     return {
       ...statuses,
       currentStep: statuses.delivered ? 4 : statuses.onDelivery ? 3 : statuses.shipping ? 2 : 1,
-      packingDate: orderDate.toLocaleDateString(),
-      shippingDate: new Date(orderDate.getTime() + 1 * 24 * 60 * 60 * 1000).toLocaleDateString(),
-      onDeliveryDate: new Date(orderDate.getTime() + 2 * 24 * 60 * 60 * 1000).toLocaleDateString(),
-      deliveryDate: order.estimatedDelivery || new Date(orderDate.getTime() + 5 * 24 * 60 * 60 * 1000).toLocaleDateString()
+      packingDate: orderDate.toLocaleString(),
+      shippingDate: new Date(orderDate.getTime() + 10 * 60 * 1000).toLocaleString(),
+      onDeliveryDate: new Date(orderDate.getTime() + 20 * 60 * 1000).toLocaleString(),
+      deliveryDate: order.estimatedDelivery || new Date(orderDate.getTime() + 30 * 60 * 1000).toLocaleString()
     }
   }
 
@@ -161,7 +168,7 @@ const TrackOrder = () => {
                   <div className="flex justify-between">
                     <span className="text-gray-600">Order Date:</span>
                     <span className="font-semibold text-[#22262A]">
-                      {new Date(orderData.orderDate || orderData.createdAt).toLocaleDateString()}
+                      {new Date(orderData.orderDate || orderData.createdAt).toLocaleString()}
                     </span>
                   </div>
                   <div className="flex justify-between">
@@ -176,17 +183,17 @@ const TrackOrder = () => {
               {/* Timeline */}
               <div className="relative">
                 <h2 className="text-lg font-bold text-[#22262A] mb-6">Order Status</h2>
-                
+
                 {/* Progress Line */}
                 <div className="relative flex items-center justify-between mb-8">
                   {/* Background line */}
                   <div className="absolute top-6 left-0 right-0 h-1 bg-gray-200"></div>
-                  
+
                   {/* Progress line */}
-                  <div 
+                  <div
                     className="absolute top-6 left-0 h-1 bg-[#2196F3] transition-all duration-500"
-                    style={{ 
-                      width: `${((status.currentStep - 1) / 3) * 100}%` 
+                    style={{
+                      width: `${((status.currentStep - 1) / 3) * 100}%`
                     }}
                   ></div>
 
@@ -289,8 +296,8 @@ const TrackOrder = () => {
                       <div key={index} className="flex items-center justify-between py-2 border-b border-gray-200 last:border-0">
                         <div className="flex items-center gap-3">
                           {item.imagePath ? (
-                            <img 
-                              src={item.imagePath} 
+                            <img
+                              src={item.imagePath}
                               alt={item.title}
                               className="w-12 h-12 object-cover rounded"
                             />
