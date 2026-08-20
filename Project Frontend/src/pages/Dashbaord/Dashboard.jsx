@@ -1,10 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
-import { useWishlist } from "../../context/WishlistContext";
 import {
-  FiHeart,
-  FiFileText,
   FiLock,
   FiLogOut,
   FiMapPin,
@@ -14,11 +11,9 @@ import {
 import { MdHome } from "react-icons/md";
 import AddressTab from "./components/AddressTab";
 import ChangePasswordTab from "./components/ChangePasswordTab";
-import OrderDetailsTab from "./components/OrderDetailsTab";
 import OrdersTab from "./components/OrdersTab";
 import OverviewTab from "./components/OverviewTab";
 import ProfileTab from "./components/ProfileTab";
-import WishlistTab from "./components/WishlistTab";
 import { readCustomerList, writeCustomerList } from "./dashboardStorage";
 
 const dashboardTabs = [
@@ -26,8 +21,6 @@ const dashboardTabs = [
   { id: "profile", label: "Profile", icon: FiUser },
   { id: "addresses", label: "Addresses", icon: FiMapPin },
   { id: "orders", label: "Orders", icon: FiShoppingBag },
-  { id: "order-details", label: "Order Details", icon: FiFileText },
-  { id: "wishlist", label: "Wishlist", icon: FiHeart },
   { id: "change-password", label: "Change Password", icon: FiLock },
 ];
 
@@ -36,9 +29,7 @@ const API_BASE_URL = "http://localhost:9000/v1";
 const Dashboard = () => {
   const navigate = useNavigate();
   const { user, isAuthenticated, logout, updateProfile, updateProfilePicture } = useAuth();
-  const { wishlistItems } = useWishlist();
   const [activeTab, setActiveTab] = useState("overview");
-  const [selectedOrder, setSelectedOrder] = useState(null);
   const [addresses, setAddresses] = useState([]);
   const [orders, setOrders] = useState([]);
 
@@ -50,7 +41,6 @@ const Dashboard = () => {
 
   useEffect(() => {
     setAddresses(readCustomerList(user, "addresses"));
-    setSelectedOrder(null);
   }, [user]);
 
   // Fetch real orders from backend and keep synced with localStorage
@@ -91,11 +81,6 @@ const Dashboard = () => {
   const handleSaveAddresses = (nextAddresses) => {
     setAddresses(nextAddresses);
     writeCustomerList(user, "addresses", nextAddresses);
-  };
-
-  const handleViewDetails = (order) => {
-    setSelectedOrder(order);
-    setActiveTab("order-details");
   };
 
   const handleLogout = () => {
@@ -191,7 +176,6 @@ const Dashboard = () => {
                 user={user}
                 orders={orders}
                 addresses={addresses}
-                wishlistItems={wishlistItems}
                 onSelectTab={setActiveTab}
               />
             )}
@@ -205,13 +189,7 @@ const Dashboard = () => {
             {activeTab === "addresses" && (
               <AddressTab addresses={addresses} onSaveAddresses={handleSaveAddresses} />
             )}
-            {activeTab === "orders" && (
-              <OrdersTab orders={orders} onViewDetails={handleViewDetails} />
-            )}
-            {activeTab === "order-details" && (
-              <OrderDetailsTab order={selectedOrder} user={user} onBack={() => setActiveTab("orders")} />
-            )}
-            {activeTab === "wishlist" && <WishlistTab />}
+            {activeTab === "orders" && <OrdersTab orders={orders} />}
             {activeTab === "change-password" && <ChangePasswordTab user={user} />}
           </div>
         </div>

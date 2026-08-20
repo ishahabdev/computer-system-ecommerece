@@ -1,15 +1,14 @@
 import { Link } from "react-router-dom";
-import { FiHeart, FiMapPin, FiShoppingBag } from "react-icons/fi";
+import { FiMapPin, FiShoppingBag } from "react-icons/fi";
 import { getLiveOrderStatus } from "../dashboardStorage";
 
-const OverviewTab = ({ user, orders = [], addresses = [], wishlistItems = [], onSelectTab }) => {
+const OverviewTab = ({ user, orders = [], addresses = [], onSelectTab }) => {
   const userName = typeof user?.name === "string" ? user.name.trim() : "";
   const recentOrder = orders[orders.length - 1];
 
   const stats = [
     { label: "Orders", value: orders.length, icon: FiShoppingBag, tab: "orders" },
     { label: "Addresses", value: addresses.length, icon: FiMapPin, tab: "addresses" },
-    { label: "Wishlist", value: wishlistItems.length, icon: FiHeart, tab: "wishlist" },
   ];
 
   return (
@@ -22,7 +21,7 @@ const OverviewTab = ({ user, orders = [], addresses = [], wishlistItems = [], on
         <p className="text-sm text-gray-600 mt-2">{user?.email || "No email available"}</p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
         {stats.map((stat) => {
           const Icon = stat.icon;
           return (

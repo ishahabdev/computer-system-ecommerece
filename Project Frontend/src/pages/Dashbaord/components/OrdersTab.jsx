@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 
-const OrdersTab = ({ orders = [], onViewDetails }) => {
+const OrdersTab = ({ orders = [] }) => {
   return (
     <div>
       <h2 className="text-2xl font-bold text-[#22262A] mb-6">My Orders</h2>
@@ -69,13 +69,6 @@ const OrdersTab = ({ orders = [], onViewDetails }) => {
               </div>
 
               <div className="px-6 py-4 bg-white border-t border-gray-200 flex flex-wrap gap-3">
-                <button
-                  type="button"
-                  onClick={() => onViewDetails(order)}
-                  className="bg-[#2196F3] hover:bg-[#1a7fd1] text-white text-sm font-semibold px-6 py-2 rounded transition-colors"
-                >
-                  View Details
-                </button>
                 <Link
                   to="/track-order"
                   state={{ orderId: order.orderId }}
