@@ -183,7 +183,67 @@ categoryDefs.forEach((cat) => {
   }
 });
 
+// Flash Sale Products — appended with continuing unique ids so no collision with generated products
+const flashSaleDefs = [
+  {
+    title: "Gaming Headset Pro",
+    category: "Headphones",
+    brand: "TechGear",
+    price: 200,
+    sale: 400,
+    img: flash1,
+  },
+  {
+    title: "Wireless Mouse Elite",
+    category: "Mouses",
+    brand: "ProGaming",
+    price: 200,
+    sale: 400,
+    img: flash2,
+  },
+  {
+    title: "RGB Keyboard Mechanical",
+    category: "Keyboards",
+    brand: "MechKeys",
+    price: 200,
+    sale: 400,
+    img: flash3,
+  },
+  {
+    title: "Gaming Monitor 144Hz",
+    category: "Monitors",
+    brand: "ViewPro",
+    price: 250,
+    sale: 500,
+    img: flash4,
+  },
+];
+
+const flashSaleIds = [];
+flashSaleDefs.forEach((item) => {
+  const id = createdAtCounter + 1;
+  flashSaleIds.push(id);
+  generatedProducts.push({
+    id,
+    category: item.category,
+    title: item.title,
+    price: item.price,
+    sale: item.sale,
+    currency: "$",
+    img: item.img,
+    brand: item.brand,
+    isNew: true,
+    rating: 4.5,
+    createdAt: createdAtCounter,
+  });
+  createdAtCounter += 1;
+});
+
 export const products = generatedProducts;
+
+export const flashSaleProducts = products.filter((p) =>
+  flashSaleIds.includes(p.id)
+);
 
 export const categories = categoryDefs.map(({ label, count }) => ({
   label,

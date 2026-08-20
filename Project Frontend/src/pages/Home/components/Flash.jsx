@@ -2,62 +2,19 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { FaRegHeart, FaHeart } from "react-icons/fa";
 import { IoCartOutline } from "react-icons/io5";
-import img1 from "../../../assets/homePIc/homeflash1.webp";
-import img2 from "../../../assets/homePIc/homeflash2.webp";
-import img3 from "../../../assets/homePIc/homeflash3.webp";
 import img4 from "../../../assets/homePIc/homeflash4.webp";
 import Typography from "../../../components/common/Typography";
 import { useCart } from "../../../context/CartContext";
 import { useWishlist } from "../../../context/WishlistContext";
 import { useToast } from "../../../context/ToastContext";
+import { flashSaleProducts } from "../../Shop/data";
 
 const Flash = () => {
   const { addToCart } = useCart();
   const { toggleWishlist, isInWishlist } = useWishlist();
   const toast = useToast();
 
-  const products = [
-    {
-      id: 10001,
-      title: "Gaming Headset Pro",
-      price: 200,
-      sale: 400,
-      currency: "$",
-      image: img1,
-      category: "Headset",
-      brand: "TechGear"
-    },
-    {
-      id: 10002,
-      title: "Wireless Mouse Elite",
-      price: 200,
-      sale: 400,
-      currency: "$",
-      image: img2,
-      category: "Mouse",
-      brand: "ProGaming"
-    },
-    {
-      id: 10003,
-      title: "RGB Keyboard Mechanical",
-      price: 200,
-      sale: 400,
-      currency: "$",
-      image: img3,
-      category: "Keyboard",
-      brand: "MechKeys"
-    },
-    {
-      id: 10004,
-      title: "Gaming Monitor 144Hz",
-      price: 250,
-      sale: 500,
-      currency: "$",
-      image: img2,
-      category: "Monitor",
-      brand: "ViewPro"
-    },
-  ];
+  const products = flashSaleProducts;
 
   const handleAddToCart = (e, product) => {
     e.preventDefault();
@@ -67,8 +24,8 @@ const Flash = () => {
       title: product.title,
       price: product.price,
       currency: product.currency,
-      image: product.image,
-      imagePath: product.image,
+      image: product.img,
+      imagePath: product.img,
       category: product.category,
     }, 1);
     toast.success(`${product.title} added to cart!`);
@@ -83,7 +40,7 @@ const Flash = () => {
       title: product.title,
       price: product.price,
       currency: product.currency,
-      img: product.image,
+      img: product.img,
       category: product.category,
       brand: product.brand
     });
@@ -162,7 +119,7 @@ const Flash = () => {
               {/* Product Image */}
               <div className="w-[110px] sm:w-[130px] lg:w-[155px] h-full flex items-center justify-center pr-2 sm:pr-3">
                 <img
-                  src={item.image}
+                  src={item.img}
                   alt={`${item.title} - Flash sale computer product`}
                   className="max-w-full max-h-[110px] sm:max-h-[125px] lg:max-h-[145px] object-contain group-hover:scale-105 transition-transform"
                 />
