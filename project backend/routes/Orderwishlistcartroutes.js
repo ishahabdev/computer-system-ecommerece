@@ -7,6 +7,7 @@ import {
   getOrderById,
   getAllOrders,
   updateOrderStatus,
+  deleteOrder,
 } from "../controllers/OrderController.js";
 
 import {
@@ -30,6 +31,7 @@ router.get("/orders", authMiddleware, getMyOrders);
 router.get("/orders/all", authMiddleware, adminOnly, getAllOrders);
 router.get("/orders/:id", authMiddleware, getOrderById);
 router.put("/orders/:id/status", authMiddleware, adminOnly, updateOrderStatus);
+router.delete("/orders/:id", authMiddleware, deleteOrder);
 
 // WISHLIST ROUTES
 router.post("/wishlist", authMiddleware, addToWishlist);

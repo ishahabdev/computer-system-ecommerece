@@ -106,6 +106,33 @@ export const getAllOrders = async (req, res) => {
   }
 };
 
+// DELETE ORDER (customer removes their own order from their dashboard)
+export const deleteOrder = async (req, res) => {
+  try {
+    const deletedCount = await Order.destroy({
+      where: { id: req.params.id, userId: req.user.id },
+    });
+
+    if (!deletedCount) {
+      return res.status(404).json({
+        success: false,
+        message: "Order not found",
+      });
+    }
+
+    res.json({
+      success: true,
+      message: "Order deleted",
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "internal server error",
+      error: error.message,
+    });
+  }
+};
+
 // UPDATE ORDER STATUS (admin only - pending -> confirmed -> shipped -> delivered)
 export const updateOrderStatus = async (req, res) => {
   try {
