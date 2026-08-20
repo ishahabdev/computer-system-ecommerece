@@ -14,7 +14,12 @@ import ChangePasswordTab from "./components/ChangePasswordTab";
 import OrdersTab from "./components/OrdersTab";
 import OverviewTab from "./components/OverviewTab";
 import ProfileTab from "./components/ProfileTab";
-import { readCustomerList, writeCustomerList } from "./dashboardStorage";
+import {
+  getBackendOrderId,
+  mergeBackendOrders,
+  readCustomerList,
+  writeCustomerList,
+} from "./dashboardStorage";
 
 const dashboardTabs = [
   { id: "overview", label: "Overview", icon: MdHome },
@@ -63,8 +68,12 @@ const Dashboard = () => {
         if (response.ok) {
           const result = await response.json();
           if (result.success && Array.isArray(result.data)) {
-            setOrders(result.data);
-            writeCustomerList(user, "orders", result.data);
+            const mergedOrders = mergeBackendOrders(
+              readCustomerList(user, "orders"),
+              result.data
+            );
+            setOrders(mergedOrders);
+            writeCustomerList(user, "orders", mergedOrders);
           }
         }
       } catch (err) {
@@ -90,10 +99,11 @@ const Dashboard = () => {
     writeCustomerList(user, "orders", nextOrders);
 
     const token = localStorage.getItem("authToken");
-    if (!token || !order.id) return;
+    const backendOrderId = getBackendOrderId(order);
+    if (!token || !backendOrderId) return;
 
     try {
-      await fetch(`${API_BASE_URL}/orders/${order.id}`, {
+      await fetch(`${API_BASE_URL}/orders/${backendOrderId}`, {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${token}`,
