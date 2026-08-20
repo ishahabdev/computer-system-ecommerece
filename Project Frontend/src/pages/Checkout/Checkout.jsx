@@ -176,7 +176,7 @@ const Checkout = () => {
         city,
         state,
         zipCode,
-        status: databaseOrder.status || "pending",
+        status: databaseOrder.status || "packing",
       };
 
       // Retain confirmed orders for this signed-in customer only.

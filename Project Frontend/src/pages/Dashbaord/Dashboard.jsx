@@ -1,20 +1,11 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useWishlist } from "../../context/WishlistContext";
-import {
-  FiHeart,
-  FiFileText,
-  FiLock,
-  FiLogOut,
-  FiMapPin,
-  FiShoppingBag,
-  FiUser,
-} from "react-icons/fi";
+import { FiLock, FiLogOut, FiMapPin, FiShoppingBag, FiUser } from "react-icons/fi";
 import { MdHome } from "react-icons/md";
 import AddressTab from "./components/AddressTab";
 import ChangePasswordTab from "./components/ChangePasswordTab";
-import OrderDetailsTab from "./components/OrderDetailsTab";
 import OrdersTab from "./components/OrdersTab";
 import OverviewTab from "./components/OverviewTab";
 import ProfileTab from "./components/ProfileTab";
@@ -26,19 +17,28 @@ const dashboardTabs = [
   { id: "profile", label: "Profile", icon: FiUser },
   { id: "addresses", label: "Addresses", icon: FiMapPin },
   { id: "orders", label: "Orders", icon: FiShoppingBag },
-  { id: "order-details", label: "Order Details", icon: FiFileText },
-  { id: "wishlist", label: "Wishlist", icon: FiHeart },
   { id: "change-password", label: "Change Password", icon: FiLock },
 ];
 
 const API_BASE_URL = "http://localhost:9000/v1";
+
+const getOrderDatabaseId = (order) => {
+  if (order?.databaseOrderId) return order.databaseOrderId;
+  if (order?.id) return order.id;
+  if (typeof order?.orderId === "string" && order.orderId.startsWith("ORD-")) {
+    return order.orderId.replace("ORD-", "");
+  }
+  return null;
+};
+
+const getOrderKey = (order) =>
+  String(order?.orderId || order?.databaseOrderId || order?.id || "");
 
 const Dashboard = () => {
   const navigate = useNavigate();
   const { user, isAuthenticated, logout, updateProfile, updateProfilePicture } = useAuth();
   const { wishlistItems } = useWishlist();
   const [activeTab, setActiveTab] = useState("overview");
-  const [selectedOrder, setSelectedOrder] = useState(null);
   const [addresses, setAddresses] = useState([]);
   const [orders, setOrders] = useState([]);
 
@@ -50,7 +50,6 @@ const Dashboard = () => {
 
   useEffect(() => {
     setAddresses(readCustomerList(user, "addresses"));
-    setSelectedOrder(null);
   }, [user]);
 
   // Fetch real orders from backend and keep synced with localStorage
@@ -93,9 +92,38 @@ const Dashboard = () => {
     writeCustomerList(user, "addresses", nextAddresses);
   };
 
-  const handleViewDetails = (order) => {
-    setSelectedOrder(order);
-    setActiveTab("order-details");
+  const handleDeleteOrder = async (order) => {
+    const shouldDelete = window.confirm("Delete this order from your dashboard?");
+    if (!shouldDelete) return;
+
+    const orderKey = getOrderKey(order);
+    const databaseOrderId = getOrderDatabaseId(order);
+    const previousOrders = orders;
+    const nextOrders = orders.filter((currentOrder) => getOrderKey(currentOrder) !== orderKey);
+
+    setOrders(nextOrders);
+    writeCustomerList(user, "orders", nextOrders);
+
+    const token = localStorage.getItem("authToken");
+    if (!token || !databaseOrderId) return;
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/orders/${databaseOrderId}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        const result = await response.json().catch(() => ({}));
+        throw new Error(result.message || "Unable to delete order");
+      }
+    } catch (err) {
+      setOrders(previousOrders);
+      writeCustomerList(user, "orders", previousOrders);
+      alert(err.message || "Unable to delete order. Please try again.");
+    }
   };
 
   const handleLogout = () => {
@@ -206,10 +234,7 @@ const Dashboard = () => {
               <AddressTab addresses={addresses} onSaveAddresses={handleSaveAddresses} />
             )}
             {activeTab === "orders" && (
-              <OrdersTab orders={orders} onViewDetails={handleViewDetails} />
-            )}
-            {activeTab === "order-details" && (
-              <OrderDetailsTab order={selectedOrder} user={user} onBack={() => setActiveTab("orders")} />
+              <OrdersTab orders={orders} onDeleteOrder={handleDeleteOrder} />
             )}
             {activeTab === "wishlist" && <WishlistTab />}
             {activeTab === "change-password" && <ChangePasswordTab user={user} />}

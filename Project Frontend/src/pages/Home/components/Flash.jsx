@@ -99,72 +99,77 @@ const Flash = () => {
 
       {/* Top Product Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 md:gap-8 lg:gap-10">
-        {products.map((item) => (
-          <Link
-            key={item.id}
-            to={`/store/product/${item.id}`}
-            className="group w-full max-w-full lg:max-w-[370px] h-[200px] sm:h-[220px] lg:h-[250px] rounded-md bg-[#F8F8F8] flex items-center justify-between overflow-hidden hover:shadow-lg transition-shadow relative"
-          >
-            {/* Action buttons */}
-            <div className="absolute top-2 right-2 flex gap-2 z-10">
-              <button
-                onClick={(e) => handleToggleWishlist(e, item)}
-                className="w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-sm hover:bg-gray-50 transition-colors"
-                aria-label={isInWishlist(item.id) ? "Remove from wishlist" : "Add to wishlist"}
-              >
-                {isInWishlist(item.id) ? (
-                  <FaHeart className="text-red-500 text-sm" />
-                ) : (
-                  <FaRegHeart className="text-gray-600 text-sm" />
-                )}
-              </button>
-              <button
-                onClick={(e) => handleAddToCart(e, item)}
-                className="w-8 h-8 bg-[#2196F3] text-white rounded-full flex items-center justify-center shadow-sm hover:bg-[#1a7fd1] transition-colors"
-                aria-label="Add to cart"
-              >
-                <IoCartOutline className="text-base" />
-              </button>
-            </div>
-
-            {/* Left Content */}
-            <div className="pl-4 sm:pl-5 flex flex-col justify-center min-w-[110px] sm:min-w-[130px]">
-              <Typography varient="h6" style="font-semibold mb-1 text-sm sm:text-base">
-                {item.title}
-              </Typography>
-
-              <div className="flex items-center gap-2">
-                <Typography varient="p" style="text-[#2196F3] font-semibold text-sm sm:text-base">
-                  {item.currency}
-                  {item.price}
-                </Typography>
-
-                <Typography varient="p" style="text-gray-400 line-through text-sm sm:text-base">
-                  {item.currency}
-                  {item.sale}
-                </Typography>
+        {products.map((item) => {
+          const liked = isInWishlist(item.id);
+          return (
+            <Link
+              key={item.id}
+              to={`/store/product/${item.id}`}
+              className="group w-full max-w-full lg:max-w-[370px] h-[200px] sm:h-[220px] lg:h-[250px] rounded-md bg-[#F8F8F8] flex items-center justify-between overflow-hidden hover:shadow-lg transition-shadow relative"
+            >
+              {/* Action buttons */}
+              <div className="absolute top-2 right-2 flex gap-2 z-10">
+                <button
+                  type="button"
+                  onClick={(e) => handleToggleWishlist(e, item)}
+                  className="flex items-center justify-center w-8 h-8 bg-white rounded-full shadow-sm hover:bg-gray-50 transition-colors cursor-pointer"
+                  aria-label={liked ? "Remove from wishlist" : "Add to wishlist"}
+                >
+                  {liked ? (
+                    <FaHeart size={14} className="text-red-500" />
+                  ) : (
+                    <FaRegHeart size={14} className="text-gray-600" />
+                  )}
+                </button>
+                <button
+                  type="button"
+                  onClick={(e) => handleAddToCart(e, item)}
+                  className="flex items-center justify-center w-8 h-8 bg-[#2196F3] text-white rounded-full shadow-sm hover:bg-[#1a7fd1] transition-colors cursor-pointer"
+                  aria-label="Add to cart"
+                >
+                  <IoCartOutline size={16} />
+                </button>
               </div>
 
-              {/* View Details */}
-              <div className="flex items-center gap-2 mt-3 cursor-pointer group-hover:text-[#2196F3] transition-colors">
-                <Typography varient="small" style="text-black group-hover:text-[#2196F3]">
-                  View Details
+              {/* Left Content */}
+              <div className="pl-4 sm:pl-5 flex flex-col justify-center min-w-[110px] sm:min-w-[130px]">
+                <Typography varient="h6" style="font-semibold mb-1 text-sm sm:text-base">
+                  {item.title}
                 </Typography>
 
-                <span className="text-xl leading-none">→</span>
-              </div>
-            </div>
+                <div className="flex items-center gap-2">
+                  <Typography varient="p" style="text-[#2196F3] font-semibold text-sm sm:text-base">
+                    {item.currency}
+                    {item.price}
+                  </Typography>
 
-            {/* Product Image */}
-            <div className="w-[110px] sm:w-[130px] lg:w-[155px] h-full flex items-center justify-center pr-2 sm:pr-3">
-              <img
-                src={item.image}
-                alt={`${item.title} - Flash sale computer product`}
-                className="max-w-full max-h-[110px] sm:max-h-[125px] lg:max-h-[145px] object-contain group-hover:scale-105 transition-transform"
-              />
-            </div>
-          </Link>
-        ))}
+                  <Typography varient="p" style="text-gray-400 line-through text-sm sm:text-base">
+                    {item.currency}
+                    {item.sale}
+                  </Typography>
+                </div>
+
+                {/* View Details */}
+                <div className="flex items-center gap-2 mt-3 cursor-pointer group-hover:text-[#2196F3] transition-colors">
+                  <Typography varient="small" style="text-black group-hover:text-[#2196F3]">
+                    View Details
+                  </Typography>
+
+                  <span className="text-xl leading-none">→</span>
+                </div>
+              </div>
+
+              {/* Product Image */}
+              <div className="w-[110px] sm:w-[130px] lg:w-[155px] h-full flex items-center justify-center pr-2 sm:pr-3">
+                <img
+                  src={item.image}
+                  alt={`${item.title} - Flash sale computer product`}
+                  className="max-w-full max-h-[110px] sm:max-h-[125px] lg:max-h-[145px] object-contain group-hover:scale-105 transition-transform"
+                />
+              </div>
+            </Link>
+          );
+        })}
       </div>
 
       {/* Bottom Banner */}

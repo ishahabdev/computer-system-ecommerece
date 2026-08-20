@@ -3,9 +3,11 @@ import { authMiddleware, adminOnly } from "../middleware/AuthMiddleware.js";
 
 import {
   createOrder,
+  deleteOrder,
   getMyOrders,
   getOrderById,
   getAllOrders,
+  trackOrder,
   updateOrderStatus,
 } from "../controllers/OrderController.js";
 
@@ -25,10 +27,13 @@ import {
 const router = express.Router();
 
 // ORDER ROUTES
+router.get("/track-order/:trackingId", trackOrder);
 router.post("/orders", authMiddleware, createOrder);
 router.get("/orders", authMiddleware, getMyOrders);
 router.get("/orders/all", authMiddleware, adminOnly, getAllOrders);
+router.get("/orders/track/:trackingId", trackOrder);
 router.get("/orders/:id", authMiddleware, getOrderById);
+router.delete("/orders/:id", authMiddleware, deleteOrder);
 router.put("/orders/:id/status", authMiddleware, adminOnly, updateOrderStatus);
 
 // WISHLIST ROUTES

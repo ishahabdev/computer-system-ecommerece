@@ -28,9 +28,18 @@ const Order = database.define("Order", {
     allowNull: false,
   },
   status: {
-    type: DataTypes.ENUM("pending", "confirmed", "shipped", "delivered", "cancelled"),
+    type: DataTypes.ENUM(
+      "pending",
+      "packing",
+      "confirmed",
+      "shipping",
+      "shipped",
+      "on delivery",
+      "delivered",
+      "cancelled"
+    ),
     allowNull: false,
-    defaultValue: "pending",
+    defaultValue: "packing",
   },
   address: {
     type: DataTypes.STRING,

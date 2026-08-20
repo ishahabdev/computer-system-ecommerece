@@ -5,7 +5,7 @@ import * as Yup from "yup"
 import { BsTruck, BsCheckCircleFill } from "react-icons/bs"
 import { IoCheckmarkCircle } from "react-icons/io5"
 import { useAuth } from "../../context/AuthContext"
-import { getLiveOrderStatus } from "../../pages/Dashbaord/dashboardStorage"
+import { getLiveOrderStatus, readCustomerList, writeCustomerList } from "../Dashbaord/dashboardStorage"
 
 const API_BASE_URL = "http://localhost:9000/v1"
 
@@ -14,6 +14,33 @@ const TrackOrderSchema = Yup.object().shape({
     .trim()
     .required("Tracking ID is required"),
 })
+
+const getOrderId = (order) => order.orderId || (order.id ? `ORD-${order.id}` : "")
+const getOrderItems = (order) => {
+  if (Array.isArray(order.items)) return order.items
+  if (Array.isArray(order.products)) return order.products
+  return []
+}
+const getItemName = (item) => item.title || item.name || "Product"
+const getItemQty = (item) => item.qty || item.quantity || 1
+const getOrderTotal = (order) => order.total ?? order.totalAmount ?? 0
+
+const normalizeOrder = (order) => {
+  if (!order) return null
+
+  return {
+    ...order,
+    orderId: getOrderId(order),
+    items: getOrderItems(order).map((item) => ({
+      ...item,
+      title: getItemName(item),
+      qty: getItemQty(item),
+      currency: item.currency || "$",
+    })),
+    total: getOrderTotal(order),
+    shippingAddress: order.shippingAddress || order.address || "",
+  }
+}
 
 const TrackOrder = () => {
   const { user } = useAuth()
@@ -34,11 +61,25 @@ const TrackOrder = () => {
 
     try {
       // 1. First attempt to fetch real live order from backend
-      const response = await fetch(`${API_BASE_URL}/orders/track/${encodeURIComponent(cleanId)}`)
+      const response = await fetch(`${API_BASE_URL}/track-order/${encodeURIComponent(cleanId)}`)
       if (response.ok) {
         const result = await response.json()
         if (result.success && result.data) {
-          setOrderData(result.data)
+          const normalizedOrder = normalizeOrder(result.data)
+          setOrderData(normalizedOrder)
+
+          if (user && normalizedOrder) {
+            const orders = readCustomerList(user, "orders")
+            const nextOrders = orders.map((order) => {
+              const matchesOrder =
+                String(order.orderId).toUpperCase() === normalizedOrder.orderId.toUpperCase() ||
+                String(order.databaseOrderId || order.id) === String(normalizedOrder.id)
+
+              return matchesOrder ? { ...order, status: normalizedOrder.status } : order
+            })
+            writeCustomerList(user, "orders", nextOrders)
+          }
+
           setIsLoading(false)
           return
         }
@@ -48,12 +89,7 @@ const TrackOrder = () => {
     }
 
     // 2. Fallback to localStorage if backend is unreachable or order is only local
-    const userIdentifier = user?.id || user?._id || user?.email
-    const ordersStorageKey = userIdentifier
-      ? `orders:${String(userIdentifier).toLowerCase()}`
-      : null
-    const ordersJSON = ordersStorageKey ? localStorage.getItem(ordersStorageKey) : null
-    const orders = ordersJSON ? JSON.parse(ordersJSON) : []
+    const orders = user ? readCustomerList(user, "orders") : []
 
     const localOrder = orders.find(
       (o) =>
@@ -63,7 +99,16 @@ const TrackOrder = () => {
     )
 
     if (localOrder) {
-      setOrderData(localOrder)
+      const status = getLiveOrderStatus(localOrder)
+      const normalizedOrder = normalizeOrder({ ...localOrder, status })
+      setOrderData(normalizedOrder)
+
+      if (user) {
+        const nextOrders = orders.map((order) =>
+          order === localOrder ? { ...order, status } : order
+        )
+        writeCustomerList(user, "orders", nextOrders)
+      }
     } else if (!isBackgroundSync) {
       setErrorMessage("Invalid tracking ID. Please enter your valid tracking ID")
     }
@@ -124,7 +169,7 @@ const TrackOrder = () => {
       packingDate: orderDate.toLocaleString(),
       shippingDate: new Date(orderDate.getTime() + 1 * 60 * 1000).toLocaleString(),
       onDeliveryDate: new Date(orderDate.getTime() + 2 * 60 * 1000).toLocaleString(),
-      deliveryDate: order.estimatedDelivery || new Date(orderDate.getTime() + 3 * 60 * 1000).toLocaleString()
+      deliveryDate: new Date(orderDate.getTime() + 3 * 60 * 1000).toLocaleString()
     }
   }
 
@@ -225,9 +270,13 @@ const TrackOrder = () => {
                     </span>
                   </div>
                   <div className="flex justify-between">
+                    <span className="text-gray-600">Current Status:</span>
+                    <span className="font-semibold text-[#2196F3] uppercase">{getLiveOrderStatus(orderData)}</span>
+                  </div>
+                  <div className="flex justify-between">
                     <span className="text-gray-600">Total Amount:</span>
                     <span className="font-semibold text-[#22262A]">
-                      ${orderData.total || 0}
+                      ${getOrderTotal(orderData)}
                     </span>
                   </div>
                 </div>
@@ -351,7 +400,7 @@ const TrackOrder = () => {
                           {item.imagePath ? (
                             <img
                               src={item.imagePath}
-                              alt={item.title}
+                              alt={getItemName(item)}
                               className="w-12 h-12 object-cover rounded"
                             />
                           ) : (
@@ -360,12 +409,12 @@ const TrackOrder = () => {
                             </div>
                           )}
                           <div>
-                            <p className="text-sm font-semibold text-[#22262A]">{item.title}</p>
-                            <p className="text-xs text-gray-500">Qty: {item.qty}</p>
+                            <p className="text-sm font-semibold text-[#22262A]">{getItemName(item)}</p>
+                            <p className="text-xs text-gray-500">Qty: {getItemQty(item)}</p>
                           </div>
                         </div>
                         <span className="text-sm font-semibold text-[#22262A]">
-                          {item.currency}{item.price * item.qty}
+                          {item.currency || "$"}{item.price * getItemQty(item)}
                         </span>
                       </div>
                     ))}
@@ -374,12 +423,14 @@ const TrackOrder = () => {
               )}
 
               {/* Shipping Address */}
-              {orderData.shippingAddress && (
+              {(orderData.shippingAddress || orderData.address) && (
                 <div className="bg-gray-50 p-6 rounded-lg">
                   <h2 className="text-lg font-bold text-[#22262A] mb-4">Shipping Address</h2>
                   <div className="text-sm text-gray-700">
-                    <p>{orderData.shippingAddress}</p>
-                    <p>{orderData.city}, {orderData.state} {orderData.zipCode}</p>
+                    <p>{orderData.shippingAddress || orderData.address}</p>
+                    {(orderData.city || orderData.state || orderData.zipCode) && (
+                      <p>{orderData.city}, {orderData.state} {orderData.zipCode}</p>
+                    )}
                   </div>
                 </div>
               )}

@@ -1,6 +1,50 @@
 import Order from "../model/orderModel.js";
 import User from "../model/userModel.js";
 
+const normalizeStoredStatus = (status) => {
+  const normalizedStatus = String(status || "").toLowerCase().trim();
+  if (normalizedStatus === "cancelled") return "cancelled";
+  if (normalizedStatus === "delivered") return "delivered";
+  if (normalizedStatus === "on delivery") return "on delivery";
+  if (normalizedStatus === "shipping" || normalizedStatus === "shipped" || normalizedStatus === "confirmed") {
+    return "shipping";
+  }
+  return "packing";
+};
+
+const getLiveOrderStatus = (order) => {
+  if (!order) return "packing";
+
+  const storedStatus = normalizeStoredStatus(order.status);
+  if (storedStatus === "cancelled" || storedStatus === "delivered") return storedStatus;
+
+  const orderDate = new Date(order.createdAt);
+  if (isNaN(orderDate.getTime())) return storedStatus;
+
+  const minutesSinceOrder = Math.floor((Date.now() - orderDate.getTime()) / (1000 * 60));
+
+  if (minutesSinceOrder >= 3) return "delivered";
+  if (minutesSinceOrder >= 2) return "on delivery";
+  if (minutesSinceOrder >= 1) return "shipping";
+  return "packing";
+};
+
+const syncLiveOrderStatus = async (order) => {
+  if (!order) return null;
+
+  const liveStatus = getLiveOrderStatus(order);
+  if (order.status !== liveStatus) {
+    order.status = liveStatus;
+    await order.save();
+  }
+
+  return order;
+};
+
+const syncLiveOrderStatuses = async (orders) => {
+  return Promise.all(orders.map((order) => syncLiveOrderStatus(order)));
+};
+
 // CREATE ORDER (customer places an order at checkout)
 export const createOrder = async (req, res) => {
   try {
@@ -18,6 +62,7 @@ export const createOrder = async (req, res) => {
       products,
       totalAmount,
       address,
+      status: "packing",
     });
 
     res.json({
@@ -41,10 +86,11 @@ export const getMyOrders = async (req, res) => {
       where: { userId: req.user.id },
       order: [["createdAt", "DESC"]],
     });
+    const syncedOrders = await syncLiveOrderStatuses(orders);
 
     res.json({
       success: true,
-      data: orders,
+      data: syncedOrders,
     });
   } catch (error) {
     res.status(500).json({
@@ -68,10 +114,75 @@ export const getOrderById = async (req, res) => {
         message: "Order not found",
       });
     }
+    const syncedOrder = await syncLiveOrderStatus(order);
 
     res.json({
       success: true,
-      data: order,
+      data: syncedOrder,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "internal server error",
+      error: error.message,
+    });
+  }
+};
+
+// TRACK ORDER (public lookup by ORD-11 or 11)
+export const trackOrder = async (req, res) => {
+  try {
+    const trackingId = String(req.params.trackingId || "").trim();
+    const databaseOrderId = trackingId.replace(/^ORD-/i, "");
+
+    if (!databaseOrderId || Number.isNaN(Number(databaseOrderId))) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid tracking ID",
+      });
+    }
+
+    const order = await Order.findByPk(databaseOrderId);
+
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: "Order not found",
+      });
+    }
+
+    const syncedOrder = await syncLiveOrderStatus(order);
+
+    res.json({
+      success: true,
+      data: syncedOrder,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "internal server error",
+      error: error.message,
+    });
+  }
+};
+
+// DELETE MY ORDER - removes an order only if it belongs to the logged-in user
+export const deleteOrder = async (req, res) => {
+  try {
+    const deleted = await Order.destroy({
+      where: { id: req.params.id, userId: req.user.id },
+    });
+
+    if (!deleted) {
+      return res.status(404).json({
+        success: false,
+        message: "Order not found",
+      });
+    }
+
+    res.json({
+      success: true,
+      message: "Order deleted successfully",
     });
   } catch (error) {
     res.status(500).json({
@@ -92,10 +203,11 @@ export const getAllOrders = async (req, res) => {
       },
       order: [["createdAt", "DESC"]],
     });
+    const syncedOrders = await syncLiveOrderStatuses(orders);
 
     res.json({
       success: true,
-      data: orders,
+      data: syncedOrders,
     });
   } catch (error) {
     res.status(500).json({

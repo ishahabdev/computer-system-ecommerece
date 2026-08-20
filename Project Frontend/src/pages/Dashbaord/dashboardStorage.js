@@ -27,15 +27,18 @@ export const writeCustomerList = (user, resource, items) => {
 
 export const getLiveOrderStatus = (order) => {
   if (!order) return "packing";
-  if (order.status === "cancelled") return "cancelled";
 
   const normalizedStatus = (order.status || "").toLowerCase().trim();
+  if (normalizedStatus === "cancelled") return "cancelled";
+  if (normalizedStatus === "delivered") return "delivered";
 
   // Use createdAt (ISO timestamp with exact time) first,
   // NOT orderDate (display-only date string like "August 19, 2026" which parses to midnight)
   const orderDate = new Date(order.createdAt || order.orderDate);
   if (isNaN(orderDate.getTime())) {
-    return normalizedStatus || "packing";
+    if (normalizedStatus === "on delivery") return "on delivery";
+    if (["shipping", "shipped", "confirmed"].includes(normalizedStatus)) return "shipping";
+    return "packing";
   }
 
   const currentDate = new Date();
@@ -46,8 +49,8 @@ export const getLiveOrderStatus = (order) => {
   // 1-2 min  → shipping
   // 2-3 min  → on delivery
   // 3+ min   → delivered
-  if (normalizedStatus === "delivered" || minutesSinceOrder >= 3) return "delivered";
-  if (normalizedStatus === "on delivery" || minutesSinceOrder >= 2) return "on delivery";
-  if (normalizedStatus === "shipping" || normalizedStatus === "shipped" || minutesSinceOrder >= 1) return "shipping";
+  if (minutesSinceOrder >= 3) return "delivered";
+  if (minutesSinceOrder >= 2) return "on delivery";
+  if (minutesSinceOrder >= 1) return "shipping";
   return "packing";
 };
