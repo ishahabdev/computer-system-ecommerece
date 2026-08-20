@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import {
@@ -81,6 +81,27 @@ const Dashboard = () => {
   const handleSaveAddresses = (nextAddresses) => {
     setAddresses(nextAddresses);
     writeCustomerList(user, "addresses", nextAddresses);
+  };
+
+  const handleDeleteOrder = async (order) => {
+    const orderKey = order.orderId || order.id;
+    const nextOrders = orders.filter((item) => (item.orderId || item.id) !== orderKey);
+    setOrders(nextOrders);
+    writeCustomerList(user, "orders", nextOrders);
+
+    const token = localStorage.getItem("authToken");
+    if (!token || !order.id) return;
+
+    try {
+      await fetch(`${API_BASE_URL}/orders/${order.id}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+    } catch (err) {
+      console.warn("Failed to delete order on backend:", err);
+    }
   };
 
   const handleLogout = () => {
@@ -189,7 +210,7 @@ const Dashboard = () => {
             {activeTab === "addresses" && (
               <AddressTab addresses={addresses} onSaveAddresses={handleSaveAddresses} />
             )}
-            {activeTab === "orders" && <OrdersTab orders={orders} />}
+            {activeTab === "orders" && <OrdersTab orders={orders} onDeleteOrder={handleDeleteOrder} />}
             {activeTab === "change-password" && <ChangePasswordTab user={user} />}
           </div>
         </div>
