@@ -1,4 +1,4 @@
-import { products } from "../constant.js";
+import { products } from "../";
 
 export const getProducts = (req, res) => {
   res.json({

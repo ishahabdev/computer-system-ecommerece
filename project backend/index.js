@@ -13,6 +13,10 @@ const port = 9000;
 app.use(cors());
 app.use(express.json());
 
+app.get("/v1/debug-routes", (req, res) => {
+  res.json({ success: true, message: "current backend code loaded" });
+});
+
 // Routes
 app.use("/v1", userRoutes);
 app.use("/v1", orderWishlistCartRoutes);
