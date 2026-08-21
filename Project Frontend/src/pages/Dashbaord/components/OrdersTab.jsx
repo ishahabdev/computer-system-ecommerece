@@ -2,6 +2,16 @@ import { Link } from 'react-router-dom';
 import { useMemo, useState } from 'react';
 import { FiCalendar, FiChevronDown, FiPackage, FiSearch, FiXCircle } from 'react-icons/fi';
 import { getLiveOrderStatus } from '../dashboardStorage';
+import {
+  BUTTON_PRIMARY,
+  BUTTON_SECONDARY,
+  CARD,
+  FIELD_INPUT,
+  HAIRLINE,
+  SURFACE,
+  TAB_SUBTITLE,
+  TAB_TITLE,
+} from '../dashboardStyles';
 
 const ORDERS_PER_PAGE = 5;
 
@@ -22,7 +32,43 @@ const getOrderItems = (order) => {
 
 const getItemName = (item) => item.title || item.name || "Product";
 const getItemQty = (item) => item.qty || item.quantity || 1;
+const getItemImage = (item) => item.image || item.img || item.thumbnail || "";
 const getOrderTotal = (order) => order.total ?? order.totalAmount ?? 0;
+
+// A stored image is either a real picture (URL / absolute path / data URI) or a
+// short emoji/text placeholder (e.g. "🛍️"). Only the former should render as <img>.
+const isImageUrl = (value) =>
+  typeof value === "string" && /^(https?:|\/|data:)/.test(value);
+
+// Round product thumbnail. Falls back to the emoji placeholder, then to a
+// generic package icon, when no real image is available (or one fails to load).
+const OrderThumbnail = ({ image, alt, className = "mt-0.5 h-10 w-10 text-lg" }) => {
+  const [failed, setFailed] = useState(false);
+  const base = "flex shrink-0 items-center justify-center rounded-full";
+
+  if (isImageUrl(image) && !failed) {
+    return (
+      <span className={`${base} overflow-hidden border border-[#E5E5E0] bg-white ${className}`}>
+        <img
+          src={image}
+          alt={alt}
+          onError={() => setFailed(true)}
+          className="h-full w-full object-cover"
+        />
+      </span>
+    );
+  }
+
+  return (
+    <span className={`${base} bg-blue-50 text-[#2196F3] ${className}`}>
+      {!isImageUrl(image) && image ? (
+        <span className="leading-none">{image}</span>
+      ) : (
+        <FiPackage />
+      )}
+    </span>
+  );
+};
 
 const getOrderDate = (order) => {
   const date = new Date(order.createdAt || order.orderDate);
@@ -156,16 +202,19 @@ const OrdersTab = ({ orders = [], onCancelOrder }) => {
 
   return (
     <div>
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-        <h2 className="text-2xl font-bold text-[#22262A]">My Orders</h2>
-        <div className="relative w-full sm:w-64">
-          <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
+        <div>
+          <h2 className={TAB_TITLE}>My Orders</h2>
+          <p className={TAB_SUBTITLE}>Track, review and cancel the orders you have placed.</p>
+        </div>
+        <div className="relative w-full sm:w-64 shrink-0">
+          <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 z-10" />
           <input
             type="text"
             value={searchTerm}
             onChange={handleSearchChange}
             placeholder="Search orders..."
-            className="w-full pl-10 pr-4 py-2 bg-white border border-[#E5E5E0] rounded-lg text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#2196F3]/30 focus:border-[#2196F3]"
+            className={`${FIELD_INPUT} pl-10 py-2.5`}
           />
         </div>
       </div>
@@ -178,10 +227,11 @@ const OrdersTab = ({ orders = [], onCancelOrder }) => {
               key={filter.id}
               type="button"
               onClick={() => handleFilterChange(filter.id)}
+              aria-pressed={isActive}
               className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
                 isActive
                   ? "bg-[#2196F3] text-white"
-                  : "bg-white border border-[#E5E5E0] text-gray-600 hover:bg-gray-50"
+                  : "bg-white border border-[#E5E5E0] text-gray-600 hover:bg-[#F7F7F5] hover:text-[#22262A]"
               }`}
             >
               {filter.label}
@@ -194,18 +244,18 @@ const OrdersTab = ({ orders = [], onCancelOrder }) => {
       </div>
 
       {orders.length === 0 ? (
-        <div className="text-center py-12 bg-white border border-[#E5E5E0] rounded-lg">
-          <p className="text-gray-600 mb-4">No orders yet</p>
-          <Link
-            to="/store"
-            className="inline-block bg-[#2196F3] hover:bg-[#1a7fd1] text-white px-6 py-2 rounded transition-colors"
-          >
+        <div className={`${CARD} text-center py-12`}>
+          <span className={`mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full ${SURFACE} text-gray-400`}>
+            <FiPackage className="text-xl" />
+          </span>
+          <p className="text-gray-500 mb-4">No orders yet</p>
+          <Link to="/store" className={BUTTON_PRIMARY}>
             Start Shopping
           </Link>
         </div>
       ) : filteredOrders.length === 0 ? (
-        <div className="text-center py-12 bg-white border border-[#E5E5E0] rounded-lg">
-          <p className="text-gray-600">No orders match your search.</p>
+        <div className={`${CARD} text-center py-12`}>
+          <p className="text-gray-500">No orders match your search.</p>
         </div>
       ) : (
         <>
@@ -221,18 +271,17 @@ const OrdersTab = ({ orders = [], onCancelOrder }) => {
                   const { order, index, key, status } = entry;
                   const orderItems = getOrderItems(order);
                   const firstItemName = orderItems.length > 0 ? getItemName(orderItems[0]) : "Order";
+                  const firstItemImage = orderItems.length > 0 ? getItemImage(orderItems[0]) : "";
                   const extraItemsCount = Math.max(orderItems.length - 1, 0);
                   const isExpanded = expandedOrderKey === key;
                   const orderNumber = order.orderId || (order.id ? `ORD-${order.id}` : key);
                   const total = getOrderTotal(order);
 
                   return (
-                    <div key={key} className="border border-[#E5E5E0] rounded-lg overflow-hidden bg-white">
+                    <div key={key} className={`${CARD} overflow-hidden`}>
                       <div className="px-4 sm:px-6 py-4 flex flex-col md:flex-row md:items-center gap-4">
                         <div className="flex items-start gap-3 flex-1 min-w-0">
-                          <span className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-50 text-[#2196F3]">
-                            <FiPackage className="text-lg" />
-                          </span>
+                          <OrderThumbnail image={firstItemImage} alt={firstItemName} />
                           <div className="min-w-0">
                             <p className="text-sm font-semibold text-[#22262A] truncate">
                               Order #{orderNumber}
@@ -246,9 +295,9 @@ const OrdersTab = ({ orders = [], onCancelOrder }) => {
 
                         <div className="grid grid-cols-2 sm:flex sm:items-center gap-3 sm:gap-5 text-sm">
                           <span className="text-gray-500">{formatOrderDate(order)}</span>
-                          <span className="font-semibold text-[#22262A]">${total}</span>
+                          <span className="font-semibold text-[#22262A]">${total} </span>
                           <span
-                            className={`justify-self-start text-xs font-semibold uppercase tracking-wide px-3 py-1 rounded ${getStatusClass(status)}`}
+                            className={`justify-self-start text-xs font-semibold uppercase tracking-wide px-3 py-1 rounded-full ${getStatusClass(status)}`}
                           >
                             {status}
                           </span>
@@ -258,7 +307,8 @@ const OrdersTab = ({ orders = [], onCancelOrder }) => {
                           <button
                             type="button"
                             onClick={() => toggleDetails(order, index)}
-                            className="inline-flex items-center gap-2 bg-[#2196F3] hover:bg-[#1a7fd1] text-white text-sm font-semibold px-4 py-2 rounded transition-colors"
+                            aria-expanded={isExpanded}
+                            className={BUTTON_SECONDARY}
                           >
                             Details
                             <FiChevronDown
@@ -270,7 +320,7 @@ const OrdersTab = ({ orders = [], onCancelOrder }) => {
 
                       {isExpanded && (
                         <>
-                          <div className="px-4 sm:px-6 py-6 bg-[#F7F7F5] border-t border-[#E5E5E0]">
+                          <div className={`px-4 sm:px-6 py-6 ${SURFACE} border-t ${HAIRLINE}`}>
                             <h4 className="text-sm font-semibold text-[#22262A] mb-4">Products</h4>
                             <table className="w-full text-sm">
                               <thead>
@@ -287,7 +337,16 @@ const OrdersTab = ({ orders = [], onCancelOrder }) => {
 
                                   return (
                                     <tr key={itemIdx} className="border-b border-[#E5E5E0]">
-                                      <td className="py-3 text-gray-700">{getItemName(item)}</td>
+                                      <td className="py-3 text-gray-700">
+                                        <span className="flex items-center gap-3">
+                                          <OrderThumbnail
+                                            image={getItemImage(item)}
+                                            alt={getItemName(item)}
+                                            className="h-9 w-9 text-base"
+                                          />
+                                          <span>{getItemName(item)}</span>
+                                        </span>
+                                      </td>
                                       <td className="text-center py-3 text-gray-700">{qty}</td>
                                       <td className="text-right py-3 text-gray-700">
                                         {item.currency || "$"}{price}
@@ -315,11 +374,11 @@ const OrdersTab = ({ orders = [], onCancelOrder }) => {
                             )}
                           </div>
 
-                          <div className="px-4 sm:px-6 py-4 bg-white border-t border-[#E5E5E0] flex flex-wrap items-center gap-3">
+                          <div className={`px-4 sm:px-6 py-4 bg-white border-t ${HAIRLINE} flex flex-wrap items-center gap-3`}>
                             <Link
                               to="/track-order"
                               state={{ orderId: orderNumber }}
-                              className="inline-block bg-gray-100 hover:bg-gray-200 text-gray-800 text-sm font-semibold px-6 py-2 rounded transition-colors"
+                              className={BUTTON_SECONDARY}
                             >
                               Track Order
                             </Link>
@@ -330,7 +389,7 @@ const OrdersTab = ({ orders = [], onCancelOrder }) => {
                                   setCancelError('');
                                   setCancelTarget({ order, key });
                                 }}
-                                className="inline-flex items-center gap-2 bg-red-50 hover:bg-red-100 text-red-700 text-sm font-semibold px-6 py-2 rounded transition-colors"
+                                className="inline-flex items-center gap-2 bg-red-50 hover:bg-red-100 text-red-700 text-sm font-semibold px-5 py-2.5 rounded-lg transition-colors"
                               >
                                 <FiXCircle className="text-base" />
                                 Cancel Order
@@ -351,7 +410,7 @@ const OrdersTab = ({ orders = [], onCancelOrder }) => {
               <button
                 type="button"
                 onClick={() => setVisibleCount((count) => count + ORDERS_PER_PAGE)}
-                className="inline-flex items-center gap-2 border border-[#E5E5E0] bg-white text-gray-700 text-sm font-semibold px-6 py-2.5 rounded-lg hover:bg-gray-50 transition-colors"
+                className={BUTTON_SECONDARY}
               >
                 Load More Orders
                 <FiChevronDown className="text-base" />

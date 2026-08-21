@@ -1,5 +1,15 @@
 import { useState } from "react";
 import { HiBriefcase, HiHome, HiMapPin, HiOutlinePlus, HiPhone } from "react-icons/hi2";
+import {
+  BUTTON_PRIMARY,
+  BUTTON_SECONDARY,
+  CARD,
+  FIELD_INPUT,
+  FIELD_LABEL,
+  LINK_ACTION,
+  TAB_SUBTITLE,
+  TAB_TITLE,
+} from "../dashboardStyles";
 
 const emptyForm = {
   fullName: "",
@@ -115,24 +125,19 @@ const AddressTab = ({ addresses = [], onSaveAddresses, user }) => {
     onSaveAddresses(addresses.map((address) => ({ ...address, isDefault: address.id === addressId })));
   };
 
-  const labelClass = "block text-sm font-medium text-gray-700 mb-2";
-  const inputClass =
-    "w-full bg-gray-50 border border-gray-200 text-sm text-gray-700 placeholder-gray-400 px-4 py-3 rounded-md outline-none focus:ring-2 focus:ring-[#2196F3]/40 transition";
-  const linkClass = "text-sm font-medium text-[#2196F3] hover:underline transition-colors";
+  const labelClass = FIELD_LABEL;
+  const inputClass = FIELD_INPUT;
+  const linkClass = LINK_ACTION;
 
   return (
     <div>
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
         <div>
-          <h2 className="text-2xl font-bold text-[#22262A]">Your Addresses</h2>
-          <p className="text-sm text-gray-500 mt-1">Manage your shipping and billing locations.</p>
+          <h2 className={TAB_TITLE}>Your Addresses</h2>
+          <p className={TAB_SUBTITLE}>Manage your shipping and billing locations.</p>
         </div>
-        <button
-          type="button"
-          onClick={openNewForm}
-          className="inline-flex items-center justify-center gap-2 shrink-0 bg-[#2196F3] hover:bg-[#1a7fd1] text-white text-sm font-semibold px-4 py-2.5 rounded-md transition-colors"
-        >
+        <button type="button" onClick={openNewForm} className={`${BUTTON_PRIMARY} shrink-0`}>
           <HiOutlinePlus className="text-base" />
           Add New Address
         </button>
@@ -140,7 +145,7 @@ const AddressTab = ({ addresses = [], onSaveAddresses, user }) => {
 
       {/* Add / edit form */}
       {isFormOpen && (
-        <form onSubmit={handleSubmit} className="bg-white border border-gray-200 rounded-xl p-5 mb-6 shadow-sm">
+        <form onSubmit={handleSubmit} className={`${CARD} p-6 mb-5`}>
           <h3 className="text-base font-semibold text-[#22262A] mb-4">
             {editingId ? "Edit address" : "Add a new address"}
           </h3>
@@ -231,18 +236,11 @@ const AddressTab = ({ addresses = [], onSaveAddresses, user }) => {
           {formError && <p className="text-sm text-red-600 mt-4">{formError}</p>}
 
           <div className="flex flex-wrap gap-3 mt-5">
-            <button
-              type="submit"
-              className="bg-[#2196F3] hover:bg-[#1a7fd1] text-white text-sm font-semibold px-5 py-2.5 rounded-md transition-colors"
-            >
+            <button type="submit" className={BUTTON_PRIMARY}>
               {editingId ? "Update Address" : "Save Address"}
             </button>
             {addresses.length > 0 && (
-              <button
-                type="button"
-                onClick={resetForm}
-                className="bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-semibold px-5 py-2.5 rounded-md transition-colors"
-              >
+              <button type="button" onClick={resetForm} className={BUTTON_SECONDARY}>
                 Cancel
               </button>
             )}
@@ -258,14 +256,13 @@ const AddressTab = ({ addresses = [], onSaveAddresses, user }) => {
           const isConfirmingDelete = confirmingId === address.id;
 
           return (
-            <div
-              key={address.id}
-              className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm flex flex-col"
-            >
+            <div key={address.id} className={`${CARD} p-5 flex flex-col`}>
               {/* Label + default badge */}
               <div className="flex items-start justify-between gap-3">
                 <div className="flex items-center gap-2.5 min-w-0">
-                  <AddressIcon className="text-lg text-gray-700 shrink-0" />
+                  <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-50 text-[#2196F3] shrink-0">
+                    <AddressIcon className="text-lg" />
+                  </span>
                   <h3 className="font-semibold text-[#22262A] truncate">{address.label || "Home"}</h3>
                 </div>
                 {address.isDefault && (
@@ -296,7 +293,7 @@ const AddressTab = ({ addresses = [], onSaveAddresses, user }) => {
               </div>
 
               {/* Footer actions */}
-              <div className="flex items-center justify-between gap-3 flex-wrap mt-4 pt-3 border-t border-gray-100">
+              <div className="flex items-center justify-between gap-3 flex-wrap mt-4 pt-3 border-t border-[#E5E5E0]">
                 {isConfirmingDelete ? (
                   <>
                     <span className="text-sm text-gray-600">Remove this address?</span>
@@ -352,9 +349,9 @@ const AddressTab = ({ addresses = [], onSaveAddresses, user }) => {
           <button
             type="button"
             onClick={openNewForm}
-            className="border-2 border-dashed border-gray-200 rounded-xl p-8 min-h-[190px] flex flex-col items-center justify-center text-center hover:border-[#2196F3]/50 hover:bg-blue-50/40 transition-colors"
+            className="border-2 border-dashed border-[#E5E5E0] rounded-xl p-8 min-h-[190px] flex flex-col items-center justify-center text-center hover:border-[#2196F3]/50 hover:bg-blue-50/40 transition-colors"
           >
-            <span className="w-11 h-11 rounded-full bg-gray-100 text-gray-500 flex items-center justify-center">
+            <span className="w-11 h-11 rounded-full bg-[#F7F7F5] text-gray-500 flex items-center justify-center">
               <HiOutlinePlus className="text-xl" />
             </span>
             <span className="text-sm font-semibold text-[#22262A] mt-4">

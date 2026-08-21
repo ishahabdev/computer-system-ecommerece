@@ -9,6 +9,7 @@ import OrdersTab from "./components/OrdersTab";
 import OverviewTab from "./components/OverviewTab";
 import ProfileTab from "./components/ProfileTab";
 import { getLiveOrderStatus, readCustomerList, writeCustomerList } from "./dashboardStorage";
+import { CARD, HAIRLINE, SURFACE } from "./dashboardStyles";
 
 const dashboardTabs = [
   { id: "overview", label: "Overview", icon: MdHome },
@@ -160,8 +161,8 @@ const Dashboard = () => {
       .toUpperCase() || "U";
 
   return (
-    <main className="bg-[#F7F7F5] min-h-screen text-gray-800">
-      <div className="border-b border-[#E5E5E0]">
+    <main className="bg-white min-h-screen text-gray-800">
+      <div className={`border-b ${HAIRLINE}`}>
         <div className="px-4 sm:px-6 md:px-10 lg:px-20 xl:px-36 py-3">
           <nav className="flex items-center gap-2 text-sm" aria-label="Breadcrumb">
             <Link to="/" className="text-[#2196F3] hover:underline transition-colors">
@@ -173,16 +174,21 @@ const Dashboard = () => {
         </div>
       </div>
 
-      <div className="px-4 sm:px-6 md:px-10 lg:px-20 xl:px-36 py-6 border-b border-[#E5E5E0]">
+      <div className="px-4 sm:px-6 md:px-10 lg:px-20 xl:px-36 pt-8 pb-6">
         <h1 className="text-2xl font-bold text-[#22262A]">Customer Dashboard</h1>
+        <p className="text-sm text-gray-500 mt-1">
+          Manage your profile, addresses and orders in one place.
+        </p>
       </div>
 
-      <div className="px-4 sm:px-6 md:px-10 lg:px-20 xl:px-36 py-8">
+      <div className="px-4 sm:px-6 md:px-10 lg:px-20 xl:px-36 pb-12">
         <div className="flex flex-col lg:flex-row gap-8">
           <aside className="lg:w-64 flex-shrink-0">
-            <div className="bg-white border border-[#E5E5E0] rounded-lg p-4 mb-4">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-full bg-[#2196F3] text-white flex items-center justify-center overflow-hidden font-bold">
+            {/* Identity, counts and navigation live in one card so the sidebar
+                reads as a single object against the white page. */}
+            <div className={`${CARD} overflow-hidden lg:sticky lg:top-6`}>
+              <div className="flex items-center gap-3 p-4">
+                <div className="w-12 h-12 rounded-full bg-[#2196F3] text-white flex items-center justify-center overflow-hidden font-bold shrink-0">
                   {user.profilePicture ? (
                     <img src={user.profilePicture} alt={userName || "Profile"} className="w-full h-full object-cover" />
                   ) : (
@@ -194,47 +200,51 @@ const Dashboard = () => {
                   <p className="text-xs text-gray-500 truncate">{user.email || ""}</p>
                 </div>
               </div>
-            </div>
 
-            <div className="grid grid-cols-2 gap-3 mb-4">
-              <div className="rounded-lg border border-[#E5E5E0] bg-white px-4 py-3">
-                <p className="text-xs text-gray-500">Total orders</p>
-                <p className="text-2xl font-bold text-[#22262A]">{totalOrders}</p>
+              <div className={`grid grid-cols-2 border-y ${HAIRLINE} ${SURFACE}`}>
+                <div className={`px-4 py-3 border-r ${HAIRLINE}`}>
+                  <p className="text-xs text-gray-500">Total orders</p>
+                  <p className="text-xl font-bold text-[#22262A]">{totalOrders}</p>
+                </div>
+                <div className="px-4 py-3">
+                  <p className="text-xs text-gray-500">Delivered</p>
+                  <p className="text-xl font-bold text-[#22262A]">{deliveredOrders}</p>
+                </div>
               </div>
-              <div className="rounded-lg border border-[#E5E5E0] bg-white px-4 py-3">
-                <p className="text-xs text-gray-500">Delivered</p>
-                <p className="text-2xl font-bold text-[#22262A]">{deliveredOrders}</p>
+
+              <nav className="p-2" aria-label="Dashboard sections">
+                {dashboardTabs.map((tab) => {
+                  const Icon = tab.icon;
+                  const isActive = activeTab === tab.id;
+                  return (
+                    <button
+                      key={tab.id}
+                      type="button"
+                      onClick={() => setActiveTab(tab.id)}
+                      aria-current={isActive ? "page" : undefined}
+                      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
+                        isActive
+                          ? "bg-blue-50 text-[#2196F3] font-semibold"
+                          : "text-gray-600 hover:bg-[#F7F7F5] hover:text-[#22262A]"
+                      }`}
+                    >
+                      <Icon className="text-lg shrink-0" />
+                      <span className="text-sm">{tab.label}</span>
+                    </button>
+                  );
+                })}
+              </nav>
+
+              <div className={`p-2 border-t ${HAIRLINE}`}>
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-red-600 hover:bg-red-50 transition-colors"
+                >
+                  <FiLogOut className="text-lg shrink-0" />
+                  <span className="text-sm font-medium">Logout</span>
+                </button>
               </div>
-            </div>
-
-            <div className="space-y-1.5">
-              {dashboardTabs.map((tab) => {
-                const Icon = tab.icon;
-                return (
-                  <button
-                    key={tab.id}
-                    type="button"
-                    onClick={() => setActiveTab(tab.id)}
-                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
-                      activeTab === tab.id
-                        ? "bg-blue-50 text-[#2196F3] border-l-4 border-[#2196F3]"
-                        : "text-gray-700 hover:bg-white"
-                    }`}
-                  >
-                    <Icon className="text-xl shrink-0" />
-                    <span className="text-sm font-medium">{tab.label}</span>
-                  </button>
-                );
-              })}
-
-              <button
-                type="button"
-                onClick={handleLogout}
-                className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-red-600 hover:bg-white transition-all"
-              >
-                <FiLogOut className="text-xl shrink-0" />
-                <span className="text-sm font-medium">Logout</span>
-              </button>
             </div>
           </aside>
 
@@ -260,7 +270,7 @@ const Dashboard = () => {
             {activeTab === "orders" && (
               <OrdersTab orders={orders} onCancelOrder={handleCancelOrder} />
             )}
-            {activeTab === "change-password" && <ChangePasswordTab />}
+            {activeTab === "change-password" && <ChangePasswordTab user={user} />}
           </div>
         </div>
       </div>

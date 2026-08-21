@@ -168,7 +168,10 @@ const Sidebar = ({
             );
           })}
         </ul>
-      
+        <button className=" p-2 mt-8 w-full text-sm bg-[#F8F8F8] text-center ">
+          MORE
+         
+        </button>
       </div>
     </aside>
   );

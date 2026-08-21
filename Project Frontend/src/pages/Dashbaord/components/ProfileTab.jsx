@@ -1,4 +1,13 @@
 import { useEffect, useState } from "react";
+import {
+  BUTTON_PRIMARY,
+  BUTTON_SECONDARY,
+  CARD,
+  FIELD_INPUT,
+  FIELD_LABEL,
+  TAB_SUBTITLE,
+  TAB_TITLE,
+} from "../dashboardStyles";
 
 const resizeProfileImage = (file) =>
   new Promise((resolve, reject) => {
@@ -90,11 +99,14 @@ const ProfileTab = ({ user, updateProfile, updateProfilePicture }) => {
 
   return (
     <div>
-      <h2 className="text-2xl font-bold text-[#22262A] mb-6">Profile</h2>
+      <div className="mb-6">
+        <h2 className={TAB_TITLE}>Profile</h2>
+        <p className={TAB_SUBTITLE}>Update the name, photo and phone number on your account.</p>
+      </div>
 
-      <form onSubmit={handleSubmit} className="bg-white border border-[#E5E5E0] rounded-lg p-6 max-w-2xl">
+      <form onSubmit={handleSubmit} className={`${CARD} p-6 max-w-2xl`}>
         <div className="flex items-center gap-5 mb-6">
-          <div className="w-20 h-20 rounded-full bg-[#2196F3] text-white flex items-center justify-center overflow-hidden text-2xl font-bold">
+          <div className="w-20 h-20 rounded-full bg-[#2196F3] text-white flex items-center justify-center overflow-hidden text-2xl font-bold shrink-0">
             {user?.profilePicture ? (
               <img src={user.profilePicture} alt={user?.name || "Profile"} className="w-full h-full object-cover" />
             ) : (
@@ -102,7 +114,7 @@ const ProfileTab = ({ user, updateProfile, updateProfilePicture }) => {
             )}
           </div>
           <div>
-            <label className="inline-block bg-gray-100 hover:bg-gray-200 text-gray-800 text-sm font-semibold px-4 py-2 rounded cursor-pointer transition-colors">
+            <label className={`${BUTTON_SECONDARY} cursor-pointer`}>
               Change Photo
               <input type="file" accept="image/*" onChange={handlePictureChange} className="hidden" />
             </label>
@@ -112,44 +124,47 @@ const ProfileTab = ({ user, updateProfile, updateProfilePicture }) => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
+            <label htmlFor="profile-name" className={FIELD_LABEL}>Full Name</label>
             <input
+              id="profile-name"
               type="text"
               value={name}
               onChange={(event) => setName(event.target.value)}
-              className="w-full bg-gray-50 border border-gray-200 text-gray-700 px-4 py-3 rounded outline-none focus:ring-2 focus:ring-[#2196F3]/40"
+              className={FIELD_INPUT}
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Phone</label>
+            <label htmlFor="profile-phone" className={FIELD_LABEL}>Phone</label>
             <input
+              id="profile-phone"
               type="tel"
               value={phone}
               onChange={(event) => setPhone(event.target.value)}
-              className="w-full bg-gray-50 border border-gray-200 text-gray-700 px-4 py-3 rounded outline-none focus:ring-2 focus:ring-[#2196F3]/40"
+              className={FIELD_INPUT}
               placeholder="Optional"
             />
           </div>
 
           <div className="md:col-span-2">
-            <label className="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
+            <label htmlFor="profile-email" className={FIELD_LABEL}>Email Address</label>
             <input
+              id="profile-email"
               type="email"
               value={user?.email || ""}
               readOnly
-              className="w-full bg-gray-100 border border-gray-200 text-gray-500 px-4 py-3 rounded outline-none"
+              className={`${FIELD_INPUT} text-gray-500 cursor-not-allowed focus:bg-[#F7F7F5] focus:border-[#E5E5E0] focus:ring-0`}
             />
+            <p className="text-xs text-gray-500 mt-2">
+              Your email is used to sign in and cannot be changed here.
+            </p>
           </div>
         </div>
 
         {error && <p className="text-sm text-red-600 mt-4">{error}</p>}
         {message && <p className="text-sm text-green-600 mt-4">{message}</p>}
 
-        <button
-          type="submit"
-          className="mt-6 bg-[#2196F3] hover:bg-[#1a7fd1] text-white text-sm font-semibold px-6 py-3 rounded transition-colors"
-        >
+        <button type="submit" className={`${BUTTON_PRIMARY} mt-6`}>
           Save Profile
         </button>
       </form>

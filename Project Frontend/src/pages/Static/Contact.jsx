@@ -31,6 +31,8 @@ const FOOTER_COLUMNS = [
   { title: "Our Offers", links: ["About Us", "Information", "Privacy Policy", "Terms & Conditions"] },
 ];
 
+const API_BASE_URL = "http://localhost:9000/v1";
+
 const ContactSchema = Yup.object().shape({
   name: Yup.string().min(2, "Name must be at least 2 characters").required("Name is required"),
   email: Yup.string().email("Invalid email address").required("Email is required"),
@@ -40,16 +42,35 @@ const ContactSchema = Yup.object().shape({
 export default function Contact() {
   usePageSEO(PAGE_SEO.contact.title, PAGE_SEO.contact.description);
   const [submitSuccess, setSubmitSuccess] = useState(false);
+  const [submitError, setSubmitError] = useState("");
 
-  // Frontend-only: logs the submitted form values to the browser console.
-  const handleSubmit = (values, { setSubmitting, resetForm }) => {
-    setTimeout(() => {
-      console.log("Contact form submitted:", values);
+  // Sends the message to the store inbox through the backend contact endpoint.
+  const handleSubmit = async (values, { setSubmitting, resetForm }) => {
+    setSubmitError("");
+    setSubmitSuccess(false);
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/contact`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(values),
+      });
+
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok || !data.success) {
+        setSubmitError(data.message || "Could not send your message, please try again.");
+        return;
+      }
+
       setSubmitSuccess(true);
       resetForm();
-      setSubmitting(false);
       setTimeout(() => setSubmitSuccess(false), 5000);
-    }, 800);
+    } catch {
+      setSubmitError("Network error, please check your connection and try again.");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const inputClass =
@@ -83,7 +104,7 @@ export default function Contact() {
               </div>
               <div>
                 <p className="text-sm font-semibold text-slate-800">Email Address</p>
-                <p className="text-sm text-slate-500">Myemail@email.com</p>
+                <p className="text-sm text-slate-500">ishahabdevv@gmail.com</p>
               </div>
             </div>
 
@@ -107,6 +128,12 @@ export default function Contact() {
                 <p className="text-xs text-green-600 text-center">
                   Thank you for your message! We'll get back to you soon.
                 </p>
+              </div>
+            )}
+
+            {submitError && (
+              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md">
+                <p className="text-xs text-red-600 text-center">{submitError}</p>
               </div>
             )}
 

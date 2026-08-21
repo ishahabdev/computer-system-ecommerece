@@ -141,6 +141,10 @@ const Checkout = () => {
             name: item.title,
             quantity: item.qty,
             price: item.price,
+            // Persist the product image + currency so the order history can show
+            // the real product thumbnail instead of a generic placeholder icon.
+            image: item.image,
+            currency: item.currency,
           })),
           totalAmount: total,
           address: `${address}, ${city}, ${state} ${zipCode}`,
