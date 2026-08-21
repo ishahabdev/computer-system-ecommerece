@@ -45,6 +45,17 @@ const Order = database.define("Order", {
     type: DataTypes.STRING,
     allowNull: true,
   },
+  // Set when an admin changes the status by hand, or when the customer
+  // cancels. The background scheduler skips these rows so the 10-minute
+  // simulation can't overwrite a deliberate choice.
+  // NOT NULL with a default matters: a nullable column would leave every
+  // pre-existing row NULL, and `WHERE isManuallySet = false` never matches
+  // NULL, so the scheduler would silently skip all existing orders.
+  isManuallySet: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: false,
+  },
 }, {
   timestamps: true,
 });

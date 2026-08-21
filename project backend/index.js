@@ -6,6 +6,7 @@ import "dotenv/config";
 import userRoutes from "./routes/userRoutes.js";
 import { connectDB } from "./config/database.js";
 import orderWishlistCartRoutes from "./routes/Orderwishlistcartroutes.js"
+import contactRoutes from "./routes/contactRoutes.js";
 import { syncActiveOrderStatuses } from "./controllers/OrderController.js";
 
 const app = express();
@@ -26,6 +27,7 @@ app.get("/v1/debug-routes", (req, res) => {
 // Routes
 app.use("/v1", userRoutes);
 app.use("/v1", orderWishlistCartRoutes);
+app.use("/v1", contactRoutes);
 
 
 // Periodically advance order statuses (packing -> shipping -> on delivery ->
