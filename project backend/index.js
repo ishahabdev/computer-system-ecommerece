@@ -12,9 +12,9 @@ const app = express();
 const port = 9000;
 
 // How often the server re-checks active orders and advances their status.
-// Steps are 10 seconds apart, so a 5s tick keeps the stored status at most
-// ~5s behind the frontend's live view.
-const ORDER_STATUS_SYNC_INTERVAL_MS = 5000;
+// Steps are 10 minutes apart, so a 60s tick keeps the stored status at most
+// ~1 min behind the frontend's live view.
+const ORDER_STATUS_SYNC_INTERVAL_MS = 60000;
 
 app.use(cors());
 app.use(express.json());
@@ -29,7 +29,7 @@ app.use("/v1", orderWishlistCartRoutes);
 
 
 // Periodically advance order statuses (packing -> shipping -> on delivery ->
-// delivered) so the database reflects the same 10-second-per-step timeline the
+// delivered) so the database reflects the same 10-minute-per-step timeline the
 // frontend shows, without waiting for someone to fetch the orders.
 function startOrderStatusScheduler() {
   let isSyncing = false;

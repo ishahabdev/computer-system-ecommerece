@@ -26,18 +26,35 @@ const getLiveOrderStatus = (order) => {
   const orderDate = new Date(order.createdAt);
   if (isNaN(orderDate.getTime())) return storedStatus;
 
-  const secondsSinceOrder = Math.floor((Date.now() - orderDate.getTime()) / 1000);
+  const minutesSinceOrder = Math.floor((Date.now() - orderDate.getTime()) / (1000 * 60));
 
-  // Auto-progress on a 10-second-per-step timeline:
-  // 0-10s → packing, 10-20s → shipping, 20-30s → on delivery, 30s+ → delivered
-  if (secondsSinceOrder >= 30) return "delivered";
-  if (secondsSinceOrder >= 20) return "on delivery";
-  if (secondsSinceOrder >= 10) return "shipping";
+  // Safety guard: if createdAt somehow resolves to the future (clock skew,
+  // timezone mismatch between app/server and DB) or shows an implausibly
+  // large gap for a brand-new order, don't silently jump the order all the
+  // way to "delivered". Log it so a timezone bug gets noticed, not hidden.
+  if (minutesSinceOrder < 0) {
+    console.warn(
+      `getLiveOrderStatus: order ${order.id} createdAt (${order.createdAt}) is in the future ` +
+      `relative to server time. Check DB/Sequelize timezone config. Falling back to stored status.`
+    );
+    return storedStatus;
+  }
+
+  // Auto-progress on a 10-minute-per-step timeline:
+  // 0-10 min → packing, 10-20 min → shipping, 20-30 min → on delivery, 30 min+ → delivered
+  if (minutesSinceOrder >= 30) return "delivered";
+  if (minutesSinceOrder >= 20) return "on delivery";
+  if (minutesSinceOrder >= 10) return "shipping";
   return "packing";
 };
 
 const syncLiveOrderStatus = async (order) => {
   if (!order) return null;
+
+  // Never auto-progress an order the admin has manually set — otherwise the
+  // scheduler (or the next read) silently overwrites the admin's choice with
+  // the time-based simulation.
+  if (order.isManuallySet) return order;
 
   const liveStatus = getLiveOrderStatus(order);
   if (order.status !== liveStatus) {
@@ -52,14 +69,17 @@ const syncLiveOrderStatuses = async (orders) => {
   return Promise.all(orders.map((order) => syncLiveOrderStatus(order)));
 };
 
-// Advance every still-active order to its live status on the 10-second-per-step
+// Advance every still-active order to its live status on the 10-minute-per-step
 // timeline and persist any change. This is what the background scheduler calls,
 // so the stored status keeps moving (packing -> shipping -> on delivery ->
 // delivered) even when nobody is actively fetching the orders. Without this the
 // DB status only updates on read and appears frozen until someone loads it.
 export const syncActiveOrderStatuses = async () => {
   const activeOrders = await Order.findAll({
-    where: { status: { [Op.notIn]: TERMINAL_STATUSES } },
+    where: {
+      status: { [Op.notIn]: TERMINAL_STATUSES },
+      isManuallySet: false, // skip orders an admin has manually overridden
+    },
   });
   await syncLiveOrderStatuses(activeOrders);
   return activeOrders.length;
@@ -83,6 +103,7 @@ export const createOrder = async (req, res) => {
       totalAmount,
       address,
       status: "packing",
+      isManuallySet: false,
     });
 
     res.json({
@@ -229,7 +250,9 @@ export const cancelOrder = async (req, res) => {
 
     // Resolve the real, time-based status first so an order that has already
     // reached "delivered" on the timeline can no longer be cancelled.
-    const liveStatus = getLiveOrderStatus(order);
+    const liveStatus = order.isManuallySet
+      ? normalizeStoredStatus(order.status)
+      : getLiveOrderStatus(order);
 
     if (liveStatus === "cancelled") {
       return res.status(400).json({
@@ -246,6 +269,7 @@ export const cancelOrder = async (req, res) => {
     }
 
     order.status = "cancelled";
+    order.isManuallySet = true; // cancellation is a manual, permanent override too
     await order.save();
 
     res.json({
@@ -293,7 +317,7 @@ export const updateOrderStatus = async (req, res) => {
     const { status } = req.body;
 
     await Order.update(
-      { status },
+      { status, isManuallySet: true }, // mark as manual so the scheduler won't overwrite it
       { where: { id: req.params.id } }
     );
 
