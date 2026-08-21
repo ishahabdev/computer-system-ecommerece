@@ -1,22 +1,35 @@
 import { Link } from "react-router-dom";
-import { FiHeart, FiMapPin, FiShoppingBag } from "react-icons/fi";
+import { FiCreditCard, FiMapPin, FiShoppingBag } from "react-icons/fi";
 import { getLiveOrderStatus } from "../dashboardStorage";
 
-const OverviewTab = ({ user, orders = [], addresses = [], wishlistItems = [], onSelectTab }) => {
+const OverviewTab = ({ user, orders = [], addresses = [], onSelectTab }) => {
   const userName = typeof user?.name === "string" ? user.name.trim() : "";
   const recentOrder = orders[orders.length - 1];
+
+  // Total amount paid across every order that has not been cancelled.
+  const totalPayment = orders
+    .filter((order) => getLiveOrderStatus(order) !== "cancelled")
+    .reduce((sum, order) => sum + Number(order.total ?? order.totalAmount ?? 0), 0);
 
   const stats = [
     { label: "Orders", value: orders.length, icon: FiShoppingBag, tab: "orders" },
     { label: "Addresses", value: addresses.length, icon: FiMapPin, tab: "addresses" },
-    { label: "Wishlist", value: wishlistItems.length, icon: FiHeart, tab: "wishlist" },
+    {
+      label: "Total Payment",
+      value: `$${totalPayment.toLocaleString(undefined, {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      })}`,
+      icon: FiCreditCard,
+      tab: "orders",
+    },
   ];
 
   return (
     <div>
       <h2 className="text-2xl font-bold text-[#22262A] mb-6">Overview</h2>
 
-      <div className="border border-gray-200 rounded-lg p-6 mb-6">
+      <div className="bg-white border border-[#E5E5E0] rounded-lg p-6 mb-6">
         <p className="text-sm text-gray-600 mb-1">Welcome back</p>
         <h3 className="text-xl font-bold text-[#22262A]">{userName || "Customer"}</h3>
         <p className="text-sm text-gray-600 mt-2">{user?.email || "No email available"}</p>
@@ -30,7 +43,7 @@ const OverviewTab = ({ user, orders = [], addresses = [], wishlistItems = [], on
               key={stat.label}
               type="button"
               onClick={() => onSelectTab(stat.tab)}
-              className="text-left border border-gray-200 rounded-lg p-4 hover:border-[#2196F3] hover:bg-blue-50/40 transition-colors"
+              className="text-left bg-white border border-[#E5E5E0] rounded-lg p-4 hover:border-[#2196F3] hover:bg-blue-50/40 transition-colors"
             >
               <Icon className="text-2xl text-[#2196F3] mb-3" />
               <p className="text-2xl font-bold text-[#22262A]">{stat.value}</p>
@@ -40,7 +53,7 @@ const OverviewTab = ({ user, orders = [], addresses = [], wishlistItems = [], on
         })}
       </div>
 
-      <div className="border border-gray-200 rounded-lg p-6">
+      <div className="bg-white border border-[#E5E5E0] rounded-lg p-6">
         <div className="flex items-center justify-between gap-4 mb-4">
           <h3 className="text-lg font-semibold text-[#22262A]">Latest Order</h3>
           <button

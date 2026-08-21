@@ -42,15 +42,11 @@ export const getLiveOrderStatus = (order) => {
   }
 
   const currentDate = new Date();
-  const secondsSinceOrder = Math.floor((currentDate - orderDate) / 1000);
+  const minutesSinceOrder = Math.floor((currentDate - orderDate) / (1000 * 60));
 
-  // Auto-progress: 10 seconds per step
-  // 0-10s   → packing
-  // 10-20s  → shipping
-  // 20-30s  → on delivery
-  // 30s+    → delivered
-  if (secondsSinceOrder >= 30) return "delivered";
-  if (secondsSinceOrder >= 20) return "on delivery";
-  if (secondsSinceOrder >= 10) return "shipping";
+  
+  if (minutesSinceOrder >= 30) return "delivered";
+  if (minutesSinceOrder >= 20) return "on delivery";
+  if (minutesSinceOrder >= 10) return "shipping";
   return "packing";
 };

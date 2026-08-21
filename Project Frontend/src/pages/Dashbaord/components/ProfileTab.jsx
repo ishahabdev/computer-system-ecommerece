@@ -92,7 +92,7 @@ const ProfileTab = ({ user, updateProfile, updateProfilePicture }) => {
     <div>
       <h2 className="text-2xl font-bold text-[#22262A] mb-6">Profile</h2>
 
-      <form onSubmit={handleSubmit} className="border border-gray-200 rounded-lg p-6 max-w-2xl">
+      <form onSubmit={handleSubmit} className="bg-white border border-[#E5E5E0] rounded-lg p-6 max-w-2xl">
         <div className="flex items-center gap-5 mb-6">
           <div className="w-20 h-20 rounded-full bg-[#2196F3] text-white flex items-center justify-center overflow-hidden text-2xl font-bold">
             {user?.profilePicture ? (

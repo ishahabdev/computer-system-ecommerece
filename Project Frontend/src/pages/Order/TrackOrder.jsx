@@ -217,9 +217,9 @@ const TrackOrder = () => {
       ...statuses,
       currentStep,
       packingDate: orderDate.toLocaleString(),
-      shippingDate: new Date(orderDate.getTime() + 10 * 1000).toLocaleString(),
-      onDeliveryDate: new Date(orderDate.getTime() + 20 * 1000).toLocaleString(),
-      deliveryDate: new Date(orderDate.getTime() + 30 * 1000).toLocaleString()
+      shippingDate: new Date(orderDate.getTime() + 10 * 60 * 1000).toLocaleString(),
+      onDeliveryDate: new Date(orderDate.getTime() + 20 * 60 * 1000).toLocaleString(),
+      deliveryDate: new Date(orderDate.getTime() + 30 * 60 * 1000).toLocaleString()
     }
   }
 

@@ -111,7 +111,7 @@ const AddressTab = ({ addresses = [], onSaveAddresses }) => {
       </div>
 
       {isFormOpen && (
-        <form onSubmit={handleSubmit} className="border border-gray-200 rounded-lg p-5 mb-6">
+        <form onSubmit={handleSubmit} className="bg-white border border-[#E5E5E0] rounded-lg p-5 mb-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <input value={form.label} onChange={(event) => updateField("label", event.target.value)} className={inputClass} placeholder="Label" />
             <input value={form.country} onChange={(event) => updateField("country", event.target.value)} className={inputClass} placeholder="Country" />
@@ -134,7 +134,7 @@ const AddressTab = ({ addresses = [], onSaveAddresses }) => {
       )}
 
       {addresses.length === 0 ? (
-        <div className="bg-gray-50 border border-gray-200 rounded-lg p-12 text-center">
+        <div className="bg-white border border-[#E5E5E0] rounded-lg p-12 text-center">
           <FiMapPin className="text-4xl text-gray-400 mx-auto mb-4" />
           <h3 className="text-lg font-semibold text-gray-700 mb-2">No saved addresses</h3>
           <p className="text-sm text-gray-600">Add an address here or place an order to save your checkout address.</p>
@@ -142,7 +142,7 @@ const AddressTab = ({ addresses = [], onSaveAddresses }) => {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {addresses.map((address) => (
-            <div key={address.id} className="border border-gray-200 rounded-lg p-5">
+            <div key={address.id} className="bg-white border border-[#E5E5E0] rounded-lg p-5">
               <div className="flex items-start justify-between gap-4 mb-3">
                 <div>
                   <h3 className="font-semibold text-[#22262A]">{address.label || "Home"}</h3>

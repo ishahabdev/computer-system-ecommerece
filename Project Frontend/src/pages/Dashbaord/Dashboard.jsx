@@ -1,7 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
-import { useWishlist } from "../../context/WishlistContext";
 import { FiLock, FiLogOut, FiMapPin, FiShoppingBag, FiUser } from "react-icons/fi";
 import { MdHome } from "react-icons/md";
 import AddressTab from "./components/AddressTab";
@@ -9,8 +8,7 @@ import ChangePasswordTab from "./components/ChangePasswordTab";
 import OrdersTab from "./components/OrdersTab";
 import OverviewTab from "./components/OverviewTab";
 import ProfileTab from "./components/ProfileTab";
-import WishlistTab from "./components/WishlistTab";
-import { readCustomerList, writeCustomerList } from "./dashboardStorage";
+import { getLiveOrderStatus, readCustomerList, writeCustomerList } from "./dashboardStorage";
 
 const dashboardTabs = [
   { id: "overview", label: "Overview", icon: MdHome },
@@ -25,7 +23,6 @@ const API_BASE_URL = "http://localhost:9000/v1";
 const Dashboard = () => {
   const navigate = useNavigate();
   const { user, isAuthenticated, logout, updateProfile, updateProfilePicture } = useAuth();
-  const { wishlistItems } = useWishlist();
   const [activeTab, setActiveTab] = useState("overview");
   const [addresses, setAddresses] = useState([]);
   const [orders, setOrders] = useState([]);
@@ -140,6 +137,14 @@ const Dashboard = () => {
     navigate("/");
   };
 
+  // Sidebar summary counts (live status so an order that has auto-progressed to
+  // "delivered" is counted even before the backend persists the change).
+  const totalOrders = orders.length;
+  const deliveredOrders = useMemo(
+    () => orders.filter((order) => getLiveOrderStatus(order) === "delivered").length,
+    [orders]
+  );
+
   if (!isAuthenticated || !user) {
     return null;
   }
@@ -155,8 +160,8 @@ const Dashboard = () => {
       .toUpperCase() || "U";
 
   return (
-    <main className="bg-white min-h-screen">
-      <div className="bg-gray-50 border-b border-gray-200">
+    <main className="bg-[#F7F7F5] min-h-screen text-gray-800">
+      <div className="border-b border-[#E5E5E0]">
         <div className="px-4 sm:px-6 md:px-10 lg:px-20 xl:px-36 py-3">
           <nav className="flex items-center gap-2 text-sm" aria-label="Breadcrumb">
             <Link to="/" className="text-[#2196F3] hover:underline transition-colors">
@@ -168,14 +173,14 @@ const Dashboard = () => {
         </div>
       </div>
 
-      <div className="px-4 sm:px-6 md:px-10 lg:px-20 xl:px-36 py-6 border-b border-gray-200">
+      <div className="px-4 sm:px-6 md:px-10 lg:px-20 xl:px-36 py-6 border-b border-[#E5E5E0]">
         <h1 className="text-2xl font-bold text-[#22262A]">Customer Dashboard</h1>
       </div>
 
       <div className="px-4 sm:px-6 md:px-10 lg:px-20 xl:px-36 py-8">
         <div className="flex flex-col lg:flex-row gap-8">
           <aside className="lg:w-64 flex-shrink-0">
-            <div className="border border-gray-200 rounded-lg p-4 mb-4">
+            <div className="bg-white border border-[#E5E5E0] rounded-lg p-4 mb-4">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-full bg-[#2196F3] text-white flex items-center justify-center overflow-hidden font-bold">
                   {user.profilePicture ? (
@@ -191,7 +196,18 @@ const Dashboard = () => {
               </div>
             </div>
 
-            <div className="space-y-2">
+            <div className="grid grid-cols-2 gap-3 mb-4">
+              <div className="rounded-lg border border-[#E5E5E0] bg-white px-4 py-3">
+                <p className="text-xs text-gray-500">Total orders</p>
+                <p className="text-2xl font-bold text-[#22262A]">{totalOrders}</p>
+              </div>
+              <div className="rounded-lg border border-[#E5E5E0] bg-white px-4 py-3">
+                <p className="text-xs text-gray-500">Delivered</p>
+                <p className="text-2xl font-bold text-[#22262A]">{deliveredOrders}</p>
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
               {dashboardTabs.map((tab) => {
                 const Icon = tab.icon;
                 return (
@@ -199,10 +215,10 @@ const Dashboard = () => {
                     key={tab.id}
                     type="button"
                     onClick={() => setActiveTab(tab.id)}
-                    className={`w-full flex items-center gap-3 px-4 py-3 rounded transition-all ${
+                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
                       activeTab === tab.id
                         ? "bg-blue-50 text-[#2196F3] border-l-4 border-[#2196F3]"
-                        : "text-gray-700 hover:bg-gray-50"
+                        : "text-gray-700 hover:bg-white"
                     }`}
                   >
                     <Icon className="text-xl shrink-0" />
@@ -214,7 +230,7 @@ const Dashboard = () => {
               <button
                 type="button"
                 onClick={handleLogout}
-                className="w-full flex items-center gap-3 px-4 py-3 rounded text-red-600 hover:bg-red-50 transition-all"
+                className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-red-600 hover:bg-white transition-all"
               >
                 <FiLogOut className="text-xl shrink-0" />
                 <span className="text-sm font-medium">Logout</span>
@@ -228,7 +244,6 @@ const Dashboard = () => {
                 user={user}
                 orders={orders}
                 addresses={addresses}
-                wishlistItems={wishlistItems}
                 onSelectTab={setActiveTab}
               />
             )}
@@ -245,7 +260,6 @@ const Dashboard = () => {
             {activeTab === "orders" && (
               <OrdersTab orders={orders} onCancelOrder={handleCancelOrder} />
             )}
-            {activeTab === "wishlist" && <WishlistTab />}
             {activeTab === "change-password" && <ChangePasswordTab user={user} />}
           </div>
         </div>
@@ -262,7 +276,7 @@ const Dashboard = () => {
             className="absolute inset-0 bg-black/40 transition-opacity"
             onClick={() => setShowLogoutConfirm(false)}
           />
-          <div className="relative w-full max-w-sm bg-white rounded-xl shadow-2xl border border-gray-200 p-6 text-center">
+          <div className="relative w-full max-w-sm bg-white rounded-xl shadow-2xl border border-[#E5E5E0] p-6 text-center">
             <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-red-50 text-red-600">
               <FiLogOut className="text-2xl" />
             </div>

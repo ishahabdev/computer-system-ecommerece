@@ -106,6 +106,17 @@ const OrdersTab = ({ orders = [], onCancelOrder }) => {
     [orders]
   );
 
+  // Counts shown next to each filter pill (All / Active / Delivered / Cancelled).
+  const filterCounts = useMemo(() => {
+    const counts = { all: enrichedOrders.length, active: 0, delivered: 0, cancelled: 0 };
+    enrichedOrders.forEach((entry) => {
+      if (entry.status === 'delivered') counts.delivered += 1;
+      else if (entry.status === 'cancelled') counts.cancelled += 1;
+      else counts.active += 1;
+    });
+    return counts;
+  }, [enrichedOrders]);
+
   // Apply the active tab + search box, newest first.
   const filteredOrders = useMemo(() => {
     const term = searchTerm.trim().toLowerCase();
@@ -154,30 +165,36 @@ const OrdersTab = ({ orders = [], onCancelOrder }) => {
             value={searchTerm}
             onChange={handleSearchChange}
             placeholder="Search orders..."
-            className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#2196F3]/30 focus:border-[#2196F3]"
+            className="w-full pl-10 pr-4 py-2 bg-white border border-[#E5E5E0] rounded-lg text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#2196F3]/30 focus:border-[#2196F3]"
           />
         </div>
       </div>
 
       <div className="flex flex-wrap gap-2 mb-6">
-        {FILTERS.map((filter) => (
-          <button
-            key={filter.id}
-            type="button"
-            onClick={() => handleFilterChange(filter.id)}
-            className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
-              activeFilter === filter.id
-                ? "bg-[#2196F3] text-white"
-                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-            }`}
-          >
-            {filter.label}
-          </button>
-        ))}
+        {FILTERS.map((filter) => {
+          const isActive = activeFilter === filter.id;
+          return (
+            <button
+              key={filter.id}
+              type="button"
+              onClick={() => handleFilterChange(filter.id)}
+              className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                isActive
+                  ? "bg-[#2196F3] text-white"
+                  : "bg-white border border-[#E5E5E0] text-gray-600 hover:bg-gray-50"
+              }`}
+            >
+              {filter.label}
+              <span className={`ml-1.5 ${isActive ? "text-white/70" : "text-gray-400"}`}>
+                {filterCounts[filter.id]}
+              </span>
+            </button>
+          );
+        })}
       </div>
 
       {orders.length === 0 ? (
-        <div className="text-center py-12 bg-gray-50 rounded-lg">
+        <div className="text-center py-12 bg-white border border-[#E5E5E0] rounded-lg">
           <p className="text-gray-600 mb-4">No orders yet</p>
           <Link
             to="/store"
@@ -187,7 +204,7 @@ const OrdersTab = ({ orders = [], onCancelOrder }) => {
           </Link>
         </div>
       ) : filteredOrders.length === 0 ? (
-        <div className="text-center py-12 bg-gray-50 rounded-lg">
+        <div className="text-center py-12 bg-white border border-[#E5E5E0] rounded-lg">
           <p className="text-gray-600">No orders match your search.</p>
         </div>
       ) : (
@@ -210,8 +227,8 @@ const OrdersTab = ({ orders = [], onCancelOrder }) => {
                   const total = getOrderTotal(order);
 
                   return (
-                    <div key={key} className="border border-gray-200 rounded-lg overflow-hidden">
-                      <div className="bg-white px-4 sm:px-6 py-4 flex flex-col md:flex-row md:items-center gap-4">
+                    <div key={key} className="border border-[#E5E5E0] rounded-lg overflow-hidden bg-white">
+                      <div className="px-4 sm:px-6 py-4 flex flex-col md:flex-row md:items-center gap-4">
                         <div className="flex items-start gap-3 flex-1 min-w-0">
                           <span className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-50 text-[#2196F3]">
                             <FiPackage className="text-lg" />
@@ -220,7 +237,7 @@ const OrdersTab = ({ orders = [], onCancelOrder }) => {
                             <p className="text-sm font-semibold text-[#22262A] truncate">
                               Order #{orderNumber}
                             </p>
-                            <p className="text-sm text-gray-600 truncate">
+                            <p className="text-sm text-gray-500 truncate">
                               {firstItemName}
                               {extraItemsCount > 0 ? ` +${extraItemsCount} more` : ""}
                             </p>
@@ -228,7 +245,7 @@ const OrdersTab = ({ orders = [], onCancelOrder }) => {
                         </div>
 
                         <div className="grid grid-cols-2 sm:flex sm:items-center gap-3 sm:gap-5 text-sm">
-                          <span className="text-gray-600">{formatOrderDate(order)}</span>
+                          <span className="text-gray-500">{formatOrderDate(order)}</span>
                           <span className="font-semibold text-[#22262A]">${total}</span>
                           <span
                             className={`justify-self-start text-xs font-semibold uppercase tracking-wide px-3 py-1 rounded ${getStatusClass(status)}`}
@@ -253,11 +270,11 @@ const OrdersTab = ({ orders = [], onCancelOrder }) => {
 
                       {isExpanded && (
                         <>
-                          <div className="px-4 sm:px-6 py-6 bg-gray-50 border-t border-gray-200">
+                          <div className="px-4 sm:px-6 py-6 bg-[#F7F7F5] border-t border-[#E5E5E0]">
                             <h4 className="text-sm font-semibold text-[#22262A] mb-4">Products</h4>
                             <table className="w-full text-sm">
                               <thead>
-                                <tr className="border-b border-gray-200">
+                                <tr className="border-b border-[#E5E5E0]">
                                   <th className="text-left py-2 text-gray-600 font-medium">Product Name</th>
                                   <th className="text-center py-2 text-gray-600 font-medium">Qty</th>
                                   <th className="text-right py-2 text-gray-600 font-medium">Price</th>
@@ -269,7 +286,7 @@ const OrdersTab = ({ orders = [], onCancelOrder }) => {
                                   const price = Number(item.price || 0) * qty;
 
                                   return (
-                                    <tr key={itemIdx} className="border-b border-gray-200">
+                                    <tr key={itemIdx} className="border-b border-[#E5E5E0]">
                                       <td className="py-3 text-gray-700">{getItemName(item)}</td>
                                       <td className="text-center py-3 text-gray-700">{qty}</td>
                                       <td className="text-right py-3 text-gray-700">
@@ -298,7 +315,7 @@ const OrdersTab = ({ orders = [], onCancelOrder }) => {
                             )}
                           </div>
 
-                          <div className="px-4 sm:px-6 py-4 bg-white border-t border-gray-200 flex flex-wrap items-center gap-3">
+                          <div className="px-4 sm:px-6 py-4 bg-white border-t border-[#E5E5E0] flex flex-wrap items-center gap-3">
                             <Link
                               to="/track-order"
                               state={{ orderId: orderNumber }}
@@ -334,7 +351,7 @@ const OrdersTab = ({ orders = [], onCancelOrder }) => {
               <button
                 type="button"
                 onClick={() => setVisibleCount((count) => count + ORDERS_PER_PAGE)}
-                className="inline-flex items-center gap-2 border border-gray-300 text-gray-700 text-sm font-semibold px-6 py-2.5 rounded-lg hover:bg-gray-50 transition-colors"
+                className="inline-flex items-center gap-2 border border-[#E5E5E0] bg-white text-gray-700 text-sm font-semibold px-6 py-2.5 rounded-lg hover:bg-gray-50 transition-colors"
               >
                 Load More Orders
                 <FiChevronDown className="text-base" />
@@ -355,7 +372,7 @@ const OrdersTab = ({ orders = [], onCancelOrder }) => {
             className="absolute inset-0 bg-black/40 transition-opacity"
             onClick={() => !isCancelling && setCancelTarget(null)}
           />
-          <div className="relative w-full max-w-sm bg-white rounded-xl shadow-2xl border border-gray-200 p-6 text-center">
+          <div className="relative w-full max-w-sm bg-white rounded-xl shadow-2xl border border-[#E5E5E0] p-6 text-center">
             <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-red-50 text-red-600">
               <FiXCircle className="text-2xl" />
             </div>

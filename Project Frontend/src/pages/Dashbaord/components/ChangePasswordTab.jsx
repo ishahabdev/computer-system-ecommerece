@@ -44,7 +44,7 @@ const ChangePasswordTab = ({ user }) => {
     <div>
       <h2 className="text-2xl font-bold text-[#22262A] mb-6">Change Password</h2>
 
-      <div className="border border-gray-200 rounded-lg p-6 max-w-xl">
+      <div className="bg-white border border-[#E5E5E0] rounded-lg p-6 max-w-xl">
         <div className="w-12 h-12 rounded bg-blue-50 text-[#2196F3] flex items-center justify-center mb-4">
           <HiOutlineLockClosed className="text-2xl" />
         </div>
