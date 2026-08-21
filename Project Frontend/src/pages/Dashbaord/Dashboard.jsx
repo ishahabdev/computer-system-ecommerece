@@ -22,18 +22,6 @@ const dashboardTabs = [
 
 const API_BASE_URL = "http://localhost:9000/v1";
 
-const getOrderDatabaseId = (order) => {
-  if (order?.databaseOrderId) return order.databaseOrderId;
-  if (order?.id) return order.id;
-  if (typeof order?.orderId === "string" && order.orderId.startsWith("ORD-")) {
-    return order.orderId.replace("ORD-", "");
-  }
-  return null;
-};
-
-const getOrderKey = (order) =>
-  String(order?.orderId || order?.databaseOrderId || order?.id || "");
-
 const Dashboard = () => {
   const navigate = useNavigate();
   const { user, isAuthenticated, logout, updateProfile, updateProfilePicture } = useAuth();
@@ -41,6 +29,7 @@ const Dashboard = () => {
   const [activeTab, setActiveTab] = useState("overview");
   const [addresses, setAddresses] = useState([]);
   const [orders, setOrders] = useState([]);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -51,6 +40,18 @@ const Dashboard = () => {
   useEffect(() => {
     setAddresses(readCustomerList(user, "addresses"));
   }, [user]);
+
+  // Close the logout confirmation dialog when Escape is pressed.
+  useEffect(() => {
+    if (!showLogoutConfirm) return;
+
+    const handleKeyDown = (event) => {
+      if (event.key === "Escape") setShowLogoutConfirm(false);
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [showLogoutConfirm]);
 
   // Fetch real orders from backend and keep synced with localStorage
   useEffect(() => {
@@ -92,41 +93,49 @@ const Dashboard = () => {
     writeCustomerList(user, "addresses", nextAddresses);
   };
 
-  const handleDeleteOrder = async (order) => {
-    const shouldDelete = window.confirm("Delete this order from your dashboard?");
-    if (!shouldDelete) return;
-
-    const orderKey = getOrderKey(order);
-    const databaseOrderId = getOrderDatabaseId(order);
-    const previousOrders = orders;
-    const nextOrders = orders.filter((currentOrder) => getOrderKey(currentOrder) !== orderKey);
-
-    setOrders(nextOrders);
-    writeCustomerList(user, "orders", nextOrders);
-
+  // Cancel an order the customer owns (allowed until it is delivered). Returns a
+  // { success, message } result so the Orders tab can show inline feedback.
+  const handleCancelOrder = async (order) => {
+    const dbId = order.databaseOrderId ?? order.id;
     const token = localStorage.getItem("authToken");
-    if (!token || !databaseOrderId) return;
+
+    if (!dbId || !token) {
+      return { success: false, message: "You must be signed in to cancel this order." };
+    }
 
     try {
-      const response = await fetch(`${API_BASE_URL}/orders/${databaseOrderId}`, {
-        method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+      const response = await fetch(`${API_BASE_URL}/orders/${dbId}/cancel`, {
+        method: "PUT",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const result = await response.json().catch(() => ({}));
+
+      if (!response.ok || result.success === false) {
+        return { success: false, message: result.message || "Unable to cancel order" };
+      }
+
+      setOrders((currentOrders) => {
+        const nextOrders = currentOrders.map((existingOrder) =>
+          (existingOrder.databaseOrderId ?? existingOrder.id) === dbId
+            ? { ...existingOrder, status: "cancelled" }
+            : existingOrder
+        );
+        writeCustomerList(user, "orders", nextOrders);
+        return nextOrders;
       });
 
-      if (!response.ok) {
-        const result = await response.json().catch(() => ({}));
-        throw new Error(result.message || "Unable to delete order");
-      }
+      return { success: true };
     } catch (err) {
-      setOrders(previousOrders);
-      writeCustomerList(user, "orders", previousOrders);
-      alert(err.message || "Unable to delete order. Please try again.");
+      return { success: false, message: err.message || "Unable to cancel order" };
     }
   };
 
   const handleLogout = () => {
+    setShowLogoutConfirm(true);
+  };
+
+  const confirmLogout = () => {
+    setShowLogoutConfirm(false);
     logout();
     navigate("/");
   };
@@ -234,13 +243,54 @@ const Dashboard = () => {
               <AddressTab addresses={addresses} onSaveAddresses={handleSaveAddresses} />
             )}
             {activeTab === "orders" && (
-              <OrdersTab orders={orders} onDeleteOrder={handleDeleteOrder} />
+              <OrdersTab orders={orders} onCancelOrder={handleCancelOrder} />
             )}
             {activeTab === "wishlist" && <WishlistTab />}
             {activeTab === "change-password" && <ChangePasswordTab user={user} />}
           </div>
         </div>
       </div>
+
+      {showLogoutConfirm && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="logout-dialog-title"
+        >
+          <div
+            className="absolute inset-0 bg-black/40 transition-opacity"
+            onClick={() => setShowLogoutConfirm(false)}
+          />
+          <div className="relative w-full max-w-sm bg-white rounded-xl shadow-2xl border border-gray-200 p-6 text-center">
+            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-red-50 text-red-600">
+              <FiLogOut className="text-2xl" />
+            </div>
+            <h2 id="logout-dialog-title" className="text-lg font-bold text-[#22262A]">
+              Log out?
+            </h2>
+            <p className="mt-2 text-sm text-gray-500">
+              Are you sure you want to log out of your account?
+            </p>
+            <div className="mt-6 flex gap-3">
+              <button
+                type="button"
+                onClick={() => setShowLogoutConfirm(false)}
+                className="flex-1 rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={confirmLogout}
+                className="flex-1 rounded-lg bg-red-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-red-700 transition-colors"
+              >
+                Log Out
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 };

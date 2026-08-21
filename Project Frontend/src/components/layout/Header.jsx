@@ -168,7 +168,7 @@ const Header = () => {
             />
             <button
               type="submit"
-              className="bg-[#2196F3] text-white h-full  px-2 sm:px-3 h-full shrink-0 hover:bg-[#1a7fd1] transition-all duration-200 rounded-md"
+              className="bg-[#2196F3] text-white h-full px-2 sm:px-3 shrink-0 hover:bg-[#1a7fd1] transition-all duration-200 rounded-md"
               title="Search"
             >
               <IoMdSearch className="text-3xl" />

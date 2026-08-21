@@ -4,6 +4,7 @@ import { Formik, Form, Field, ErrorMessage } from "formik"
 import * as Yup from "yup"
 import { BsTruck, BsCheckCircleFill } from "react-icons/bs"
 import { IoCheckmarkCircle } from "react-icons/io5"
+import { FiXCircle } from "react-icons/fi"
 import { useAuth } from "../../context/AuthContext"
 import { getLiveOrderStatus, readCustomerList, writeCustomerList } from "../Dashbaord/dashboardStorage"
 
@@ -48,6 +49,9 @@ const TrackOrder = () => {
   const [orderData, setOrderData] = useState(null)
   const [errorMessage, setErrorMessage] = useState("")
   const [isLoading, setIsLoading] = useState(false)
+  const [isCancelling, setIsCancelling] = useState(false)
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false)
+  const [cancelError, setCancelError] = useState("")
 
   const findAndSetOrder = async (trackingId, isBackgroundSync = false) => {
     if (!trackingId) return
@@ -140,6 +144,52 @@ const TrackOrder = () => {
     setSubmitting(false)
   }
 
+  // Cancel the currently displayed order (allowed until it is delivered).
+  const handleCancelOrder = async () => {
+    const dbId = orderData?.databaseOrderId ?? orderData?.id
+    const token = localStorage.getItem("authToken")
+
+    if (!dbId || !token) {
+      setCancelError("You must be signed in to cancel this order.")
+      return
+    }
+
+    setIsCancelling(true)
+    setCancelError("")
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/orders/${dbId}/cancel`, {
+        method: "PUT",
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      const result = await response.json().catch(() => ({}))
+
+      if (!response.ok || result.success === false) {
+        throw new Error(result.message || "Unable to cancel order")
+      }
+
+      const cancelledOrder = normalizeOrder({ ...orderData, status: "cancelled" })
+      setOrderData(cancelledOrder)
+
+      if (user) {
+        const orders = readCustomerList(user, "orders")
+        const nextOrders = orders.map((order) => {
+          const matches =
+            String(order.orderId).toUpperCase() === String(cancelledOrder.orderId).toUpperCase() ||
+            String(order.databaseOrderId || order.id) === String(dbId)
+          return matches ? { ...order, status: "cancelled" } : order
+        })
+        writeCustomerList(user, "orders", nextOrders)
+      }
+
+      setShowCancelConfirm(false)
+    } catch (err) {
+      setCancelError(err.message || "Unable to cancel order")
+    } finally {
+      setIsCancelling(false)
+    }
+  }
+
   // Calculate order status and timeline using the shared status function
   const getOrderStatus = (order) => {
     if (!order) return null
@@ -167,13 +217,16 @@ const TrackOrder = () => {
       ...statuses,
       currentStep,
       packingDate: orderDate.toLocaleString(),
-      shippingDate: new Date(orderDate.getTime() + 1 * 60 * 1000).toLocaleString(),
-      onDeliveryDate: new Date(orderDate.getTime() + 2 * 60 * 1000).toLocaleString(),
-      deliveryDate: new Date(orderDate.getTime() + 3 * 60 * 1000).toLocaleString()
+      shippingDate: new Date(orderDate.getTime() + 10 * 1000).toLocaleString(),
+      onDeliveryDate: new Date(orderDate.getTime() + 20 * 1000).toLocaleString(),
+      deliveryDate: new Date(orderDate.getTime() + 30 * 1000).toLocaleString()
     }
   }
 
   const status = orderData ? getOrderStatus(orderData) : null
+  const liveStatus = orderData ? getLiveOrderStatus(orderData) : null
+  const canCancel =
+    Boolean(user) && liveStatus && liveStatus !== "delivered" && liveStatus !== "cancelled"
 
   const inputClass = "w-full bg-gray-50 text-sm text-gray-600 placeholder-gray-400 rounded-md px-4 py-3 outline-none focus:ring-2 focus:ring-[#2196F3]/40 transition"
   const labelClass = "block text-sm font-medium text-gray-700 mb-2"
@@ -251,6 +304,12 @@ const TrackOrder = () => {
           {/* Order Details */}
           {orderData && status && (
             <div className="space-y-8">
+              {liveStatus === "cancelled" && (
+                <div className="flex items-center gap-3 rounded-lg border border-red-200 bg-red-50 p-4 text-red-700">
+                  <FiXCircle className="text-xl shrink-0" />
+                  <p className="text-sm font-semibold">This order has been cancelled.</p>
+                </div>
+              )}
               {/* Order Info */}
               <div className="bg-gray-50 p-6 rounded-lg">
                 <h2 className="text-lg font-bold text-[#22262A] mb-4">My Order</h2>
@@ -435,20 +494,78 @@ const TrackOrder = () => {
                 </div>
               )}
 
-              {/* Track Another Order */}
-              <button
-                onClick={() => {
-                  setOrderData(null)
-                  setErrorMessage("")
-                }}
-                className="w-full bg-gray-100 hover:bg-gray-200 text-[#22262A] text-sm font-semibold py-3.5 rounded-md transition-colors"
-              >
-                Track Another Order
-              </button>
+              {/* Actions */}
+              <div className="space-y-3">
+                {canCancel && (
+                  <button
+                    onClick={() => {
+                      setCancelError("")
+                      setShowCancelConfirm(true)
+                    }}
+                    className="w-full inline-flex items-center justify-center gap-2 bg-red-50 hover:bg-red-100 text-red-700 text-sm font-semibold py-3.5 rounded-md border border-red-200 transition-colors"
+                  >
+                    <FiXCircle className="text-base" />
+                    Cancel Order
+                  </button>
+                )}
+                <button
+                  onClick={() => {
+                    setOrderData(null)
+                    setErrorMessage("")
+                  }}
+                  className="w-full bg-gray-100 hover:bg-gray-200 text-[#22262A] text-sm font-semibold py-3.5 rounded-md transition-colors"
+                >
+                  Track Another Order
+                </button>
+              </div>
             </div>
           )}
         </div>
       </div>
+
+      {showCancelConfirm && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="track-cancel-title"
+        >
+          <div
+            className="absolute inset-0 bg-black/40 transition-opacity"
+            onClick={() => !isCancelling && setShowCancelConfirm(false)}
+          />
+          <div className="relative w-full max-w-sm bg-white rounded-xl shadow-2xl border border-gray-200 p-6 text-center">
+            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-red-50 text-red-600">
+              <FiXCircle className="text-2xl" />
+            </div>
+            <h2 id="track-cancel-title" className="text-lg font-bold text-[#22262A]">
+              Cancel this order?
+            </h2>
+            <p className="mt-2 text-sm text-gray-500">
+              Order #{orderData?.orderId} will be cancelled. This cannot be undone.
+            </p>
+            {cancelError && <p className="mt-3 text-sm text-red-600">{cancelError}</p>}
+            <div className="mt-6 flex gap-3">
+              <button
+                type="button"
+                disabled={isCancelling}
+                onClick={() => setShowCancelConfirm(false)}
+                className="flex-1 rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-60"
+              >
+                Keep Order
+              </button>
+              <button
+                type="button"
+                disabled={isCancelling}
+                onClick={handleCancelOrder}
+                className="flex-1 rounded-lg bg-red-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-red-700 transition-colors disabled:opacity-60"
+              >
+                {isCancelling ? "Cancelling..." : "Cancel Order"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   )
 }
