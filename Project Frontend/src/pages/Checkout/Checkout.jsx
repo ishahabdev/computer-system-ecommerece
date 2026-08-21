@@ -190,6 +190,10 @@ const Checkout = () => {
       const checkoutAddress = {
         id: Date.now(),
         label: "Checkout",
+        // Carry the profile name/phone so the saved card renders complete in the
+        // dashboard Addresses tab, which shows a recipient and contact number.
+        fullName: user?.name || "",
+        phone: user?.phone || "",
         street: address,
         city,
         state,

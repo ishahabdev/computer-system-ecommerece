@@ -4,6 +4,20 @@ const AuthContext = createContext(null)
 
 const API_BASE_URL = "http://localhost:9000/v1"
 
+// Without a deadline a stalled backend leaves the form spinning forever with no
+// error, because fetch only rejects when the connection is actually refused.
+const REQUEST_TIMEOUT_MS = 15000
+
+const getRequestErrorMessage = (error, fallback) => {
+  if (error.name === "TimeoutError" || error.name === "AbortError") {
+    return "The server took too long to respond. Please make sure the backend is running and try again."
+  }
+  if (error instanceof TypeError) {
+    return "Could not reach the server. Please check your connection and try again."
+  }
+  return error.message || fallback
+}
+
 const getUserIdentifier = (user) => {
   const identifier = user?.id || user?._id || user?.email
   return identifier ? String(identifier).toLowerCase() : null
@@ -89,7 +103,8 @@ export const AuthProvider = ({ children }) => {
         headers: {
           "Content-Type": "application/json"
         },
-        body: JSON.stringify({ name, email, password })
+        body: JSON.stringify({ name, email, password }),
+        signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS)
       })
 
       const data = await response.json()
@@ -102,7 +117,7 @@ export const AuthProvider = ({ children }) => {
       // accessing protected routes such as the database cart.
       return { success: true, requiresSignin: true }
     } catch (error) {
-      return { success: false, error: error.message }
+      return { success: false, error: getRequestErrorMessage(error, "Signup failed") }
     }
   }
 
@@ -114,7 +129,8 @@ export const AuthProvider = ({ children }) => {
         headers: {
           "Content-Type": "application/json"
         },
-        body: JSON.stringify({ email, password })
+        body: JSON.stringify({ email, password }),
+        signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS)
       })
 
       const data = await response.json()
@@ -134,7 +150,7 @@ export const AuthProvider = ({ children }) => {
 
       return { success: true, user: mergedUser }
     } catch (error) {
-      return { success: false, error: error.message }
+      return { success: false, error: getRequestErrorMessage(error, "Login failed") }
     }
   }
 

@@ -255,12 +255,12 @@ const Dashboard = () => {
               />
             )}
             {activeTab === "addresses" && (
-              <AddressTab addresses={addresses} onSaveAddresses={handleSaveAddresses} />
+              <AddressTab addresses={addresses} onSaveAddresses={handleSaveAddresses} user={user} />
             )}
             {activeTab === "orders" && (
               <OrdersTab orders={orders} onCancelOrder={handleCancelOrder} />
             )}
-            {activeTab === "change-password" && <ChangePasswordTab user={user} />}
+            {activeTab === "change-password" && <ChangePasswordTab />}
           </div>
         </div>
       </div>
