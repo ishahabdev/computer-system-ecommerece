@@ -1,5 +1,10 @@
+import { Op } from "sequelize";
+
 import Order from "../model/orderModel.js";
 import User from "../model/userModel.js";
+
+// Orders in these states never change again, so the scheduler can skip them.
+const TERMINAL_STATUSES = ["delivered", "cancelled"];
 
 const normalizeStoredStatus = (status) => {
   const normalizedStatus = String(status || "").toLowerCase().trim();
@@ -21,11 +26,13 @@ const getLiveOrderStatus = (order) => {
   const orderDate = new Date(order.createdAt);
   if (isNaN(orderDate.getTime())) return storedStatus;
 
-  const minutesSinceOrder = Math.floor((Date.now() - orderDate.getTime()) / (1000 * 60));
+  const secondsSinceOrder = Math.floor((Date.now() - orderDate.getTime()) / 1000);
 
-  if (minutesSinceOrder >= 3) return "delivered";
-  if (minutesSinceOrder >= 2) return "on delivery";
-  if (minutesSinceOrder >= 1) return "shipping";
+  // Auto-progress on a 10-second-per-step timeline:
+  // 0-10s → packing, 10-20s → shipping, 20-30s → on delivery, 30s+ → delivered
+  if (secondsSinceOrder >= 30) return "delivered";
+  if (secondsSinceOrder >= 20) return "on delivery";
+  if (secondsSinceOrder >= 10) return "shipping";
   return "packing";
 };
 
@@ -43,6 +50,19 @@ const syncLiveOrderStatus = async (order) => {
 
 const syncLiveOrderStatuses = async (orders) => {
   return Promise.all(orders.map((order) => syncLiveOrderStatus(order)));
+};
+
+// Advance every still-active order to its live status on the 10-second-per-step
+// timeline and persist any change. This is what the background scheduler calls,
+// so the stored status keeps moving (packing -> shipping -> on delivery ->
+// delivered) even when nobody is actively fetching the orders. Without this the
+// DB status only updates on read and appears frozen until someone loads it.
+export const syncActiveOrderStatuses = async () => {
+  const activeOrders = await Order.findAll({
+    where: { status: { [Op.notIn]: TERMINAL_STATUSES } },
+  });
+  await syncLiveOrderStatuses(activeOrders);
+  return activeOrders.length;
 };
 
 // CREATE ORDER (customer places an order at checkout)
@@ -183,6 +203,55 @@ export const deleteOrder = async (req, res) => {
     res.json({
       success: true,
       message: "Order deleted successfully",
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "internal server error",
+      error: error.message,
+    });
+  }
+};
+
+// CANCEL MY ORDER - the owner can cancel any time before the order is delivered
+export const cancelOrder = async (req, res) => {
+  try {
+    const order = await Order.findOne({
+      where: { id: req.params.id, userId: req.user.id },
+    });
+
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: "Order not found",
+      });
+    }
+
+    // Resolve the real, time-based status first so an order that has already
+    // reached "delivered" on the timeline can no longer be cancelled.
+    const liveStatus = getLiveOrderStatus(order);
+
+    if (liveStatus === "cancelled") {
+      return res.status(400).json({
+        success: false,
+        message: "Order is already cancelled",
+      });
+    }
+
+    if (liveStatus === "delivered") {
+      return res.status(400).json({
+        success: false,
+        message: "Delivered orders can no longer be cancelled",
+      });
+    }
+
+    order.status = "cancelled";
+    await order.save();
+
+    res.json({
+      success: true,
+      message: "Order cancelled successfully",
+      data: order,
     });
   } catch (error) {
     res.status(500).json({

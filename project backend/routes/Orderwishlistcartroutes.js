@@ -2,6 +2,7 @@ import express from "express";
 import { authMiddleware, adminOnly } from "../middleware/AuthMiddleware.js";
 
 import {
+  cancelOrder,
   createOrder,
   deleteOrder,
   getMyOrders,
@@ -34,6 +35,7 @@ router.get("/orders/all", authMiddleware, adminOnly, getAllOrders);
 router.get("/orders/track/:trackingId", trackOrder);
 router.get("/orders/:id", authMiddleware, getOrderById);
 router.delete("/orders/:id", authMiddleware, deleteOrder);
+router.put("/orders/:id/cancel", authMiddleware, cancelOrder);
 router.put("/orders/:id/status", authMiddleware, adminOnly, updateOrderStatus);
 
 // WISHLIST ROUTES
