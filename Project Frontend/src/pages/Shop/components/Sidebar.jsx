@@ -168,10 +168,7 @@ const Sidebar = ({
             );
           })}
         </ul>
-        <button className="flex items-center gap-1 text-blue-500 text-xs font-medium mt-3 hover:underline">
-          MORE
-          <FiChevronDown />
-        </button>
+      
       </div>
     </aside>
   );

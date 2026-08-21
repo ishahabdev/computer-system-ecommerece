@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect } from "react";
+import React, { useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import storebanner from "../../assets/storepics/storebanner.webp";
 import Sidebar from "./components/Sidebar";

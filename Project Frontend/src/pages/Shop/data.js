@@ -1,9 +1,27 @@
-import img1 from "../../assets/homePIc/home1.webp";
-import img2 from "../../assets/homePIc/home2.webp";
-import img3 from "../../assets/homePIc/home3.webp";
-import img4 from "../../assets/homePIc/home4.webp";
-import img5 from "../../assets/homePIc/home5.webp";
-import img6 from "../../assets/homePIc/home6.webp";
+import img1 from "../../assets/Store/Dell1.webp";
+import img2 from "../../assets/Store/Dell2.webp";
+import img3 from "../../assets/Store/Dell3.webp";
+import img4 from "../../assets/Store/Dell4.webp";
+import img5 from "../../assets/Store/Dell5.webp";
+import img6 from "../../assets/Store/Dell6.webp";
+import img7 from "../../assets/Store/Dell7.webp";
+import img8 from "../../assets/Store/Dell8.webp";
+import img9 from "../../assets/Store/Dell9.webp";
+import img10 from "../../assets/Store/Dell10.webp";
+import img11 from "../../assets/Store/hp1.webp";
+import img12 from "../../assets/Store/hp2.webp";
+import img13 from "../../assets/Store/hp3.webp";
+import img14 from "../../assets/Store/hp4.webp";
+import img15 from "../../assets/Store/hp5.webp";
+import img16 from "../../assets/Store/hp6.webp";
+import img17 from "../../assets/Store/hp7.webp";
+import img18 from "../../assets/Store/hp8.webp";
+import img19 from "../../assets/Store/hp9.webp";
+import img20 from "../../assets/Store/hp10.webp";
+import img21 from "../../assets/Store/Disktop1.webp";
+import img22 from "../../assets/Store/Disktop2.webp";
+import img23 from "../../assets/Store/Disktop3.webp";
+import img24 from "../../assets/Store/Disktop4.webp";
 import view1 from "../../assets/homePIc/homeview1.webp";
 import view2 from "../../assets/homePIc/homeview2.webp";
 import view3 from "../../assets/homePIc/homeview3.webp";
@@ -21,80 +39,79 @@ const PRICE_MAX = 999;
 const categoryDefs = [
   {
     label: "Desktop Computers",
-    count: 40,
+    count: 10,
     base: 450,
-    images: [img1, img6, view2],
-    brands: ["Dell", "HP", "Apple", "Lenovo", "Samsung", "ASUS"],
+    images: [img21, img22, img23, img24],
+    brands: ["Apple", "HP", "Samsung", "Dell"],
+
     names: [
-      "OptiPlex 7080 Tower",
-      "Pavilion TP01 Desktop",
-      'iMac 24" M1',
-      "Galaxy Desktop DM500",
-      "ThinkCentre M90q",
-      "Precision 3650 Tower",
-      "Envy TE01 Desktop",
-      "IdeaCentre 3 Desktop",
-      "Mac Mini M2",
-      "Vostro 3910 Tower",
-      "ProDesk 400 G7",
-      "Legion Tower 5",
+      "Dell OptiPlex Tower",
+      "HP Pavilion Desktop",
+      "Apple iMac 24-inch",
+      "Dell Inspiron Desktop",
+      "HP EliteDesk Mini",
     ],
   },
   {
     label: "Laptops",
-    count: 58,
+    count: 20,
     base: 520,
-    images: [img2, img3, view5, img4],
-    brands: ["Apple", "HP", "Samsung", "Dell", "Lenovo", "ASUS", "MSI"],
+    images: [
+      img2,
+      img3,
+      view5,
+      img4,
+      img10,
+      img9,
+      img6,
+      img7,
+      img8,
+      img1,
+      img12,
+      img13,
+      img15,
+      img14,
+      img20,
+      img19,
+      img16,
+      img17,
+      img18,
+      img11,
+    ],
+    brands: ["Apple", "HP", "Samsung", "Dell"],
     names: [
-      "EliteBook 840 G6",
-      "XPS 13 Plus",
-      "MacBook Air M2",
-      "Galaxy Book3 Pro",
-      "Spectre x360 2-in-1",
-      "ThinkPad X1 Carbon",
-      "Pavilion 15 Laptop",
-      "Gram 17 Ultrabook",
-      "Swift 3 Laptop",
-      "ZenBook 14 OLED",
-      "Vivobook S15",
-      "Inspiron 15 3000",
-      "Surface Laptop 5",
-      "ROG Zephyrus G14",
+      "MacBook Air 13-inch",
+      "HP Spectre x360",
+      "Samsung Galaxy Book",
+      "Dell XPS 13",
+      "MacBook Pro 14-inch",
+      "HP Envy Laptop",
     ],
   },
   {
     label: "Gaming PCs",
     count: 16,
     base: 700,
-    images: [img1, img4, img6],
-    brands: ["Dell", "ASUS", "MSI", "HP"],
+    images: [],
+    brands: ["Apple", "HP", "Samsung", "Dell"],
     names: [
-      "Gamer Supreme X",
-      "Aurora R15",
-      "OMEN 45L Tower",
-      "Predator Orion 3000",
-      "ROG Strix GA35",
-      "Cyborg Manticore",
-      "GF63 Tower",
-      "Nitro N50",
+      "Alienware Aurora R16",
+      "ASUS ROG Strix GT",
+      "MSI Aegis Gaming Tower",
+      "HP OMEN Desktop",
     ],
   },
   {
     label: "Gaming Laptops",
     count: 18,
     base: 800,
-    images: [img2, img6, flash2],
-    brands: ["ASUS", "MSI", "Lenovo", "Dell", "Razer"],
+    images: [img2, img6, img7],
+    brands: ["Apple", "HP", "Samsung", "Dell"],
     names: [
-      "ROG Strix G16",
-      "Raider GE78",
-      "Legion Pro 7",
-      "Predator Helios 16",
-      "Blade 16",
-      "GF63 Thin",
-      "Katana 15",
-      "Ghost Pro 16",
+      "ASUS ROG Zephyrus",
+      "MSI Katana Gaming Laptop",
+      "Lenovo Legion 5",
+      "Alienware m16",
     ],
   },
   {
@@ -102,18 +119,12 @@ const categoryDefs = [
     count: 34,
     base: 100,
     images: [view2, img5, view1, flash3],
-    brands: ["Logitech", "Razer", "Corsair", "HP"],
+    brands: ["Apple", "HP", "Samsung", "Dell"],
     names: [
-      "G502 X Plus",
-      "DeathAdder V3",
-      "MX Master 3S",
-      "Basmilisk V3",
-      "Viper V2 Pro",
-      "M720 Triathlon",
-      "Corsair M65",
-      "Pulsefire Haste",
-      "Model O Wireless",
-      "Kone Pro Air",
+      "Logitech G502 Hero",
+      "Razer DeathAdder V3",
+      "Corsair Dark Core RGB",
+      "HP Wireless Mouse 220",
     ],
   },
   {
@@ -121,18 +132,12 @@ const categoryDefs = [
     count: 29,
     base: 100,
     images: [view3, img5, view6, flash1],
-    brands: ["Logitech", "Razer", "Keychron", "Corsair"],
+    brands: ["Apple", "HP", "Samsung", "Dell"],
     names: [
-      "K780 Multi-Device",
-      "K8 Pro",
-      "G513 Carbon",
-      "Huntsman V2",
-      "MX Keys S",
-      "Corsair K70",
-      "BlackWidow V4",
-      "Vortex Race 3",
-      "Ducky One 3",
-      "Anne Pro 2",
+      "Logitech G Pro Mechanical",
+      "Razer BlackWidow V4",
+      "Corsair K95 RGB Platinum",
+      "HP Wired Keyboard K200",
     ],
   },
   {
@@ -140,18 +145,12 @@ const categoryDefs = [
     count: 55,
     base: 100,
     images: [view6, view7, flash4, view4],
-    brands: ["Sony", "JBL", "Bose", "Logitech", "Apple"],
+    brands: ["Apple", "HP", "Samsung", "Dell"],
     names: [
-      "WH-1000XM5",
-      "Quantum One",
-      "Astro A50 X",
-      "Pulse Elite",
-      "Bose QC45",
-      "Cloud Alpha",
-      "Lightspeed G733",
-      "Studio Pro Wireless",
-      "G Pro X",
-      "Momentum 4",
+      "Logitech G435 Wireless",
+      "Razer BlackShark V2",
+      "Corsair HS65 Surround",
+      "HP Stereo Headset",
     ],
   },
 ];
@@ -163,7 +162,7 @@ categoryDefs.forEach((cat) => {
   for (let i = 0; i < cat.count; i++) {
     const price = Math.min(
       PRICE_MAX,
-      cat.base + ((i * 37) % 250) + (i % 5 === 0 ? 120 : 0)
+      cat.base + ((i * 37) % 250) + (i % 5 === 0 ? 120 : 0),
     );
 
     generatedProducts.push({
@@ -188,7 +187,7 @@ const flashSaleDefs = [
   {
     title: "Gaming Headset Pro",
     category: "Headphones",
-    brand: "TechGear",
+    brand:"Apple",
     price: 200,
     sale: 400,
     img: flash1,
@@ -196,7 +195,7 @@ const flashSaleDefs = [
   {
     title: "Wireless Mouse Elite",
     category: "Mouses",
-    brand: "ProGaming",
+    brand:"Apple",
     price: 200,
     sale: 400,
     img: flash2,
@@ -204,7 +203,7 @@ const flashSaleDefs = [
   {
     title: "RGB Keyboard Mechanical",
     category: "Keyboards",
-    brand: "MechKeys",
+    brand:"HP",
     price: 200,
     sale: 400,
     img: flash3,
@@ -212,10 +211,10 @@ const flashSaleDefs = [
   {
     title: "Gaming Monitor 144Hz",
     category: "Monitors",
-    brand: "ViewPro",
+    brand:"Apple",
     price: 250,
     sale: 500,
-    img: flash4,
+    img: img2,
   },
 ];
 
@@ -242,7 +241,7 @@ flashSaleDefs.forEach((item) => {
 export const products = generatedProducts;
 
 export const flashSaleProducts = products.filter((p) =>
-  flashSaleIds.includes(p.id)
+  flashSaleIds.includes(p.id),
 );
 
 export const categories = categoryDefs.map(({ label, count }) => ({
@@ -254,7 +253,7 @@ export const brandOptions = Object.entries(
   products.reduce((acc, product) => {
     acc[product.brand] = (acc[product.brand] || 0) + 1;
     return acc;
-  }, {})
+  }, {}),
 )
   .map(([label, count]) => ({ label, count }))
   .sort((a, b) => b.count - a.count);
@@ -286,15 +285,14 @@ export const getProductById = (id) => {
 
   return {
     ...product,
-    description:
-      descriptionBodies[product.id % descriptionBodies.length],
+    description: descriptionBodies[product.id % descriptionBodies.length],
     features: [
       FEATURE_LINES[product.id % FEATURE_LINES.length],
       FEATURE_LINES[(product.id + 2) % FEATURE_LINES.length],
       FEATURE_LINES[(product.id + 4) % FEATURE_LINES.length],
       FEATURE_LINES[(product.id + 6) % FEATURE_LINES.length],
     ],
-    stock: (product.id * 7) % 30 + 5,
+    stock: ((product.id * 7) % 30) + 5,
     sku: `SKU-${String(product.id).padStart(4, "0")}`,
   };
 };

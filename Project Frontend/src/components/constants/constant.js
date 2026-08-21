@@ -18,21 +18,21 @@ export const ProductDetails = [
    },
    { id : 2,
     img : img2,
-    category :"Laptop",
-    title:"Gaming Laptop",
+    category :"Disktop",
+    title:"Gaming Disktop",
     price:999,
     currency:"$"
    },
    { id : 3,
     img : img3,
-    category :"Moniter",
+    category :"Laptop",
     title:"UHD Display",
     price:800,
     currency:"$"
    },
    { id : 4,
     img : img4 ,
-    category :"Laptop",
+    category :"Mouse",
     title:"G502 wireless",
     price:999,
     currency:"$"
@@ -47,7 +47,7 @@ export const ProductDetails = [
 
    { id : 6,
     img : img6,
-    category :"Laptop",
+    category :"Headphone",
     title:"G502 wireless",
     price:999,
     currency:"$"

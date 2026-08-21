@@ -5,7 +5,6 @@ import { FaMinus, FaPlus, FaCheck } from "react-icons/fa6";
 import { FiChevronRight } from "react-icons/fi";
 import { FaFacebookF, FaTwitter, FaTruck } from "react-icons/fa";
 import { useCart } from "../../context/CartContext";
-import { useWishlist } from "../../context/WishlistContext";
 import { getProductById, products } from "./data";
 import adImage from "../../assets/homePIc/homeflash1.webp";
 
@@ -17,7 +16,6 @@ const ProductDetail = () => {
   const [activeTab, setActiveTab] = useState("information");
   const [mainImage, setMainImage] = useState(0);
   const { addToCart } = useCart();
-  const { toggleWishlist, isInWishlist } = useWishlist();
 
   const product = getProductById(id);
 
@@ -232,26 +230,7 @@ const ProductDetail = () => {
             </button>
           </div>
 
-          {/* Share */}
-          <div className="flex items-center gap-3 mt-6">
-            <span className="text-sm text-gray-600">Share it on</span>
-            <div className="flex gap-2">
-              <a
-                href="#"
-                aria-label="Facebook"
-                className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-gray-500 hover:text-white hover:bg-[#006CE4] hover:border-[#006CE4] transition-colors"
-              >
-                <FaFacebookF size={14} />
-              </a>
-              <a
-                href="#"
-                aria-label="Twitter"
-                className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-gray-500 hover:text-white hover:bg-[#006CE4] hover:border-[#006CE4] transition-colors"
-              >
-                <FaTwitter size={14} />
-              </a>
-            </div>
-          </div>
+        
 
           {/* Tabs */}
           <div className="mt-8">

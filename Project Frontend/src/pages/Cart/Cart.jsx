@@ -1,4 +1,3 @@
-import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { FaMinus, FaPlus } from "react-icons/fa6";
 import { IoClose } from "react-icons/io5";
@@ -8,12 +7,9 @@ import Checkout from "../Checkout/Checkout.jsx"
 
 const Cart = () => {
   const navigate = useNavigate();
-  const { cartItems, removeFromCart, updateQuantity, getCartSummary } = useCart();
+  const { cartItems, removeFromCart, updateQuantity, getCartSummary, clearCart } = useCart();
   const { isAuthenticated } = useAuth();
 
-  const [couponCode, setCouponCode] = useState("");
-  const [couponApplied, setCouponApplied] = useState(false);
-  const [couponDiscount, setCouponDiscount] = useState(0);
 
   const updateQty = (id, delta) => {
     const item = cartItems.find((i) => i.id === id);
@@ -26,13 +22,11 @@ const Cart = () => {
     removeFromCart(id);
   };
 
-  const clearCart = () => {
-    cartItems.forEach((item) => removeFromCart(item.id));
-    setCouponApplied(false);
-    setCouponDiscount(0);
+  const handleDeleteAll = () => {
+    if (clearCart) {
+      clearCart();
+    }
   };
-
-
 
   const handleCheckout = () => {
     if (!isAuthenticated) {
@@ -43,10 +37,11 @@ const Cart = () => {
       navigate("/checkout");
     }
   };
+
   const cartSummary = getCartSummary();
   const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.qty, 0);
+  const total = subtotal + (cartSummary.shippingFee || 0);
   const hasItems = cartItems.length > 0;
-  const total = hasItems ? subtotal + cartSummary.shippingFee - couponDiscount : 0;
   const currency = hasItems ? cartItems[0].currency : "$";
 
   const renderQty = (item) => (
@@ -180,7 +175,7 @@ const Cart = () => {
               {/* Delete All */}
               <div className="mt-6">
                 <button
-                  onClick={clearCart}
+                  onClick={handleDeleteAll}
                   className="bg-red-500 hover:bg-red-600 text-white text-sm font-semibold px-6 py-2.5 rounded-md transition-colors"
                   title="Delete all items from cart"
                 >
@@ -205,23 +200,6 @@ const Cart = () => {
                   <span className="text-sm font-semibold text-[#22262A]">
                     {currency}
                     {cartSummary.shippingFee}
-                  </span>
-                </div>
-
-                {couponApplied && (
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-500">Coupon Discount</span>
-                    <span className="text-sm font-semibold text-green-600">
-                      -{currency}
-                      {couponDiscount}
-                    </span>
-                  </div>
-                )}
-
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-500">Coupon</span>
-                  <span className="text-sm font-semibold text-[#22262A]">
-                    {couponApplied ? `Applied (${couponCode})` : "No"}
                   </span>
                 </div>
               </div>
