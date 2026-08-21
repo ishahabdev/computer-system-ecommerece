@@ -195,6 +195,55 @@ export const resetPassword = async (req, res) => {
     res.status(500).json({ success: false, message: "internal server error" });
   }
 };
+// LOGIN & SECURITY: lets a signed-in customer change their own password by
+// confirming the current one. Runs behind authMiddleware so the account comes
+// from the verified token, never from the request body.
+export const changePassword = async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({
+        success: false,
+        message: "Current password and new password are both required",
+      });
+    }
+
+    if (newPassword.length < 8) {
+      return res.status(400).json({
+        success: false,
+        message: "Passwords must be at least 8 characters long",
+      });
+    }
+
+    const user = await User.findByPk(req.user.id);
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    const isValidPassword = await bcrypt.compare(currentPassword, user.password);
+    if (!isValidPassword) {
+      return res.status(400).json({
+        success: false,
+        message: "Current password is incorrect",
+      });
+    }
+
+    if (await bcrypt.compare(newPassword, user.password)) {
+      return res.status(400).json({
+        success: false,
+        message: "New password must be different from your current password",
+      });
+    }
+
+    user.password = await bcrypt.hash(newPassword, 10);
+    await user.save();
+
+    res.json({ success: true, message: "Password updated successfully" });
+  } catch (error) {
+    res.status(500).json({ success: false, message: "internal server error" });
+  }
+};
 // GET ALL USERS
 export const getUsers = async (req, res) => {
   try {
