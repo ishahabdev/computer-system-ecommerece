@@ -130,15 +130,19 @@ const Cart = () => {
                         <td className="py-5 pr-4 align-middle">
                           <div className="flex items-center gap-3 sm:gap-4">
                             <div className="w-12 h-12 sm:w-14 sm:h-14 flex items-center justify-center shrink-0">
-                              {typeof item.image === "string" && /^(https?:|\/|data:)/.test(item.image) ? (
-                                <img
-                                  src={item.image}
-                                  alt={item.title}
-                                  className="max-w-full max-h-full object-contain"
-                                />
-                              ) : (
-                                <span className="text-2xl">{item.image || "🛍️"}</span>
-                              )}
+                              {(() => {
+                                const imageSrc = item.image || item.img || item.imagePath;
+                                return typeof imageSrc === "string" &&
+                                  /^(https?:|\/|data:)/.test(imageSrc) ? (
+                                  <img
+                                    src={imageSrc}
+                                    alt={item.title}
+                                    className="max-w-full max-h-full object-contain"
+                                  />
+                                ) : (
+                                  <span className="text-2xl">🛍️</span>
+                                );
+                              })()}
                             </div>
                             <p className="font-semibold text-sm sm:text-base text-[#22262A] leading-snug">
                               {item.title}

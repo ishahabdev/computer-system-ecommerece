@@ -47,7 +47,7 @@ const Category = () => {
       title: product.title,
       price: product.price,
       currency: product.currency,
-      img: product.image,
+      img: product.img,
       category: product.category,
       brand: product.brand,
     });
@@ -63,8 +63,8 @@ const Category = () => {
         title: product.title,
         price: product.price,
         currency: product.currency,
-        image: product.image,
-        imagePath: product.image,
+        image: product.img,
+        imagePath: product.img,
         category: product.category,
       },
       1

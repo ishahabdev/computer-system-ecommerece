@@ -62,6 +62,12 @@
       });
       const data = await response.json().catch(() => ({}));
 
+      // A rejected token (expired) or a suspended account fails auth. Tell
+      // AuthContext to end the session so a suspended user can't keep shopping.
+      if (response.status === 401 || response.status === 403) {
+        window.dispatchEvent(new CustomEvent("auth:unauthorized"));
+      }
+
       if (!response.ok || data.success === false || data.status === false) {
         throw new Error(data.message || "Cart request failed");
       }
@@ -122,7 +128,9 @@
         setCartItems((items) =>
           existingItem
             ? items.map((item) =>
-                item.id === productId ? { ...item, qty: item.qty + quantity } : item
+                item.id === productId
+                  ? { ...item, ...cartProduct, qty: item.qty + quantity }
+                  : item
               )
             : [...items, { ...cartProduct, qty: quantity }]
         );

@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from "react"
+import { createContext, useContext, useState, useEffect, useCallback } from "react"
 
 const AuthContext = createContext(null)
 
@@ -40,7 +40,7 @@ const getStoredProfile = (user) => {
 
 const getSessionUser = (user) => {
   if (!user) return user
-  const { profilePicture, ...sessionUser } = user
+  const { profilePicture: _profilePicture, ...sessionUser } = user
   return sessionUser
 }
 
@@ -60,6 +60,7 @@ const saveStoredProfile = (user) => {
   localStorage.setItem(storageKey, JSON.stringify(profileFields))
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useAuth = () => {
   const context = useContext(AuthContext)
   if (!context) {
@@ -73,27 +74,82 @@ export const AuthProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
 
-  // Load user from localStorage on mount (keeps user logged in after refresh)
+  // Clears every trace of the session. Shared by logout, the load-time
+  // re-validation below, and the global "auth:unauthorized" handler.
+  const clearSession = useCallback(() => {
+    setUser(null)
+    setIsAuthenticated(false)
+    localStorage.removeItem("currentUser")
+    localStorage.removeItem("authToken")
+  }, [])
+
+  // On load, re-validate the stored session against the backend instead of
+  // trusting localStorage. This is what makes an admin suspension take effect on
+  // refresh: /me returns 403 for a suspended (or deleted) account, so we log out
+  // rather than silently restoring the session.
   useEffect(() => {
-    try {
+    const restoreSession = async () => {
       const storedUser = localStorage.getItem("currentUser")
       const storedToken = localStorage.getItem("authToken")
-      if (storedUser && storedToken) {
-        const userData = JSON.parse(storedUser)
-        const mergedUser = { ...userData, ...getStoredProfile(userData) }
+
+      // A profile without its JWT cannot access protected routes; drop it.
+      if (!storedUser || !storedToken) {
+        if (storedUser) localStorage.removeItem("currentUser")
+        setIsLoading(false)
+        return
+      }
+
+      let storedUserData
+      try {
+        storedUserData = JSON.parse(storedUser)
+      } catch {
+        clearSession()
+        setIsLoading(false)
+        return
+      }
+
+      try {
+        const response = await fetch(`${API_BASE_URL}/me`, {
+          headers: { Authorization: `Bearer ${storedToken}` },
+          signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS)
+        })
+
+        // 401 = bad/expired token, 403 = suspended. Either way, end the session.
+        if (response.status === 401 || response.status === 403) {
+          clearSession()
+          return
+        }
+
+        const data = await response.json().catch(() => ({}))
+        const freshUser = data.data || storedUserData
+        const mergedUser = { ...storedUserData, ...freshUser, ...getStoredProfile(freshUser) }
         setUser(mergedUser)
         persistCurrentUser(mergedUser)
         setIsAuthenticated(true)
-      } else if (storedUser) {
-        // A user profile without the JWT cannot access protected API routes.
-        localStorage.removeItem("currentUser")
+      } catch {
+        // Network/timeout means the backend is unreachable, not that the account
+        // was rejected. Keep the stored session so being offline doesn't log
+        // users out; the next protected request will re-check once it's back.
+        const mergedUser = { ...storedUserData, ...getStoredProfile(storedUserData) }
+        setUser(mergedUser)
+        persistCurrentUser(mergedUser)
+        setIsAuthenticated(true)
+      } finally {
+        setIsLoading(false)
       }
-    } catch (error) {
-      // Failed to load user from localStorage - silent fail
-    } finally {
-      setIsLoading(false)
     }
-  }, [])
+
+    restoreSession()
+  }, [clearSession])
+
+  // Any protected API call that returns 401/403 dispatches this event (see
+  // CartContext), so a mid-session suspension logs the user out on their next
+  // action instead of waiting for a refresh.
+  useEffect(() => {
+    const onUnauthorized = () => clearSession()
+    window.addEventListener("auth:unauthorized", onUnauthorized)
+    return () => window.removeEventListener("auth:unauthorized", onUnauthorized)
+  }, [clearSession])
 
   // Signup function - calls real backend API
   const signup = async ({ name, email, password }) => {
@@ -156,10 +212,7 @@ export const AuthProvider = ({ children }) => {
 
   // Logout function - clears session
   const logout = () => {
-    setUser(null)
-    setIsAuthenticated(false)
-    localStorage.removeItem("currentUser")
-    localStorage.removeItem("authToken")
+    clearSession()
   }
 
   // Update profile picture

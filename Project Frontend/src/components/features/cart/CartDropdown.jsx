@@ -110,15 +110,19 @@ const CartDropdown = ({
                   <div key={item.id} className="flex gap-3 py-3 group">
                     {/* Product Image */}
                     <div className="w-14 h-14 bg-[#F8F8F8] rounded-md flex items-center justify-center text-lg shrink-0 border border-gray-100 group-hover:border-[#2196F3] transition-colors">
-                      {typeof item.image === "string" && /^(https?:|\/|data:)/.test(item.image) ? (
-                        <img
-                          src={item.image}
-                          alt={item.title}
-                          className="w-full h-full rounded-md object-contain"
-                        />
-                      ) : (
-                        item.image || "🛍️"
-                      )}
+                      {(() => {
+                        const imageSrc = item.image || item.img || item.imagePath;
+                        return typeof imageSrc === "string" &&
+                          /^(https?:|\/|data:)/.test(imageSrc) ? (
+                          <img
+                            src={imageSrc}
+                            alt={item.title}
+                            className="w-full h-full rounded-md object-contain"
+                          />
+                        ) : (
+                          "🛍️"
+                        );
+                      })()}
                     </div>
 
                     {/* Product Info */}

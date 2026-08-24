@@ -1,17 +1,25 @@
-import { BrowserRouter, Route, Routes } from "react-router"
+import { BrowserRouter, Route, Routes, useLocation, Navigate } from "react-router"
 import { Suspense, lazy } from "react"
 
 // Layout components
 import Header from "./components/layout/Header"
 import Footer from "./components/layout/Footer"
 import NotFound from "./pages/NotFound"
+
 // Context providers
 import { CartProvider } from "./context/CartContext"
 import { WishlistProvider } from "./context/WishlistContext"
 import { AuthProvider } from "./context/AuthContext"
 import { ToastProvider } from "./context/ToastContext"
 
-// Lazy load route components for code splitting
+import OverView from "./admin/overview/overview"
+import Products from "./admin/products/products"
+import Orders from "./admin/orders/orders"
+import Analytics from "./admin/analytics/analytics"
+import UsersAdmin from "./admin/users/users"
+import AdminLayout from "./admin/components/AdminLayout"
+
+// Lazy load route components
 const Home = lazy(() => import("./pages/Home/Home"))
 const Store = lazy(() => import("./pages/Shop/Store"))
 const ProductDetail = lazy(() => import("./pages/Shop/ProductDetail"))
@@ -28,8 +36,6 @@ const Signup = lazy(() => import("./pages/Auth/Signup"))
 const ForgotPassword = lazy(() => import("./pages/Auth/ForgotPassword"))
 const TrackOrder = lazy(() => import("./pages/Order/TrackOrder"))
 
-
-// Loading fallback component
 const Loading = () => (
   <div style={{
     display: "flex",
@@ -43,6 +49,23 @@ const Loading = () => (
   </div>
 )
 
+// ← Yeh Layout component add kiya
+function Layout({ children }) {
+  const location = useLocation()
+  const isAdmin = location.pathname.startsWith("/admin")
+
+  // Admin pages bring their own chrome (sidebar + navbar + main) via AdminLayout.
+  if (isAdmin) return children
+
+  return (
+    <>
+      <Header />
+      <main role="main">{children}</main>
+      <Footer />
+    </>
+  )
+}
+
 function App() {
   return (
     <AuthProvider>
@@ -50,10 +73,10 @@ function App() {
         <WishlistProvider>
           <ToastProvider>
             <BrowserRouter>
-              <Header />
-              <main role="main">
+              <Layout>  {/* ← Header Footer yahan control ho raha hai */}
                 <Suspense fallback={<Loading />}>
                   <Routes>
+                    {/* Public Routes */}
                     <Route path="/" element={<Home />} />
                     <Route path="/store" element={<Store />} />
                     <Route path="/accessories" element={<Accessories />} />
@@ -69,11 +92,21 @@ function App() {
                     <Route path="/signup" element={<Signup />} />
                     <Route path="/forgot-password" element={<ForgotPassword />} />
                     <Route path="/track-order" element={<TrackOrder />} />
+
+                    {/* Admin Routes */}
+                    <Route path="/admin" element={<AdminLayout />}>
+                      <Route index element={<Navigate to="/admin/overview" replace />} />
+                      <Route path="overview" element={<OverView />} />
+                      <Route path="products" element={<Products />} />
+                      <Route path="orders" element={<Orders />} />
+                      <Route path="analyze" element={<Analytics />} />
+                      <Route path="users" element={<UsersAdmin />} />
+                    </Route>
+
                     <Route path="*" element={<NotFound />} />
                   </Routes>
                 </Suspense>
-              </main>
-              <Footer />
+              </Layout>
             </BrowserRouter>
           </ToastProvider>
         </WishlistProvider>
