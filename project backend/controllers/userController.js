@@ -102,10 +102,13 @@ export const creatUser = async (req, res) => {
       password: hashedPassword,
     });
 
+    // Return the new account without its password hash.
+    const { password: _password, ...safeUser } = user.toJSON();
+
     res.json({
       success: true,
       message: "User created successfully ",
-      data: user,
+      data: safeUser,
     });
   } catch (error) {
     res.json({
@@ -247,7 +250,12 @@ export const changePassword = async (req, res) => {
 // GET ALL USERS
 export const getUsers = async (req, res) => {
   try {
-    const allUsers = await User.findAll();
+    // Never expose password hashes; newest registrations first so freshly
+    // signed-up customers appear at the top of the admin Users table.
+    const allUsers = await User.findAll({
+      attributes: { exclude: ["password"] },
+      order: [["createdAt", "DESC"]],
+    });
 
     res.json({
       success: true,

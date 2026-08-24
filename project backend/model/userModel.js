@@ -21,6 +21,18 @@ const User = database.define("User", {
     type: DataTypes.STRING,
     allowNull: false,
   },
+  // Account role and lifecycle state, shown in the admin Users table. New
+  // signups default to a standard active customer account.
+  role: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    defaultValue: "User",
+  },
+  status: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    defaultValue: "Active",
+  },
 
 }, {
   timestamps: true,
