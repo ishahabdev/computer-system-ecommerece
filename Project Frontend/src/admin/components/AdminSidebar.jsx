@@ -26,10 +26,7 @@ const mainLinks = [
   { name: "Campaigns", icon: Megaphone, path: "/admin/campaigns" },
 ];
 
-const chartLinks = [
-  { name: "Support", icon: MessageSquare, dot: true },
-  { name: "Visual labels", icon: Tag },
-];
+
 
 const settingsLinks = [
   { name: "Settings", icon: Settings, path: "/admin/settings" },
@@ -46,8 +43,8 @@ function NavItem({ icon, label, active = false, dot = false, onClick }) {
       onClick={onClick}
       className={`flex w-full items-center gap-3 rounded-md px-3 py-2 text-[13px] transition-colors ${
         active
-          ? "bg-white/[0.06] text-white"
-          : "text-gray-400 hover:bg-white/[0.03] hover:text-white"
+          ? "bg-admin-active text-admin-fg"
+          : "text-admin-fg-muted hover:bg-admin-hover hover:text-admin-fg"
       }`}
     >
       <Icon size={16} strokeWidth={1.75} />
@@ -59,7 +56,7 @@ function NavItem({ icon, label, active = false, dot = false, onClick }) {
 
 function SectionLabel({ children }) {
   return (
-    <p className="mb-1 px-3 text-[10px] font-medium tracking-wider text-gray-600">
+    <p className="mb-1 px-3 text-[10px] font-medium tracking-wider text-admin-fg-faint">
       {children}
     </p>
   );
@@ -71,19 +68,19 @@ export default function AdminSidebar() {
   const isActive = (path) => location.pathname === path;
 
   return (
-    <aside className="flex w-56 flex-col border-r border-white/[0.06] bg-[#0a0a0b]">
+    <aside className="flex w-56 flex-col border-r border-admin-line bg-admin-bg">
       {/* Brand — h-16 + border-b aligns the divider with the top bar */}
-      <div className="flex h-16 items-center gap-2 border-b border-white/[0.06] px-4">
+      <div className="flex h-16 items-center gap-2 border-b border-admin-line px-4">
         <Triangle size={17} className="fill-emerald-400 text-emerald-400" />
-        <span className="text-[15px] font-semibold text-white">Nuxt Charts</span>
-        <ChevronDown size={14} className="ml-auto text-gray-500" />
+        <span className="text-[15px] font-semibold text-admin-fg">TECH MART</span>
+        <ChevronDown size={14} className="ml-auto text-admin-fg-dim" />
       </div>
 
       {/* Body */}
       <div className="flex min-h-0 flex-1 flex-col justify-between overflow-y-auto px-3 py-4">
         {/* Main nav */}
         <div>
-          <p className="mb-2 px-2 text-[10px] font-medium tracking-wider text-gray-600">
+          <p className="mb-2 px-2 text-[10px] font-medium tracking-wider text-admin-fg-faint">
             NUXTCHARTS.COM
           </p>
 
@@ -100,14 +97,7 @@ export default function AdminSidebar() {
           </nav>
         </div>
 
-        {/* Bottom groups */}
-        <div className="space-y-5 pt-6">
-          <div>
-            <SectionLabel>ALL CHARTS</SectionLabel>
-            {chartLinks.map((link) => (
-              <NavItem key={link.name} icon={link.icon} label={link.name} dot={link.dot} />
-            ))}
-          </div>
+       
 
           <div>
             <SectionLabel>SETTINGS</SectionLabel>
@@ -123,13 +113,13 @@ export default function AdminSidebar() {
 
           <button
             type="button"
-            className="flex w-full items-center justify-center gap-2 rounded-lg border border-white/[0.1] py-2 text-[13px] text-white transition-colors hover:bg-white/[0.04]"
+            className="flex w-full items-center justify-center gap-2 rounded-lg border border-admin-line-2 py-2 text-[13px] text-admin-fg transition-colors hover:bg-admin-hover"
           >
             <Plus size={15} strokeWidth={2} />
             New dashboard
           </button>
         </div>
-      </div>
+     
     </aside>
   );
 }

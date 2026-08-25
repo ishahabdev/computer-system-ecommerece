@@ -80,6 +80,13 @@ const Users = () => {
         if (!response.ok || data.success === false) {
           throw new Error(data.message || data.error || "Failed to update user");
         }
+        // Reconcile the row with the status the server actually stored, so the
+        // table shows the persisted truth rather than the optimistic guess.
+        if (data.data && data.data.status) {
+          setUsers((list) =>
+            list.map((u) => (u.id === id ? { ...u, status: data.data.status } : u)),
+          );
+        }
       } catch (err) {
         setActionError(getErrorMessage(err));
         loadUsers();
@@ -122,7 +129,7 @@ const Users = () => {
   const stats = [
     { label: "Total Users", value: total, share: 100, color: "bg-blue-500" },
     { label: "Active", value: active, share: share(active), color: "bg-emerald-500" },
-    { label: "Invited", value: invited, share: share(invited), color: "bg-gray-400" },
+    { label: "Invited", value: invited, share: share(invited), color: "bg-admin-fg-muted" },
     { label: "Suspended", value: suspended, share: share(suspended), color: "bg-yellow-400" },
   ];
 
@@ -130,13 +137,13 @@ const Users = () => {
     <div className="p-4 md:p-6">
       {/* Header */}
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-[16px] font-semibold text-white">Users</h1>
+        <h1 className="text-[16px] font-semibold text-admin-fg">Users</h1>
 
         <div className="flex flex-wrap items-center gap-2">
           <div className="relative">
             <Search
               size={13}
-              className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-500"
+              className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-admin-fg-dim"
             />
             <input
               type="search"
@@ -144,13 +151,13 @@ const Users = () => {
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search users..."
               aria-label="Search users"
-              className="w-44 rounded-lg border border-white/[0.08] bg-[#0f0f11] py-1.5 pl-8 pr-2.5 text-[11px] text-white outline-none transition-colors placeholder:text-gray-500 focus:border-white/[0.16] sm:w-56"
+              className="w-44 rounded-lg border border-admin-line-2 bg-admin-panel-2 py-1.5 pl-8 pr-2.5 text-[11px] text-admin-fg outline-none transition-colors placeholder:text-admin-fg-dim focus:border-admin-line-strong sm:w-56"
             />
           </div>
 
           <button
             type="button"
-            className="flex items-center gap-1.5 rounded-lg border border-white/[0.08] px-3 py-1.5 text-[11px] text-gray-300 transition-colors hover:bg-white/[0.06] hover:text-white"
+            className="flex items-center gap-1.5 rounded-lg border border-admin-line-2 px-3 py-1.5 text-[11px] text-admin-fg-soft transition-colors hover:bg-admin-active hover:text-admin-fg"
           >
             <Settings size={13} />
             Settings
@@ -158,7 +165,7 @@ const Users = () => {
 
           <button
             type="button"
-            className="flex items-center gap-1.5 whitespace-nowrap rounded-lg border border-white/[0.14] bg-white/[0.08] px-3 py-1.5 text-[11px] font-medium text-white transition-colors hover:bg-white/[0.12]"
+            className="flex items-center gap-1.5 whitespace-nowrap rounded-lg border border-admin-line-strong bg-admin-invert px-3 py-1.5 text-[11px] font-medium text-admin-invert-fg transition-colors hover:opacity-90"
           >
             <Plus size={13} strokeWidth={2.25} />
             New User
@@ -169,18 +176,18 @@ const Users = () => {
       {/* Summary cards */}
       <div className="mb-5 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {stats.map((stat) => (
-          <div key={stat.label} className="rounded-xl border border-white/[0.06] bg-[#141416] p-4">
+          <div key={stat.label} className="rounded-xl border border-admin-line bg-admin-panel p-4">
             <div className="flex items-center gap-2">
               <span className={`h-1.5 w-1.5 rounded-full ${stat.color}`} />
-              <p className="text-[11px] text-gray-400">{stat.label}</p>
+              <p className="text-[11px] text-admin-fg-muted">{stat.label}</p>
             </div>
 
             <div className="mt-2 flex items-baseline justify-between gap-2">
-              <p className="text-[18px] font-semibold text-white">{loading ? "—" : stat.value}</p>
-              <p className="text-[10px] text-gray-500">{stat.share}% of total</p>
+              <p className="text-[18px] font-semibold text-admin-fg">{loading ? "—" : stat.value}</p>
+              <p className="text-[10px] text-admin-fg-dim">{stat.share}% of total</p>
             </div>
 
-            <div className="mt-2.5 h-1 overflow-hidden rounded-full bg-white/[0.06]">
+            <div className="mt-2.5 h-1 overflow-hidden rounded-full bg-admin-active">
               <div className={`h-full rounded-full ${stat.color}`} style={{ width: `${stat.share}%` }} />
             </div>
           </div>

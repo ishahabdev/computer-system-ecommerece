@@ -1,168 +1,139 @@
-const orders = [
-  {
-    id: "#1001",
-    customer: "Alice",
-    date: "Jun 18, 02:00",
-    total: "120.5",
-    status: "Paid",
-  },
-  {
-    id: "#1002",
-    customer: "Bob",
-    date: "Jun 17, 02:00",
-    total: "89.99",
-    status: "Pending",
-  },
-  {
-    id: "#1003",
-    customer: "Charlie",
-    date: "Jun 16, 02:00",
-    total: "45",
-    status: "Paid",
-  },
-  {
-    id: "#1004",
-    customer: "Diana",
-    date: "Jun 15, 02:00",
-    total: "210",
-    status: "Failed",
-  },
-  {
-    id: "#1005",
-    customer: "Eve",
-    date: "Jun 14, 02:00",
-    total: "67.25",
-    status: "Paid",
-  },
-];
+import { ImageOff } from "lucide-react";
+import { money } from "../overviewData";
 
-const products = [
-  {
-    name: 'MacBook Pro 16"',
-    image:
-      "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=100&q=80",
-    stock: "Low Stock",
-    type: "low",
-  },
-  {
-    name: "iPhone 15 Pro",
-    image:
-      "https://images.unsplash.com/photo-1592899677977-9c10ca588bbd?w=100&q=80",
-    stock: "Out Of Stock",
-    type: "out",
-  },
-  {
-    name: "Dell UltraSharp 27",
-    image:
-      "https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?w=100&q=80",
-    stock: "In Stock",
-    type: "in",
-  },
-  {
-    name: "Logitech MX Master 3S",
-    image:
-      "https://images.unsplash.com/photo-1527814050087-3793815479db?w=100&q=80",
-    stock: "Low Stock",
-    type: "low",
-  },
-];
+/* ------------------------------------------------------------------ */
+/* Badges — same vocabulary the Orders + Products tabs already use     */
+/* ------------------------------------------------------------------ */
 
-function StatusBadge({ status }) {
-  const styles = {
-    Paid: "border-emerald-500/40 bg-emerald-500/10 text-emerald-400",
-    Pending: "border-yellow-500/40 bg-yellow-500/10 text-yellow-400",
-    Failed: "border-red-500/40 bg-red-500/10 text-red-400",
-  };
+// Order lifecycle colors mirror admin/orders/components/OrdersTable.jsx so a
+// status reads the same on the dashboard as it does in the full orders table.
+const ORDER_STATUS_STYLES = {
+  delivered: "border-emerald-500/30 bg-emerald-500/10 text-emerald-400",
+  "on delivery": "border-blue-500/30 bg-blue-500/10 text-blue-400",
+  shipping: "border-indigo-500/30 bg-indigo-500/10 text-indigo-400",
+  packing: "border-yellow-500/30 bg-yellow-500/10 text-yellow-400",
+  cancelled: "border-red-500/30 bg-red-500/10 text-red-400",
+};
 
+const titleCase = (value) =>
+  String(value || "")
+    .split(" ")
+    .map((word) => (word ? word[0].toUpperCase() + word.slice(1) : word))
+    .join(" ");
+
+function OrderStatusBadge({ status }) {
   return (
     <span
-      className={`rounded-md border px-1.5 py-0.5 text-[8px] font-medium ${
-        styles[status] || ""
+      className={`inline-flex items-center whitespace-nowrap rounded-md border px-1.5 py-0.5 text-[9px] font-medium leading-none ${
+        ORDER_STATUS_STYLES[status] || "border-transparent text-admin-fg-muted"
       }`}
+    >
+      {titleCase(status)}
+    </span>
+  );
+}
+
+// Stock thresholds match admin/products/components/ProductsTable.jsx so a
+// product's badge is consistent across tabs.
+const LOW_STOCK_AT = 5;
+const stockStatusOf = (stock) => {
+  if (stock === 0) return "Out of Stock";
+  if (stock <= LOW_STOCK_AT) return "Low Stock";
+  return "In Stock";
+};
+const STOCK_STYLES = {
+  "In Stock": "border-emerald-500/30 bg-emerald-500/10 text-emerald-400",
+  "Low Stock": "border-yellow-500/30 bg-yellow-500/10 text-yellow-400",
+  "Out of Stock": "border-red-500/30 bg-red-500/10 text-red-400",
+};
+
+function StockBadge({ stock }) {
+  const status = stockStatusOf(stock);
+  return (
+    <span
+      className={`inline-flex items-center whitespace-nowrap rounded-md border px-2 py-1 text-[8px] font-medium leading-none ${STOCK_STYLES[status]}`}
     >
       {status}
     </span>
   );
 }
 
-function StockBadge({ stock, type }) {
-  const styles = {
-    low: "border-yellow-500/30 bg-yellow-500/10 text-yellow-400",
-    out: "border-red-500/30 bg-red-500/10 text-red-400",
-    in: "border-emerald-500/30 bg-emerald-500/10 text-emerald-400",
-  };
-
+// A product image is optional and a pasted URL can rot, so fall back to an icon
+// (same treatment as the Products table thumbnail).
+function ProductThumb({ src, name }) {
   return (
-    <span
-      className={`rounded-md border px-2 py-1 text-[8px] font-medium ${
-        styles[type] || ""
-      }`}
-    >
-      {stock}
-    </span>
+    <div className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-md bg-admin-panel-3">
+      {src ? (
+        <img
+          src={src}
+          alt=""
+          loading="lazy"
+          onError={(e) => {
+            e.currentTarget.style.display = "none";
+          }}
+          className="h-full w-full object-cover"
+        />
+      ) : (
+        <ImageOff size={12} className="text-admin-fg-faint" aria-label={`No image for ${name}`} />
+      )}
+    </div>
   );
 }
 
-export function LatestOrders() {
+/* ------------------------------------------------------------------ */
+/* Latest orders                                                       */
+/* ------------------------------------------------------------------ */
+
+export function LatestOrders({ orders = [], loading = false }) {
+  const th =
+    "px-2 py-2 text-left text-[9px] font-medium text-admin-fg-muted";
+
   return (
-    <div className="rounded-xl border border-white/[0.06] bg-[#141416] p-4">
-      <h3 className="text-[13px] font-semibold text-white">
-        Latest Orders
-      </h3>
+    <div className="rounded-xl border border-admin-line bg-admin-panel p-4">
+      <h3 className="text-[13px] font-semibold text-admin-fg">Latest Orders</h3>
 
       <div className="mt-2 overflow-x-auto">
         <table className="w-full min-w-[500px] border-collapse">
           <thead>
-            <tr className="border-b border-white/[0.06]">
-              <th className="px-2 py-2 text-left text-[9px] font-medium text-gray-400">
-                Order
-              </th>
-
-              <th className="px-2 py-2 text-left text-[9px] font-medium text-gray-400">
-                Customer
-              </th>
-
-              <th className="px-2 py-2 text-left text-[9px] font-medium text-gray-400">
-                Date
-              </th>
-
-              <th className="px-2 py-2 text-left text-[9px] font-medium text-gray-400">
-                Total
-              </th>
-
-              <th className="px-2 py-2 text-left text-[9px] font-medium text-gray-400">
-                Status
-              </th>
+            <tr className="border-b border-admin-line">
+              <th className={th}>Order</th>
+              <th className={th}>Customer</th>
+              <th className={th}>Date</th>
+              <th className={th}>Total</th>
+              <th className={th}>Status</th>
             </tr>
           </thead>
 
           <tbody>
-            {orders.map((order) => (
-              <tr
-                key={order.id}
-                className="border-b border-white/[0.04] last:border-0"
-              >
-                <td className="px-2 py-2.5 text-[9px] text-gray-500">
-                  {order.id}
-                </td>
-
-                <td className="px-2 py-2.5 text-[9px] text-gray-400">
-                  {order.customer}
-                </td>
-
-                <td className="px-2 py-2.5 text-[9px] text-gray-500">
-                  {order.date}
-                </td>
-
-                <td className="px-2 py-2.5 text-[9px] text-gray-400">
-                  {order.total}
-                </td>
-
-                <td className="px-2 py-2.5">
-                  <StatusBadge status={order.status} />
+            {orders.length === 0 ? (
+              <tr>
+                <td colSpan={5} className="py-8 text-center text-[10px] text-admin-fg-dim">
+                  {loading ? "Loading orders…" : "No orders yet."}
                 </td>
               </tr>
-            ))}
+            ) : (
+              orders.map((order) => (
+                <tr key={order.id} className="border-b border-admin-line last:border-0">
+                  <td className="px-2 py-2.5 text-[9px] tabular-nums text-admin-fg-dim">
+                    #{order.id}
+                  </td>
+
+                  <td className="px-2 py-2.5 text-[9px] text-admin-fg-muted">
+                    <span className="block max-w-[120px] truncate">{order.customer}</span>
+                  </td>
+
+                  <td className="px-2 py-2.5 text-[9px] text-admin-fg-dim">{order.dateTime}</td>
+
+                  <td className="px-2 py-2.5 text-[9px] tabular-nums text-admin-fg-muted">
+                    {money(order.total)}
+                  </td>
+
+                  <td className="px-2 py-2.5">
+                    <OrderStatusBadge status={order.status} />
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>
@@ -170,61 +141,59 @@ export function LatestOrders() {
   );
 }
 
-export function PopularProducts() {
+/* ------------------------------------------------------------------ */
+/* Popular products                                                    */
+/* ------------------------------------------------------------------ */
+
+export function PopularProducts({ products = [], loading = false }) {
   return (
-    <div className="rounded-xl border border-white/[0.06] bg-[#141416] p-4">
-      <h3 className="text-[13px] font-semibold text-white">
-        Popular Products
-      </h3>
+    <div className="rounded-xl border border-admin-line bg-admin-panel p-4">
+      <h3 className="text-[13px] font-semibold text-admin-fg">Popular Products</h3>
 
       <div className="mt-2">
-        <div className="grid grid-cols-[60px_1fr_80px] border-b border-white/[0.06] px-2 py-2">
-          <span className="text-[9px] font-medium text-gray-400">
-            Image
-          </span>
-
-          <span className="text-[9px] font-medium text-gray-400">
-            Product
-          </span>
-
-          <span className="text-[9px] font-medium text-gray-400">
-            Stock
-          </span>
+        <div className="grid grid-cols-[44px_1fr_88px] border-b border-admin-line px-2 py-2">
+          <span className="text-[9px] font-medium text-admin-fg-muted">Image</span>
+          <span className="text-[9px] font-medium text-admin-fg-muted">Product</span>
+          <span className="text-right text-[9px] font-medium text-admin-fg-muted">Stock</span>
         </div>
 
-        {products.map((product) => (
-          <div
-            key={product.name}
-            className="grid grid-cols-[60px_1fr_80px] items-center border-b border-white/[0.04] px-2 py-2 last:border-0"
-          >
-            <div className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-md bg-[#292929]">
-              <img
-                src={product.image}
-                alt={product.name}
-                className="h-full w-full object-cover"
-              />
-            </div>
-
-            <span className="text-[9px] text-gray-400">
-              {product.name}
-            </span>
-
-            <StockBadge
-              stock={product.stock}
-              type={product.type}
-            />
+        {products.length === 0 ? (
+          <div className="py-8 text-center text-[10px] text-admin-fg-dim">
+            {loading ? "Loading products…" : "No products yet."}
           </div>
-        ))}
+        ) : (
+          products.map((product) => (
+            <div
+              key={product.id}
+              className="grid grid-cols-[44px_1fr_88px] items-center border-b border-admin-line px-2 py-2 last:border-0"
+            >
+              <ProductThumb src={product.image} name={product.name} />
+
+              <div className="min-w-0">
+                <span className="block truncate text-[9px] text-admin-fg-muted">
+                  {product.name}
+                </span>
+                <span className="text-[8px] text-admin-fg-dim">
+                  {product.sold > 0 ? `${product.sold.toLocaleString()} sold` : "No sales yet"}
+                </span>
+              </div>
+
+              <div className="flex justify-end">
+                <StockBadge stock={product.stock} />
+              </div>
+            </div>
+          ))
+        )}
       </div>
     </div>
   );
 }
 
-export function AnalyticsTables() {
+export function AnalyticsTables({ orders, products, loading }) {
   return (
     <div className="grid grid-cols-1 gap-3 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-      <LatestOrders />
-      <PopularProducts />
+      <LatestOrders orders={orders} loading={loading} />
+      <PopularProducts products={products} loading={loading} />
     </div>
   );
 }

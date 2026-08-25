@@ -15,160 +15,10 @@ import {
   Pencil,
   Copy,
   Trash2,
+  ImageOff,
+  RotateCw,
 } from "lucide-react";
 
-/* ------------------------------------------------------------------ */
-/* Data                                                                */
-/* ------------------------------------------------------------------ */
-
-const BASE = [
-  {
-    name: "Wireless Headphones",
-    sku: "WH-1000XM5",
-    category: "Electronics",
-    price: 399,
-    stock: 25,
-    image:
-      "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=80&q=80",
-  },
-  {
-    name: "Apple Watch Series 10",
-    sku: "AW-S10-GPS",
-    category: "Electronics",
-    price: 699,
-    stock: 19,
-    image:
-      "https://images.unsplash.com/photo-1546868871-7041f2a55e12?w=80&q=80",
-  },
-  {
-    name: "Dell Laptop",
-    sku: "DELL-LAT-I7",
-    category: "Electronics",
-    price: 1200,
-    stock: 5,
-    image:
-      "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=80&q=80",
-  },
-  {
-    name: "iPhone",
-    sku: "IPHONE-15-PRO",
-    category: "Electronics",
-    price: 999,
-    stock: 15,
-    image:
-      "https://images.unsplash.com/photo-1592899677977-9c10ca588bbd?w=80&q=80",
-  },
-  {
-    name: "LG OLED evo G4 55",
-    sku: "LG-OLED-G4-55",
-    category: "Electronics",
-    price: 1800,
-    stock: 5,
-    image:
-      "https://images.unsplash.com/photo-1593784991095-a205069470b6?w=80&q=80",
-  },
-  {
-    name: "LG UltraGear 27GR83Q-B",
-    sku: "LG-ULTRAGEAR-27",
-    category: "Electronics",
-    price: 350,
-    stock: 8,
-    image:
-      "https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?w=80&q=80",
-  },
-  {
-    name: "MSI MAG 271QPX QD-OLED",
-    sku: "MSI-MAG-27-OLED",
-    category: "Electronics",
-    price: 450,
-    stock: 14,
-    image:
-      "https://images.unsplash.com/photo-1616763355603-9755a640a287?w=80&q=80",
-  },
-  {
-    name: "Sony Headphones",
-    sku: "SONY-WH-CH720N",
-    category: "Audio",
-    price: 150,
-    stock: 12,
-    image:
-      "https://images.unsplash.com/photo-1583394838336-acd977736f90?w=80&q=80",
-  },
-  {
-    name: "MX Master Mouse",
-    sku: "MX-MASTER-3S",
-    category: "Accessories",
-    price: 99,
-    stock: 23,
-    image:
-      "https://images.unsplash.com/photo-1527814050087-3793815479db?w=80&q=80",
-  },
-  {
-    name: "Macbook Pro",
-    sku: "MACBOOK-PRO",
-    category: "Electronics",
-    price: 999,
-    stock: 50,
-    image:
-      "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=80&q=80",
-  },
-  {
-    name: "Keychron K2 Pro",
-    sku: "KEYCHRON-K2-PRO",
-    category: "Accessories",
-    price: 189,
-    stock: 31,
-    image:
-      "https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=80&q=80",
-  },
-  {
-    name: "Samsung 990 Pro 2TB",
-    sku: "SAM-990PRO-2TB",
-    category: "Components",
-    price: 219,
-    stock: 4,
-    image:
-      "https://images.unsplash.com/photo-1591488320449-011701bb6704?w=80&q=80",
-  },
-  {
-    name: "iPad Air M2",
-    sku: "IPAD-AIR-M2",
-    category: "Electronics",
-    price: 749,
-    stock: 17,
-    image:
-      "https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?w=80&q=80",
-  },
-  {
-    name: "Logitech C920 Webcam",
-    sku: "LOGI-C920-HD",
-    category: "Accessories",
-    price: 79,
-    stock: 0,
-    image:
-      "https://images.unsplash.com/photo-1587826080692-f439cd0b70da?w=80&q=80",
-  },
-];
-
-// The reference table paginates over five pages of the same catalog. Copies
-// past the first get a -N SKU suffix so every row keeps a unique key, and
-// their stock is rotated so the Status column isn't five identical pages.
-const STOCK_CYCLE = [25, 3, 19, 41, 0, 8, 62, 5, 12, 1, 34, 9, 27, 16];
-const PAGES_OF_DATA = 5;
-
-const PRODUCTS = Array.from({ length: PAGES_OF_DATA }, (_, copy) =>
-  BASE.map((product, i) => ({
-    ...product,
-    id: `${product.sku}-${copy}`,
-    sku: copy === 0 ? product.sku : `${product.sku}-${copy + 1}`,
-    stock:
-      copy === 0
-        ? product.stock
-        : STOCK_CYCLE[(i + copy * 3) % STOCK_CYCLE.length],
-  })),
-).flat();
-
-const CATEGORIES = ["All", ...new Set(BASE.map((p) => p.category))];
 const PAGE_SIZE = 14;
 
 /* ------------------------------------------------------------------ */
@@ -208,6 +58,37 @@ function StatusBadge({ stock }) {
 }
 
 /* ------------------------------------------------------------------ */
+/* Thumbnail — image is optional, and a pasted URL can rot             */
+/* ------------------------------------------------------------------ */
+
+function ProductThumb({ src, name }) {
+  // Remembering which URL failed, rather than a bare "it failed" flag, lets the
+  // placeholder clear itself when the row is given a different image — no effect
+  // needed to reset it.
+  const [failedSrc, setFailedSrc] = useState("");
+
+  return (
+    <div className="flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-md bg-admin-panel-3">
+      {src && src !== failedSrc ? (
+        <img
+          src={src}
+          alt=""
+          loading="lazy"
+          onError={() => setFailedSrc(src)}
+          className="h-full w-full object-cover"
+        />
+      ) : (
+        <ImageOff
+          size={12}
+          className="text-admin-fg-faint"
+          aria-label={`No image for ${name}`}
+        />
+      )}
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
 /* Checkbox — React owns `checked`, so the tick can render as an icon   */
 /* ------------------------------------------------------------------ */
 
@@ -223,7 +104,7 @@ function Checkbox({ checked, indeterminate = false, onChange, label }) {
       className={`flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-[3px] border transition-colors ${
         on
           ? "border-emerald-500 bg-emerald-500"
-          : "border-white/[0.18] hover:border-white/40"
+          : "border-admin-line-stronger hover:border-admin-line-hover"
       }`}
     >
       {indeterminate ? (
@@ -257,15 +138,15 @@ function SortHeader({ label, sortKey, sort, onSort, className = "" }) {
       <button
         type="button"
         onClick={() => onSort(sortKey)}
-        className={`flex items-center gap-1 text-[10px] transition-colors hover:text-white ${
-          active ? "text-white" : "text-gray-400"
+        className={`flex items-center gap-1 text-[10px] transition-colors hover:text-admin-fg ${
+          active ? "text-admin-fg" : "text-admin-fg-muted"
         }`}
       >
         {label}
         <Icon
           size={11}
           strokeWidth={2}
-          className={active ? "" : "text-gray-600"}
+          className={active ? "" : "text-admin-fg-faint"}
         />
       </button>
     </th>
@@ -276,6 +157,8 @@ function SortHeader({ label, sortKey, sort, onSort, className = "" }) {
 /* Per-row actions menu                                                */
 /* ------------------------------------------------------------------ */
 
+// Edit / Duplicate / Delete still need backend endpoints (the API is create +
+// read only for now), so the menu opens but the items are inert.
 const ROW_ACTIONS = [
   { label: "Edit", icon: Pencil },
   { label: "Duplicate", icon: Copy },
@@ -307,13 +190,13 @@ function RowActions({ product }) {
         aria-label={`Actions for ${product.name}`}
         aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
-        className="rounded-md p-1 text-gray-500 transition-colors hover:bg-white/[0.06] hover:text-white"
+        className="rounded-md p-1 text-admin-fg-dim transition-colors hover:bg-admin-active hover:text-admin-fg"
       >
         <MoreVertical size={14} strokeWidth={2} />
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full z-20 mt-1 w-32 overflow-hidden rounded-lg border border-white/[0.1] bg-[#1b1b1e] py-1 shadow-xl shadow-black/40">
+        <div className="absolute right-0 top-full z-20 mt-1 w-32 overflow-hidden rounded-lg border border-admin-line-2 bg-admin-panel-3 py-1 shadow-xl shadow-black/40">
           {ROW_ACTIONS.map((action) => {
             // Capitalized local so it renders as a component — a destructured
             // `icon: Icon` arg falsely lints as unused (see AdminSidebar).
@@ -323,10 +206,10 @@ function RowActions({ product }) {
                 key={action.label}
                 type="button"
                 onClick={() => setOpen(false)}
-                className={`flex w-full items-center gap-2 px-3 py-1.5 text-left text-[11px] transition-colors hover:bg-white/[0.06] ${
+                className={`flex w-full items-center gap-2 px-3 py-1.5 text-left text-[11px] transition-colors hover:bg-admin-active ${
                   action.danger
                     ? "text-red-400"
-                    : "text-gray-300 hover:text-white"
+                    : "text-admin-fg-soft hover:text-admin-fg"
                 }`}
               >
                 <Icon size={12} strokeWidth={1.75} />
@@ -345,7 +228,7 @@ function RowActions({ product }) {
 /* ------------------------------------------------------------------ */
 
 const pageBtn =
-  "flex h-6 min-w-6 items-center justify-center rounded-md border border-white/[0.08] px-1 text-[10px] text-gray-400 transition-colors hover:bg-white/[0.06] hover:text-white disabled:cursor-not-allowed disabled:opacity-35 disabled:hover:bg-transparent disabled:hover:text-gray-400";
+  "flex h-6 min-w-6 items-center justify-center rounded-md border border-admin-line-2 px-1 text-[10px] text-admin-fg-muted transition-colors hover:bg-admin-active hover:text-admin-fg disabled:cursor-not-allowed disabled:opacity-35 disabled:hover:bg-transparent disabled:hover:text-admin-fg-muted";
 
 const WINDOW = 5;
 
@@ -394,7 +277,7 @@ function Pagination({ page, pageCount, onPage }) {
           onClick={() => onPage(p)}
           className={
             p === page
-              ? "flex h-6 min-w-6 items-center justify-center rounded-md border border-white/[0.16] bg-white/[0.08] px-1 text-[10px] font-medium text-white"
+              ? "flex h-6 min-w-6 items-center justify-center rounded-md border border-admin-line-strong bg-admin-active px-1 text-[10px] font-medium text-admin-fg"
               : pageBtn
           }
         >
@@ -433,29 +316,46 @@ function Pagination({ page, pageCount, onPage }) {
 // matches what's on screen (Status sorts by severity, not alphabetically).
 const SORTERS = {
   name: (p) => p.name.toLowerCase(),
-  sku: (p) => p.sku.toLowerCase(),
   category: (p) => p.category.toLowerCase(),
   price: (p) => p.price,
   stock: (p) => p.stock,
   status: (p) => p.stock,
 };
 
-export default function ProductsTable() {
+// Checkbox + 5 data columns + actions.
+const COLUMN_COUNT = 7;
+
+export default function ProductsTable({
+  products = [],
+  loading = false,
+  error = "",
+  onRetry,
+  onAddProduct,
+}) {
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("All");
   const [sort, setSort] = useState({ key: null, dir: "asc" });
   const [page, setPage] = useState(1);
   const [selected, setSelected] = useState(() => new Set());
 
+  const categories = useMemo(
+    () => ["All", ...new Set(products.map((p) => p.category))],
+    [products],
+  );
+
+  // Clamp on read, like `page` below: a reload can drop the category that was
+  // filtered on, which would otherwise show an empty table with no way back.
+  const activeCategory = categories.includes(category) ? category : "All";
+
   const rows = useMemo(() => {
     const q = query.trim().toLowerCase();
 
-    const filtered = PRODUCTS.filter(
+    const filtered = products.filter(
       (p) =>
-        (category === "All" || p.category === category) &&
+        (activeCategory === "All" || p.category === activeCategory) &&
         (!q ||
           p.name.toLowerCase().includes(q) ||
-          p.sku.toLowerCase().includes(q)),
+          p.category.toLowerCase().includes(q)),
     );
 
     if (!sort.key) return filtered;
@@ -468,7 +368,7 @@ export default function ProductsTable() {
       const y = read(b);
       return x === y ? 0 : (x > y ? 1 : -1) * sign;
     });
-  }, [query, category, sort]);
+  }, [products, query, activeCategory, sort]);
 
   const pageCount = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
 
@@ -505,14 +405,74 @@ export default function ProductsTable() {
         : { key, dir: "asc" },
     );
 
+  // One full-width message row, reused for the loading / error / empty states.
+  const renderStateRow = () => {
+    if (loading) {
+      return (
+        <tr>
+          <td
+            colSpan={COLUMN_COUNT}
+            className="px-3 py-14 text-center text-[11px] text-admin-fg-dim"
+          >
+            Loading products…
+          </td>
+        </tr>
+      );
+    }
+
+    if (error) {
+      return (
+        <tr>
+          <td colSpan={COLUMN_COUNT} className="px-3 py-14 text-center">
+            <p className="text-[11px] text-red-400">{error}</p>
+            {onRetry && (
+              <button
+                type="button"
+                onClick={onRetry}
+                className="mt-3 inline-flex items-center gap-1.5 rounded-lg border border-admin-line-2 px-3 py-1.5 text-[11px] text-admin-fg-soft transition-colors hover:bg-admin-active"
+              >
+                <RotateCw size={12} />
+                Retry
+              </button>
+            )}
+          </td>
+        </tr>
+      );
+    }
+
+    // An empty catalog and a too-narrow search need different advice.
+    const filtering = query.trim() || activeCategory !== "All";
+    return (
+      <tr>
+        <td colSpan={COLUMN_COUNT} className="px-3 py-14 text-center">
+          <p className="text-[11px] text-admin-fg-dim">
+            {filtering
+              ? "No products match your search."
+              : "No products yet. Add your first one to get started."}
+          </p>
+          {!filtering && onAddProduct && (
+            <button
+              type="button"
+              onClick={onAddProduct}
+              className="mt-3 inline-flex items-center gap-1.5 rounded-lg border border-admin-line-strong px-3 py-1.5 text-[11px] font-medium text-admin-fg transition-colors hover:bg-admin-active"
+            >
+              <Plus size={12} strokeWidth={2.25} />
+              Add Product
+            </button>
+          )}
+        </td>
+      </tr>
+    );
+  };
+
   return (
-    <div className="rounded-xl border border-white/[0.06] bg-[#141416]">
+    <div className="rounded-xl border border-admin-line bg-admin-panel">
       {/* Toolbar */}
-      <div className="flex flex-wrap items-center gap-2 border-b border-white/[0.06] px-4 py-3">
-        <h2 className="text-[13px] font-semibold text-white">Products</h2>
+      <div className="flex flex-wrap items-center gap-2 border-b border-admin-line px-4 py-3">
+        <h2 className="text-[13px] font-semibold text-admin-fg">Products</h2>
 
         {selected.size > 0 && (
-          <span className="text-[10px] text-gray-500">
+          <span className="text-[10px] text-admin-fg-dim">
             {selected.size} selected
           </span>
         )}
@@ -522,7 +482,7 @@ export default function ProductsTable() {
           <div className="relative">
             <Search
               size={13}
-              className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-500"
+              className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-admin-fg-dim"
             />
             <input
               type="search"
@@ -533,36 +493,37 @@ export default function ProductsTable() {
               }}
               placeholder="Search..."
               aria-label="Search products"
-              className="w-40 rounded-lg border border-white/[0.08] bg-[#0f0f11] py-1.5 pl-8 pr-2.5 text-[11px] text-white outline-none transition-colors placeholder:text-gray-500 focus:border-white/[0.16] sm:w-52"
+              className="w-40 rounded-lg border border-admin-line-2 bg-admin-panel-2 py-1.5 pl-8 pr-2.5 text-[11px] text-admin-fg outline-none transition-colors placeholder:text-admin-fg-dim focus:border-admin-line-strong sm:w-52"
             />
           </div>
 
           {/* Category filter */}
           <div className="relative">
             <select
-              value={category}
+              value={activeCategory}
               onChange={(e) => {
                 setCategory(e.target.value);
                 setPage(1);
               }}
               aria-label="Filter by category"
-              className="w-28 cursor-pointer appearance-none rounded-lg border border-white/[0.08] bg-[#0f0f11] py-1.5 pl-2.5 pr-7 text-[11px] text-white outline-none transition-colors focus:border-white/[0.16] sm:w-32"
+              className="w-28 cursor-pointer appearance-none rounded-lg border border-admin-line-2 bg-admin-panel-2 py-1.5 pl-2.5 pr-7 text-[11px] text-admin-fg outline-none transition-colors focus:border-admin-line-strong sm:w-32"
             >
-              {CATEGORIES.map((c) => (
-                <option key={c} value={c} className="bg-[#1b1b1e]">
+              {categories.map((c) => (
+                <option key={c} value={c} className="bg-admin-panel-3">
                   {c}
                 </option>
               ))}
             </select>
             <ChevronDown
               size={13}
-              className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-500"
+              className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-admin-fg-dim"
             />
           </div>
 
           <button
             type="button"
-            className="flex items-center gap-1.5 whitespace-nowrap rounded-lg border border-white/[0.14] px-3 py-1.5 text-[11px] font-medium text-white transition-colors hover:bg-white/[0.06]"
+            onClick={onAddProduct}
+            className="flex items-center gap-1.5 whitespace-nowrap rounded-lg border border-admin-line-strong px-3 py-1.5 text-[11px] font-medium text-admin-fg transition-colors hover:bg-admin-active"
           >
             <Plus size={13} strokeWidth={2.25} />
             Add Product
@@ -572,9 +533,9 @@ export default function ProductsTable() {
 
       {/* Table */}
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[820px] border-collapse">
+        <table className="w-full min-w-[720px] border-collapse">
           <thead>
-            <tr className="border-b border-white/[0.06] bg-white/[0.015]">
+            <tr className="border-b border-admin-line bg-admin-hover">
               <th scope="col" className="w-10 px-3 py-2.5">
                 <Checkbox
                   checked={allOnPageSelected}
@@ -589,13 +550,6 @@ export default function ProductsTable() {
                 sortKey="name"
                 sort={sort}
                 onSort={onSort}
-              />
-              <SortHeader
-                label="SKU"
-                sortKey="sku"
-                sort={sort}
-                onSort={onSort}
-                className="w-40"
               />
               <SortHeader
                 label="Category"
@@ -633,71 +587,54 @@ export default function ProductsTable() {
           </thead>
 
           <tbody>
-            {visible.map((product) => (
-              <tr
-                key={product.id}
-                className="border-b border-white/[0.04] transition-colors last:border-0 hover:bg-white/[0.02]"
-              >
-                <td className="px-3 py-2">
-                  <Checkbox
-                    checked={selected.has(product.id)}
-                    onChange={() => toggleRow(product.id)}
-                    label={`Select ${product.name}`}
-                  />
-                </td>
-
-                <td className="px-3 py-2">
-                  <div className="flex items-center gap-2.5">
-                    <div className="h-7 w-7 shrink-0 overflow-hidden rounded-md bg-[#292929]">
-                      <img
-                        src={product.image}
-                        alt=""
-                        loading="lazy"
-                        className="h-full w-full object-cover"
+            {visible.length === 0
+              ? renderStateRow()
+              : visible.map((product) => (
+                  <tr
+                    key={product.id}
+                    className="border-b border-admin-line transition-colors last:border-0 hover:bg-admin-hover"
+                  >
+                    <td className="px-3 py-2">
+                      <Checkbox
+                        checked={selected.has(product.id)}
+                        onChange={() => toggleRow(product.id)}
+                        label={`Select ${product.name}`}
                       />
-                    </div>
-                    <span className="text-[11px] font-medium text-white">
-                      {product.name}
-                    </span>
-                  </div>
-                </td>
+                    </td>
 
-                <td className="px-3 py-2 text-[10px] uppercase tracking-wide text-gray-500">
-                  {product.sku}
-                </td>
+                    <td className="px-3 py-2">
+                      <div className="flex items-center gap-2.5">
+                        <ProductThumb
+                          src={product.image}
+                          name={product.name}
+                        />
+                        <span className="text-[11px] font-medium text-admin-fg">
+                          {product.name}
+                        </span>
+                      </div>
+                    </td>
 
-                <td className="px-3 py-2 text-[10px] text-gray-400">
-                  {product.category}
-                </td>
+                    <td className="px-3 py-2 text-[10px] text-admin-fg-muted">
+                      {product.category}
+                    </td>
 
-                <td className="px-3 py-2 text-[10px] tabular-nums text-gray-300">
-                  {money(product.price)}
-                </td>
+                    <td className="px-3 py-2 text-[10px] tabular-nums text-admin-fg-soft">
+                      {money(product.price)}
+                    </td>
 
-                <td className="px-3 py-2 text-[10px] tabular-nums text-gray-400">
-                  {product.stock}
-                </td>
+                    <td className="px-3 py-2 text-[10px] tabular-nums text-admin-fg-muted">
+                      {product.stock}
+                    </td>
 
-                <td className="px-3 py-2">
-                  <StatusBadge stock={product.stock} />
-                </td>
+                    <td className="px-3 py-2">
+                      <StatusBadge stock={product.stock} />
+                    </td>
 
-                <td className="px-3 py-2">
-                  <RowActions product={product} />
-                </td>
-              </tr>
-            ))}
-
-            {visible.length === 0 && (
-              <tr>
-                <td
-                  colSpan={8}
-                  className="px-3 py-14 text-center text-[11px] text-gray-500"
-                >
-                  No products match your search.
-                </td>
-              </tr>
-            )}
+                    <td className="px-3 py-2">
+                      <RowActions product={product} />
+                    </td>
+                  </tr>
+                ))}
           </tbody>
         </table>
       </div>

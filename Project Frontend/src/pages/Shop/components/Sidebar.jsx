@@ -140,8 +140,10 @@ const Sidebar = ({
         `}</style>
       </div>
 
-      {/* Brand */}
-      <div>
+      {/* Brand — hidden when the catalog has no brands (the products table has
+          no brand column, so the store has no brand facet). */}
+      {brands.length > 0 && (
+        <div>
         <h3 className="font-semibold text-[15px] mb-3">BRAND</h3>
         <ul className="space-y-2 max-h-[240px] overflow-y-auto pr-1">
           {brands.map((brand) => {
@@ -170,9 +172,10 @@ const Sidebar = ({
         </ul>
         <button className=" p-2 mt-8 w-full text-sm bg-[#F8F8F8] text-center ">
           MORE
-         
+
         </button>
-      </div>
+        </div>
+      )}
     </aside>
   );
 };

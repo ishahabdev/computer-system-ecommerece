@@ -1,15 +1,23 @@
-import React, { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useParams, useNavigate } from "react-router-dom";
 import { FaStar } from "react-icons/fa";
 import { FaMinus, FaPlus, FaCheck } from "react-icons/fa6";
 import { FiChevronRight } from "react-icons/fi";
 import { FaFacebookF, FaTwitter, FaTruck } from "react-icons/fa";
 import { useCart } from "../../context/CartContext";
-import { getProductById, products } from "./data";
+import { getProductById, products as demoProducts } from "./data";
+import { fetchProductById, fetchProducts, parseStoreId } from "./productApi";
 import adImage from "../../assets/homePIc/homeflash1.webp";
 
+// Thin wrapper: remount the view whenever the route id changes (via key), so all
+// of its view + fetch state resets cleanly for the new product instead of leaking
+// across navigations.
 const ProductDetail = () => {
   const { id } = useParams();
+  return <ProductDetailView key={id} routeId={id} />;
+};
+
+const ProductDetailView = ({ routeId }) => {
   const navigate = useNavigate();
   const [quantity, setQuantity] = useState(1);
   const [added, setAdded] = useState(false);
@@ -17,7 +25,57 @@ const ProductDetail = () => {
   const [mainImage, setMainImage] = useState(0);
   const { addToCart } = useCart();
 
-  const product = getProductById(id);
+  // A "db-<id>" route is a real product from the backend; a bare numeric id is a
+  // demo product the Home page still links to and resolves synchronously.
+  const dbId = parseStoreId(routeId);
+  const isDbProduct = dbId !== null;
+
+  // DB products start in a loading state; static demo products resolve in render.
+  const [dbState, setDbState] = useState({
+    loading: isDbProduct,
+    product: null,
+    catalog: [],
+  });
+
+  // Load a DB product (and the catalog, for related/best-selling) from the API.
+  // The component is keyed by route id, so this runs once per product and the
+  // initial state above already covers the loading flag — no synchronous reset.
+  useEffect(() => {
+    if (!isDbProduct) return undefined;
+
+    let cancelled = false;
+
+    (async () => {
+      try {
+        const [product, catalog] = await Promise.all([
+          fetchProductById(dbId),
+          fetchProducts(),
+        ]);
+        if (!cancelled) setDbState({ loading: false, product, catalog });
+      } catch {
+        // Treat a load failure like "not found" — the 404 block below covers it.
+        if (!cancelled) {
+          setDbState({ loading: false, product: null, catalog: [] });
+        }
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isDbProduct, dbId]);
+
+  const product = isDbProduct ? dbState.product : getProductById(routeId);
+  const catalog = isDbProduct ? dbState.catalog : demoProducts;
+
+  if (isDbProduct && dbState.loading) {
+    return (
+      <div className="min-h-[50vh] flex flex-col items-center justify-center px-6 text-gray-500">
+        <div className="w-9 h-9 rounded-full border-2 border-gray-200 border-t-[#006CE4] animate-spin" />
+        <p className="mt-4 text-sm">Loading product…</p>
+      </div>
+    );
+  }
 
   if (!product) {
     return (
@@ -34,21 +92,25 @@ const ProductDetail = () => {
     );
   }
 
+  // The cart POSTs this id to the backend as productId, so use the real integer
+  // dbId for DB products; demo products keep their numeric id.
+  const backendId = product.dbId ?? product.id;
+
   // Gallery: product image + up to 3 others from same category
   const sameCategoryImages = Array.from(
     new Set(
-      products.filter((p) => p.category === product.category).map((p) => p.img)
+      catalog.filter((p) => p.category === product.category).map((p) => p.img)
     )
   );
   const gallery = [product.img, ...sameCategoryImages]
     .filter((img, index, self) => self.indexOf(img) === index)
     .slice(0, 4);
 
-  const related = products
+  const related = catalog
     .filter((p) => p.category === product.category && p.id !== product.id)
     .slice(0, 4);
 
-  const bestSelling = products
+  const bestSelling = catalog
     .filter((p) => p.id !== product.id)
     .slice(0, 3);
 
@@ -56,7 +118,7 @@ const ProductDetail = () => {
 
   const handleAddToCart = () => {
     addToCart({
-      id: product.id,
+      id: backendId,
       title: product.title,
       price: product.price,
       currency: product.currency,
@@ -70,7 +132,7 @@ const ProductDetail = () => {
 
   const handleBuyNow = () => {
     addToCart({
-      id: product.id,
+      id: backendId,
       title: product.title,
       price: product.price,
       currency: product.currency,
@@ -145,9 +207,11 @@ const ProductDetail = () => {
 
         {/* ===== MIDDLE: INFO ===== */}
         <div className="min-w-0">
-          <p className="text-xs text-gray-400 uppercase tracking-wide">
-            {product.brand}
-          </p>
+          {product.brand && (
+            <p className="text-xs text-gray-400 uppercase tracking-wide">
+              {product.brand}
+            </p>
+          )}
           <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-[#22262A] mt-1 leading-tight">
             {product.title}
           </h1>
@@ -212,7 +276,7 @@ const ProductDetail = () => {
               </button>
             </div>
 
-            <button 
+            <button
               onClick={handleBuyNow}
               className="bg-[#006CE4] text-white text-sm font-semibold px-6 py-2.5 rounded-sm hover:bg-[#1a7fd1] transition-colors">
               Buy Now
@@ -230,7 +294,7 @@ const ProductDetail = () => {
             </button>
           </div>
 
-        
+
 
           {/* Tabs */}
           <div className="mt-8">
@@ -260,15 +324,21 @@ const ProductDetail = () => {
             <div className="py-5 text-sm text-gray-600 leading-relaxed space-y-3">
               {activeTab === "information" ? (
                 <>
-                  <p>{product.description}</p>
-                  <ul className="space-y-1.5">
-                    {product.features.map((feature, index) => (
-                      <li key={index} className="flex items-start gap-2">
-                        <FaCheck className="text-[#006CE4] mt-0.5 shrink-0" />
-                        {feature}
-                      </li>
-                    ))}
-                  </ul>
+                  {product.description ? (
+                    <p>{product.description}</p>
+                  ) : (
+                    <p className="text-gray-400">No description provided.</p>
+                  )}
+                  {product.features?.length > 0 && (
+                    <ul className="space-y-1.5">
+                      {product.features.map((feature, index) => (
+                        <li key={index} className="flex items-start gap-2">
+                          <FaCheck className="text-[#006CE4] mt-0.5 shrink-0" />
+                          {feature}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                 </>
               ) : (
                 <>

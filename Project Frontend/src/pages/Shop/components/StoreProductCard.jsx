@@ -13,10 +13,14 @@ const StoreProductCard = ({ product }) => {
   const { addToCart } = useCart();
   const { isInWishlist, toggleWishlist } = useWishlist();
 
+  // The cart/wishlist POST this id to the backend as productId, so it must be the
+  // real integer products-table id (dbId) — not the "db-<id>" routing id.
+  const backendId = product.dbId ?? product.id;
+
   const handleAddToCart = (e) => {
     e?.preventDefault();
     addToCart({
-      id: product.id,
+      id: backendId,
       title: product.title,
       price: product.price,
       currency: product.currency,
@@ -30,7 +34,7 @@ const StoreProductCard = ({ product }) => {
   const handleToggleWishlist = (e) => {
     e?.preventDefault();
     toggleWishlist({
-      id: product.id,
+      id: backendId,
       title: product.title,
       price: product.price,
       currency: product.currency,
@@ -60,7 +64,7 @@ const StoreProductCard = ({ product }) => {
 
       <div
         className={`absolute top-2 right-2 sm:top-3 sm:right-3 flex flex-col gap-1.5 z-10 ${
-          isInWishlist(product.id) ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+          isInWishlist(backendId) ? "opacity-100" : "opacity-0 group-hover:opacity-100"
         }`}
       >
         <button
@@ -71,7 +75,7 @@ const StoreProductCard = ({ product }) => {
           aria-label="Toggle wishlist"
           className="bg-white rounded-full p-1.5 shadow-sm hover:scale-105 transition-transform"
         >
-          {isInWishlist(product.id) ? (
+          {isInWishlist(backendId) ? (
             <FaHeart className="text-red-600 text-sm sm:text-base" />
           ) : (
             <FaRegHeart className="text-[#2196F3] text-sm sm:text-base" />

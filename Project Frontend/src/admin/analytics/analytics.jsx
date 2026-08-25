@@ -5,14 +5,14 @@ import TopActionsCard from "./components/TopActionsCard";
 import TopPagesCard from "./components/TopPagesCard";
 
 const barBtn =
-  "flex items-center gap-1.5 rounded-lg border border-white/[0.08] bg-[#141416] px-3 py-1.5 text-[12px] text-gray-300 transition-colors hover:bg-white/[0.04] hover:text-white";
+  "flex items-center gap-1.5 rounded-lg border border-admin-line-2 bg-admin-panel px-3 py-1.5 text-[12px] text-admin-fg-soft transition-colors hover:bg-admin-hover hover:text-admin-fg";
 
 const Analytics = () => {
   return (
     <div className="p-4 md:p-6">
       {/* Header */}
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-[16px] font-semibold text-white">Analytics</h1>
+        <h1 className="text-[16px] font-semibold text-admin-fg">Analytics</h1>
 
         <div className="flex flex-wrap gap-2">
           <button type="button" className={barBtn}>

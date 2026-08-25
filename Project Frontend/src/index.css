@@ -20,3 +20,64 @@
     animation: slide-in 0.3s ease-out;
   }
 }
+
+/* ------------------------------------------------------------------ */
+/* Admin dashboard theme tokens.                                       */
+/*                                                                     */
+/* A single elevation ladder drives both themes: `bg` is the canvas    */
+/* (sidebar, navbar, the space behind cards), `panel` is a content     */
+/* card that sits ONE step above the canvas so it reads as raised,     */
+/* `panel-2` is an inset (inputs, recessed below the card), `panel-3`  */
+/* is the top layer (menus, modals). In dark the ladder gets lighter   */
+/* as it rises; in light the canvas is a soft gray so white cards      */
+/* float — the depth is what reads as "professional" rather than flat. */
+/* Text avoids pure #fff / #000 (glare) and borders are layered so     */
+/* structure is legible without hard lines. Consumed via the `admin-*` */
+/* Tailwind colors and scoped to `.admin-theme`, so the storefront is  */
+/* never affected. `.light` overrides the same variables.             */
+/* ------------------------------------------------------------------ */
+.admin-theme {
+  --a-bg: #0a0a0c;
+  --a-panel: #151518;
+  --a-panel-2: #101013;
+  --a-panel-3: #1c1c21;
+  --a-fg: #f4f4f5;
+  --a-fg-soft: #d4d4d8;
+  --a-fg-muted: #a1a1aa;
+  --a-fg-dim: #71717a;
+  --a-fg-faint: #52525b;
+  --a-line: rgba(255, 255, 255, 0.07);
+  --a-line-2: rgba(255, 255, 255, 0.1);
+  --a-line-strong: rgba(255, 255, 255, 0.14);
+  --a-line-stronger: rgba(255, 255, 255, 0.22);
+  --a-line-hover: rgba(255, 255, 255, 0.34);
+  --a-hover: rgba(255, 255, 255, 0.035);
+  --a-active: rgba(255, 255, 255, 0.07);
+  --a-invert: #fafafa;
+  --a-invert-fg: #0a0a0c;
+
+  color-scheme: dark;
+}
+
+.admin-theme.light {
+  --a-bg: #f7f8fa;
+  --a-panel: #ffffff;
+  --a-panel-2: #f1f2f5;
+  --a-panel-3: #ffffff;
+  --a-fg: #18181b;
+  --a-fg-soft: #3f3f46;
+  --a-fg-muted: #52525b;
+  --a-fg-dim: #71717a;
+  --a-fg-faint: #a1a1aa;
+  --a-line: rgba(9, 9, 11, 0.08);
+  --a-line-2: rgba(9, 9, 11, 0.11);
+  --a-line-strong: rgba(9, 9, 11, 0.16);
+  --a-line-stronger: rgba(9, 9, 11, 0.26);
+  --a-line-hover: rgba(9, 9, 11, 0.4);
+  --a-hover: rgba(9, 9, 11, 0.035);
+  --a-active: rgba(9, 9, 11, 0.06);
+  --a-invert: #18181b;
+  --a-invert-fg: #ffffff;
+
+  color-scheme: light;
+}

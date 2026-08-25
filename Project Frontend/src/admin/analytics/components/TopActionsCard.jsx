@@ -12,21 +12,21 @@ export function BarListCard({ title, filterLabel, rows }) {
   const max = Math.max(...rows.map((r) => r.sessions));
 
   return (
-    <div className="flex flex-col rounded-xl border border-white/[0.06] bg-[#141416]">
+    <div className="flex flex-col rounded-xl border border-admin-line bg-admin-panel">
       {/* Header */}
       <div className="flex items-center justify-between gap-3 px-4 py-3">
-        <h2 className="text-[13px] font-semibold text-white">{title}</h2>
+        <h2 className="text-[13px] font-semibold text-admin-fg">{title}</h2>
 
         <div className="relative">
           <select
             aria-label={filterLabel}
-            className="w-28 cursor-pointer appearance-none truncate rounded-lg border border-white/[0.08] bg-[#0f0f11] py-1.5 pl-2.5 pr-7 text-[11px] text-gray-300 outline-none transition-colors focus:border-white/[0.16]"
+            className="w-28 cursor-pointer appearance-none truncate rounded-lg border border-admin-line-2 bg-admin-panel-2 py-1.5 pl-2.5 pr-7 text-[11px] text-admin-fg-soft outline-none transition-colors focus:border-admin-line-strong"
           >
-            <option className="bg-[#1b1b1e]">{filterLabel}</option>
+            <option className="bg-admin-panel-3">{filterLabel}</option>
           </select>
           <ChevronDown
             size={13}
-            className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-500"
+            className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-admin-fg-dim"
           />
         </div>
       </div>
@@ -34,15 +34,15 @@ export function BarListCard({ title, filterLabel, rows }) {
       {/* Rows */}
       <ul className="flex-1 px-4">
         {rows.map((row) => (
-          <li key={row.label} className="border-t border-white/[0.04] py-2.5">
+          <li key={row.label} className="border-t border-admin-line py-2.5">
             <div className="flex items-baseline justify-between gap-3">
-              <span className="truncate text-[11px] text-gray-300">{row.label}</span>
-              <span className="shrink-0 text-[10px] tabular-nums text-gray-500">
+              <span className="truncate text-[11px] text-admin-fg-soft">{row.label}</span>
+              <span className="shrink-0 text-[10px] tabular-nums text-admin-fg-dim">
                 {row.sessions} sessions
               </span>
             </div>
 
-            <div className="mt-1.5 h-1 overflow-hidden rounded-full bg-white/[0.04]">
+            <div className="mt-1.5 h-1 overflow-hidden rounded-full bg-admin-hover">
               <div
                 className="h-full rounded-full bg-blue-500"
                 style={{ width: `${(row.sessions / max) * 100}%` }}
@@ -56,7 +56,7 @@ export function BarListCard({ title, filterLabel, rows }) {
       <div className="flex justify-center px-4 py-4">
         <button
           type="button"
-          className="rounded-lg border border-white/[0.1] px-3 py-1.5 text-[11px] text-gray-300 transition-colors hover:bg-white/[0.06] hover:text-white"
+          className="rounded-lg border border-admin-line-2 px-3 py-1.5 text-[11px] text-admin-fg-soft transition-colors hover:bg-admin-active hover:text-admin-fg"
         >
           Load more
         </button>
