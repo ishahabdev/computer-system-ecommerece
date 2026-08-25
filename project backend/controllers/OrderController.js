@@ -1,6 +1,8 @@
 import { Op } from "sequelize";
 
+import { database } from "../config/database.js";
 import Order from "../model/orderModel.js";
+import Product from "../model/productModel.js";
 import User from "../model/userModel.js";
 
 // Orders in these states never change again, so the scheduler can skip them.
@@ -86,6 +88,106 @@ export const syncActiveOrderStatuses = async () => {
 };
 
 // CREATE ORDER (customer places an order at checkout)
+//
+// A cart line item stores the *cart* id as productId. Real catalog products send
+// the bare integer products-table id (Store/ProductDetail pass `dbId` into the
+// cart, see context/CartContext.jsx), but be liberal in what we accept: also
+// handle a numeric string and the store's "db-<id>" routing form. Demo/legacy
+// products carry ids that parse to a number but match no products-table row —
+// those have no stock to track and are simply skipped.
+const parseCatalogProductId = (raw) => {
+  if (typeof raw === "number") return Number.isInteger(raw) && raw > 0 ? raw : null;
+  if (typeof raw === "string") {
+    const value = raw.startsWith("db-") ? raw.slice(3) : raw;
+    const parsed = Number(value);
+    return Number.isInteger(parsed) && parsed > 0 ? parsed : null;
+  }
+  return null;
+};
+
+// Sum the ordered quantity per real catalog product. Shared by create (reserve)
+// and cancel/delete (restore) so every path reads an order's line items the same
+// way: skip items that map to no catalog row, coerce the quantity, and add
+// duplicated ids together.
+const sumOrderedByProduct = (products) => {
+  const lineItems = Array.isArray(products) ? products : [];
+  const orderedByProduct = new Map();
+  for (const item of lineItems) {
+    const productId = parseCatalogProductId(item?.productId);
+    const quantity = Number(item?.quantity);
+    if (productId === null || !Number.isFinite(quantity) || quantity <= 0) continue;
+    orderedByProduct.set(productId, (orderedByProduct.get(productId) || 0) + quantity);
+  }
+  return orderedByProduct;
+};
+
+// Resolve the order's real, time-aware status the same way the read paths do:
+// an admin/cancel override is authoritative, otherwise fall back to the
+// 10-minute timeline. Used to decide whether an order still holds stock.
+const resolveLiveStatus = (order) =>
+  order.isManuallySet ? normalizeStoredStatus(order.status) : getLiveOrderStatus(order);
+
+// Reserve (deduct) stock for an order's items, all-or-nothing. Each product row
+// is locked FOR UPDATE so two checkouts can't both sell the same last unit, and
+// a shortfall throws a 409 that rolls the whole transaction back. Must run
+// inside a transaction.
+const reserveStockForOrder = async (orderedByProduct, transaction) => {
+  const productIds = [...orderedByProduct.keys()];
+  if (productIds.length === 0) return;
+
+  const catalogProducts = await Product.findAll({
+    where: { id: { [Op.in]: productIds } },
+    lock: transaction.LOCK.UPDATE,
+    transaction,
+  });
+  const productById = new Map(catalogProducts.map((p) => [p.id, p]));
+
+  // Check every item first (so the order is all-or-nothing), then deduct.
+  for (const [productId, quantity] of orderedByProduct) {
+    const product = productById.get(productId);
+    if (!product) continue; // parsed to a number but no such catalog row
+    if (product.stock < quantity) {
+      const error = new Error(
+        product.stock > 0
+          ? `Only ${product.stock} left in stock for "${product.name}".`
+          : `"${product.name}" is out of stock.`,
+      );
+      error.statusCode = 409; // client-fixable conflict, not a server fault
+      throw error; // rolls the whole transaction back
+    }
+  }
+
+  for (const [productId, quantity] of orderedByProduct) {
+    const product = productById.get(productId);
+    if (!product) continue;
+    product.stock -= quantity;
+    await product.save({ transaction });
+  }
+};
+
+// Give an order's reserved quantities back to stock — the mirror of
+// reserveStockForOrder, used when an order is cancelled or deleted while still
+// in flight. Rows whose product was since deleted are skipped (nothing to
+// restore to). Must run inside a transaction.
+const restoreStockForOrder = async (orderedByProduct, transaction) => {
+  const productIds = [...orderedByProduct.keys()];
+  if (productIds.length === 0) return;
+
+  const catalogProducts = await Product.findAll({
+    where: { id: { [Op.in]: productIds } },
+    lock: transaction.LOCK.UPDATE,
+    transaction,
+  });
+  const productById = new Map(catalogProducts.map((p) => [p.id, p]));
+
+  for (const [productId, quantity] of orderedByProduct) {
+    const product = productById.get(productId);
+    if (!product) continue;
+    product.stock += quantity;
+    await product.save({ transaction });
+  }
+};
+
 export const createOrder = async (req, res) => {
   try {
     const { products, totalAmount, address } = req.body;
@@ -97,13 +199,28 @@ export const createOrder = async (req, res) => {
       });
     }
 
-    const order = await Order.create({
-      userId: req.user.id, // comes from the verified token, not from frontend
-      products,
-      totalAmount,
-      address,
-      status: "packing",
-      isManuallySet: false,
+    // Sum the ordered quantity per real catalog product. Items that don't map to
+    // a products-table row (demo/legacy) are left out — there's no stock to
+    // track for them. Duplicated ids are summed so the stock check sees the true
+    // demand for a product even if it appears on more than one line.
+    const orderedByProduct = sumOrderedByProduct(products);
+
+    // Reserve stock and save the order atomically: either every ordered catalog
+    // product is deducted and the order is created, or nothing changes.
+    const order = await database.transaction(async (transaction) => {
+      await reserveStockForOrder(orderedByProduct, transaction);
+
+      return Order.create(
+        {
+          userId: req.user.id, // comes from the verified token, not from frontend
+          products,
+          totalAmount,
+          address,
+          status: "packing",
+          isManuallySet: false,
+        },
+        { transaction },
+      );
     });
 
     res.json({
@@ -112,6 +229,14 @@ export const createOrder = async (req, res) => {
       data: order,
     });
   } catch (error) {
+    // A stock shortfall is a client problem (409 Conflict) with an actionable
+    // message, not an internal error — surface it as-is so checkout can show it.
+    if (error.statusCode === 409) {
+      return res.status(409).json({
+        success: false,
+        message: error.message,
+      });
+    }
     res.status(500).json({
       success: false,
       message: "internal server error",
@@ -210,22 +335,42 @@ export const trackOrder = async (req, res) => {
 // DELETE MY ORDER - removes an order only if it belongs to the logged-in user
 export const deleteOrder = async (req, res) => {
   try {
-    const deleted = await Order.destroy({
-      where: { id: req.params.id, userId: req.user.id },
-    });
-
-    if (!deleted) {
-      return res.status(404).json({
-        success: false,
-        message: "Order not found",
+    await database.transaction(async (transaction) => {
+      const order = await Order.findOne({
+        where: { id: req.params.id, userId: req.user.id },
+        lock: transaction.LOCK.UPDATE,
+        transaction,
       });
-    }
+
+      if (!order) {
+        const error = new Error("Order not found");
+        error.statusCode = 404;
+        throw error;
+      }
+
+      // Deleting an order that is still in flight releases its reserved stock,
+      // exactly like cancelling would. A delivered order (stock genuinely sold)
+      // or an already-cancelled one (stock already returned) must NOT be
+      // restored, or we'd invent inventory.
+      const liveStatus = resolveLiveStatus(order);
+      if (liveStatus !== "delivered" && liveStatus !== "cancelled") {
+        await restoreStockForOrder(sumOrderedByProduct(order.products), transaction);
+      }
+
+      await order.destroy({ transaction });
+    });
 
     res.json({
       success: true,
       message: "Order deleted successfully",
     });
   } catch (error) {
+    if (error.statusCode === 404) {
+      return res.status(404).json({
+        success: false,
+        message: "Order not found",
+      });
+    }
     res.status(500).json({
       success: false,
       message: "internal server error",
@@ -250,9 +395,7 @@ export const cancelOrder = async (req, res) => {
 
     // Resolve the real, time-based status first so an order that has already
     // reached "delivered" on the timeline can no longer be cancelled.
-    const liveStatus = order.isManuallySet
-      ? normalizeStoredStatus(order.status)
-      : getLiveOrderStatus(order);
+    const liveStatus = resolveLiveStatus(order);
 
     if (liveStatus === "cancelled") {
       return res.status(400).json({
@@ -268,9 +411,26 @@ export const cancelOrder = async (req, res) => {
       });
     }
 
-    order.status = "cancelled";
-    order.isManuallySet = true; // cancellation is a manual, permanent override too
-    await order.save();
+    // Return the reserved stock and flip the status atomically. Re-read the
+    // order FOR UPDATE inside the transaction and bail if it is already
+    // cancelled, so two cancels racing on the same order can't both add the
+    // stock back (double-restore).
+    await database.transaction(async (transaction) => {
+      const lockedOrder = await Order.findOne({
+        where: { id: order.id },
+        lock: transaction.LOCK.UPDATE,
+        transaction,
+      });
+      if (!lockedOrder || normalizeStoredStatus(lockedOrder.status) === "cancelled") return;
+
+      await restoreStockForOrder(sumOrderedByProduct(lockedOrder.products), transaction);
+      lockedOrder.status = "cancelled";
+      lockedOrder.isManuallySet = true; // cancellation is a manual, permanent override too
+      await lockedOrder.save({ transaction });
+    });
+
+    // Reflect the committed change on the instance we hand back to the client.
+    await order.reload();
 
     res.json({
       success: true,
@@ -316,16 +476,69 @@ export const updateOrderStatus = async (req, res) => {
   try {
     const { status } = req.body;
 
-    await Order.update(
-      { status, isManuallySet: true }, // mark as manual so the scheduler won't overwrite it
-      { where: { id: req.params.id } }
-    );
+    if (!status) {
+      return res.status(400).json({
+        success: false,
+        message: "status is required",
+      });
+    }
+
+    const nextStatus = normalizeStoredStatus(status);
+
+    await database.transaction(async (transaction) => {
+      const order = await Order.findOne({
+        where: { id: req.params.id },
+        lock: transaction.LOCK.UPDATE,
+        transaction,
+      });
+
+      if (!order) {
+        const error = new Error("Order not found");
+        error.statusCode = 404;
+        throw error;
+      }
+
+      const prevStatus = normalizeStoredStatus(order.status);
+      const orderedByProduct = sumOrderedByProduct(order.products);
+
+      // Keep stock in step with an admin's status change: moving an order into
+      // "cancelled" returns its reserved units, and moving it back out reserves
+      // them again (all-or-nothing, 409 if there is no longer enough). Every
+      // other transition leaves stock untouched.
+      if (prevStatus !== "cancelled" && nextStatus === "cancelled") {
+        await restoreStockForOrder(orderedByProduct, transaction);
+      } else if (prevStatus === "cancelled" && nextStatus !== "cancelled") {
+        await reserveStockForOrder(orderedByProduct, transaction);
+      }
+
+      // FIX: store the normalized status (matches the ENUM exactly), not the
+      // raw value from the request body. Saving an un-normalized value like
+      // "Cancelled" or "Shipped" can fail Sequelize's ENUM validation, which
+      // throws inside the transaction and rolls back the stock restore above
+      // — so the status looked "cancelled" to the admin's click, but neither
+      // the DB status nor the stock ever actually changed.
+      order.status = nextStatus;
+      order.isManuallySet = true; // mark as manual so the scheduler won't overwrite it
+      await order.save({ transaction });
+    });
 
     res.json({
       success: true,
       message: "Order status updated",
     });
   } catch (error) {
+    if (error.statusCode === 409) {
+      return res.status(409).json({
+        success: false,
+        message: error.message,
+      });
+    }
+    if (error.statusCode === 404) {
+      return res.status(404).json({
+        success: false,
+        message: "Order not found",
+      });
+    }
     res.status(500).json({
       success: false,
       message: "internal server error",
