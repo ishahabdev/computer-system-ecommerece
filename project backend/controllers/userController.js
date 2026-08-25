@@ -49,6 +49,14 @@ export const loginUser = async (req, res) => {
       });
     }
 
+    // A suspended account must not be able to obtain a fresh token.
+    if (user.status === "Suspended") {
+      return res.status(403).json({
+        status: false,
+        message: "Your account has been suspended. Please contact support.",
+      });
+    }
+
     const excludePassword = {
       id: user.id,
       name: user.name,
@@ -73,6 +81,25 @@ export const loginUser = async (req, res) => {
       message: "internal server error",
       error: error.message,
     });
+  }
+};
+
+// CURRENT USER: re-validates a stored session. Runs behind authMiddleware, so
+// reaching this handler already proves the account exists and is not suspended;
+// the frontend calls it on load and logs out if it returns 401/403.
+export const getMe = async (req, res) => {
+  try {
+    const user = await User.findByPk(req.user.id, {
+      attributes: { exclude: ["password"] },
+    });
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    res.json({ success: true, data: user });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
   }
 };
 
@@ -287,18 +314,61 @@ export const getSigleUsers = async (req, res) => {
   }
 };
 // UPDATE USER
+// Admin action from the Users table (suspend / re-activate, role or name edits).
+// Only a small whitelist of fields may change here, so a stray body key can never
+// overwrite the password hash, email, or id. We re-read the row afterwards and
+// return it, so the caller (and the Network tab) can confirm the change actually
+// persisted — a silent no-op is what made suspensions appear to "revert" on refresh.
 export const updateUser = async (req, res) => {
   try {
-    await User.update(req.body, {
+    const ALLOWED_FIELDS = ["name", "role", "status"];
+    const ALLOWED_STATUSES = ["Active", "Suspended", "Invited"];
+
+    const updates = {};
+    for (const field of ALLOWED_FIELDS) {
+      if (req.body[field] !== undefined) updates[field] = req.body[field];
+    }
+
+    if (Object.keys(updates).length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "No updatable fields provided (name, role, status).",
+      });
+    }
+
+    if (updates.status && !ALLOWED_STATUSES.includes(updates.status)) {
+      return res.status(400).json({
+        success: false,
+        message: `Invalid status "${updates.status}". Use one of: ${ALLOWED_STATUSES.join(", ")}.`,
+      });
+    }
+
+    const [affectedRows] = await User.update(updates, {
       where: { id: req.params.id },
+    });
+
+    // affectedRows can be 0 when the id doesn't exist OR when the row already
+    // held these values. Only the former is an error, so confirm existence.
+    if (affectedRows === 0) {
+      const exists = await User.findByPk(req.params.id);
+      if (!exists) {
+        return res.status(404).json({ success: false, message: "User not found" });
+      }
+    }
+
+    // Return the freshly-read row so the client can trust the persisted status
+    // instead of its optimistic guess.
+    const updatedUser = await User.findByPk(req.params.id, {
+      attributes: { exclude: ["password"] },
     });
 
     res.json({
       success: true,
       message: "User updated successfully",
+      data: updatedUser,
     });
   } catch (error) {
-    res.json({
+    res.status(500).json({
       success: false,
       error: error.message,
     });

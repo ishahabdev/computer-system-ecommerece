@@ -7,6 +7,8 @@ import userRoutes from "./routes/userRoutes.js";
 import { connectDB } from "./config/database.js";
 import orderWishlistCartRoutes from "./routes/Orderwishlistcartroutes.js"
 import contactRoutes from "./routes/contactRoutes.js";
+import productRoutes from "./routes/productRoutes.js";
+import { UPLOADS_DIR } from "./middleware/UploadMiddleware.js";
 import { syncActiveOrderStatuses } from "./controllers/OrderController.js";
 
 const app = express();
@@ -24,10 +26,16 @@ app.get("/v1/debug-routes", (req, res) => {
   res.json({ success: true, message: "current backend code loaded" });
 });
 
+// Uploaded product images are served straight off disk. The database only ever
+// holds the path ("/uploads/product-123.webp"), so this is what makes that path
+// resolve to an actual image for the frontend.
+app.use("/uploads", express.static(UPLOADS_DIR));
+
 // Routes
 app.use("/v1", userRoutes);
 app.use("/v1", orderWishlistCartRoutes);
 app.use("/v1", contactRoutes);
+app.use("/v1", productRoutes);
 
 
 // Periodically advance order statuses (packing -> shipping -> on delivery ->

@@ -1,7 +1,7 @@
 import express from "express";
 import {
   loginUser, creatUser, destroyUser, getSigleUsers, getUsers, updateUser,
-  requestPasswordReset, resetPassword, verifyResetOtp, changePassword
+  requestPasswordReset, resetPassword, verifyResetOtp, changePassword, getMe
 } from "../controllers/userController.js";
 import { authMiddleware } from "../middleware/AuthMiddleware.js";
 
@@ -9,6 +9,7 @@ const router = express.Router();
 
 router.post("/login", loginUser);
 router.post("/user", creatUser);
+router.get("/me", authMiddleware, getMe);
 router.post("/forgot-password", requestPasswordReset);
 router.post("/verify-code", verifyResetOtp);
 router.post("/reset-password", resetPassword);
