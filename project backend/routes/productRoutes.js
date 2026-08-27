@@ -4,9 +4,10 @@ import {
   createProduct,
   getProducts,
   getSingleProduct,
+  updateProduct,
 } from "../controllers/productController.js";
 import { adminOnly, authMiddleware } from "../middleware/AuthMiddleware.js";
-import { uploadProductImage } from "../middleware/UploadMiddleware.js";
+import { uploadProductImages } from "../middleware/UploadMiddleware.js";
 
 const router = express.Router();
 
@@ -15,14 +16,18 @@ router.get("/products", getProducts);
 router.get("/products/:id", getSingleProduct);
 
 // Admin write. Auth runs BEFORE the upload middleware on purpose: rejecting an
-// unauthorised request after multer had already written the file to disk would
+// unauthorised request after multer had already written the files to disk would
 // let anyone fill up uploads/ without being able to create a product.
 router.post(
   "/admin/products",
   authMiddleware,
   adminOnly,
-  uploadProductImage,
+  uploadProductImages,
   createProduct,
 );
+
+// Admin update (currently the "Manage deal" discount control). JSON body, so no
+// upload middleware — the global express.json() parser handles it.
+router.patch("/admin/products/:id", authMiddleware, adminOnly, updateProduct);
 
 export default router;

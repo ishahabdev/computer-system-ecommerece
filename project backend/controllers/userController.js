@@ -300,7 +300,14 @@ export const getUsers = async (req, res) => {
 // GET SINGLE USER
 export const getSigleUsers = async (req, res) => {
   try {
-    const user = await User.findByPk(req.params.id);
+    // Never expose the password hash (this route is admin-only, but excluded regardless).
+    const user = await User.findByPk(req.params.id, {
+      attributes: { exclude: ["password"] },
+    });
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
 
     res.json({
       success: true,
