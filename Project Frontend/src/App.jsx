@@ -14,13 +14,17 @@ import { ToastProvider } from "./context/ToastContext"
 
 import OverView from "./admin/overview/overview"
 import Products from "./admin/products/products"
+
 import Orders from "./admin/orders/orders"
 import Analytics from "./admin/analytics/analytics"
 import UsersAdmin from "./admin/users/users"
 import AdminLayout from "./admin/components/AdminLayout"
+import AdminRoute from "./admin/components/AdminRoute"
 
 // Lazy load route components
 const Home = lazy(() => import("./pages/Home/Home"))
+const Deals = lazy(() => import("./pages/Deals/deals"))
+
 const Store = lazy(() => import("./pages/Shop/Store"))
 const ProductDetail = lazy(() => import("./pages/Shop/ProductDetail"))
 const Accessories = lazy(() => import("./pages/Static/Accessories"))
@@ -33,6 +37,7 @@ const Checkout = lazy(() => import("./pages/Checkout/Checkout"))
 const OrderConfirmation = lazy(() => import("./pages/Order/OrderConfirmation"))
 const Signin = lazy(() => import("./pages/Auth/Signin"))
 const Signup = lazy(() => import("./pages/Auth/Signup"))
+const AdminLogin = lazy(() => import("./pages/Auth/AdminLogin"))
 const ForgotPassword = lazy(() => import("./pages/Auth/ForgotPassword"))
 const TrackOrder = lazy(() => import("./pages/Order/TrackOrder"))
 
@@ -81,6 +86,7 @@ function App() {
                     <Route path="/store" element={<Store />} />
                     <Route path="/accessories" element={<Accessories />} />
                     <Route path="/about" element={<About />} />
+                    <Route path="/deals" element={<Deals />} />
                     <Route path="/dashboard" element={<Dashboard />} />
                     <Route path="/contact" element={<Contact />} />
                     <Route path="/wishlist" element={<Wishlist />} />
@@ -93,14 +99,21 @@ function App() {
                     <Route path="/forgot-password" element={<ForgotPassword />} />
                     <Route path="/track-order" element={<TrackOrder />} />
 
-                    {/* Admin Routes */}
-                    <Route path="/admin" element={<AdminLayout />}>
-                      <Route index element={<Navigate to="/admin/overview" replace />} />
-                      <Route path="overview" element={<OverView />} />
-                      <Route path="products" element={<Products />} />
-                      <Route path="orders" element={<Orders />} />
-                      <Route path="analyze" element={<Analytics />} />
-                      <Route path="users" element={<UsersAdmin />} />
+                    {/* Admin auth — public so an unauthenticated user can reach it */}
+                    <Route path="/admin/login" element={<AdminLogin />} />
+
+                    {/* Admin Routes — gated by AdminRoute (validates JWT session +
+                        role). AdminRoute renders its <Outlet/> only for admins;
+                        AdminLayout then supplies the sidebar/navbar chrome. */}
+                    <Route path="/admin" element={<AdminRoute />}>
+                      <Route element={<AdminLayout />}>
+                        <Route index element={<Navigate to="/admin/overview" replace />} />
+                        <Route path="overview" element={<OverView />} />
+                        <Route path="products" element={<Products />} />
+                        <Route path="orders" element={<Orders />} />
+                        <Route path="analyze" element={<Analytics />} />
+                        <Route path="users" element={<UsersAdmin />} />
+                      </Route>
                     </Route>
 
                     <Route path="*" element={<NotFound />} />

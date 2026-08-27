@@ -1,6 +1,9 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Search, Settings, Plus, X } from "lucide-react";
 import UsersTable from "./components/UsersTable";
+import DateRangeMenu from "../components/filters/DateRangeMenu";
+import FilterMenu from "../components/filters/FilterMenu";
+import { DEFAULT_RANGE, inRange } from "../components/filters/dateRange";
 
 // Same backend the customer auth flow talks to. New signups/logins land in this
 // table because they are written to the same users table this reads from.
@@ -8,7 +11,9 @@ const API_BASE_URL = "http://localhost:9000/v1";
 const REQUEST_TIMEOUT_MS = 15000;
 
 // Backend rows -> the shape the table renders. Role/status fall back to the
-// model defaults, and `joined` is derived from the Sequelize createdAt column.
+// model defaults, `joined` is the human-readable createdAt for display, and
+// `time` is the same date as epoch-ms so the toolbar's date range can filter on
+// it (0 when the row has no createdAt, which drops out of any bounded range).
 const normalizeUser = (u, i) => ({
   id: u.id ?? i + 1,
   name: (typeof u.name === "string" && u.name.trim()) || (u.email ? u.email.split("@")[0] : "Unknown"),
@@ -16,6 +21,7 @@ const normalizeUser = (u, i) => ({
   role: u.role || "User",
   status: u.status || "Active",
   joined: u.createdAt ? new Date(u.createdAt).toISOString().slice(0, 10) : "—",
+  time: u.createdAt ? new Date(u.createdAt).getTime() : 0,
 });
 
 const getErrorMessage = (error) => {
@@ -28,18 +34,39 @@ const getErrorMessage = (error) => {
   return error.message || "Failed to load users";
 };
 
+// The user-management endpoints are gated by authMiddleware + adminOnly on the
+// backend, so every request must carry the admin's Bearer token (saved at login,
+// same one the storefront uses).
+const authHeaders = () => {
+  const token = localStorage.getItem("authToken");
+  return token ? { Authorization: `Bearer ${token}` } : {};
+};
+
 const Users = () => {
   const [query, setQuery] = useState("");
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [actionError, setActionError] = useState("");
+  const [range, setRange] = useState(DEFAULT_RANGE);
+  const [filters, setFilters] = useState({});
 
   const loadUsers = useCallback(async () => {
     setLoading(true);
     setError("");
+
+    // Admin-only route; without the token the request can only ever come back 401.
+    const token = localStorage.getItem("authToken");
+    if (!token) {
+      setError("You must be signed in as an admin to view users.");
+      setUsers([]);
+      setLoading(false);
+      return;
+    }
+
     try {
       const response = await fetch(`${API_BASE_URL}/users`, {
+        headers: authHeaders(),
         signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
       });
       const data = await response.json();
@@ -72,7 +99,7 @@ const Users = () => {
       try {
         const response = await fetch(`${API_BASE_URL}/user/${id}`, {
           method: "PUT",
-          headers: { "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json", ...authHeaders() },
           body: JSON.stringify({ status }),
           signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
         });
@@ -103,6 +130,7 @@ const Users = () => {
       try {
         const response = await fetch(`${API_BASE_URL}/user/${id}`, {
           method: "DELETE",
+          headers: authHeaders(),
           signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
         });
         const data = await response.json();
@@ -117,9 +145,42 @@ const Users = () => {
     [loadUsers],
   );
 
-  // Summary cards, derived from the live data rather than hard-coded totals.
-  const total = users.length;
-  const countByStatus = (status) => users.filter((u) => u.status === status).length;
+  // Role and status are free-form strings in the model, so the Filter panel's
+  // options come from whatever values are actually present in the loaded users
+  // (deduped + sorted) rather than a fixed enum. Derived from the full set, not
+  // the filtered set, so choosing one value never hides the others.
+  const filterGroups = useMemo(() => {
+    const distinct = (key) =>
+      [...new Set(users.map((u) => u[key]).filter(Boolean))].sort((a, b) =>
+        a.localeCompare(b),
+      );
+    const toOptions = (values) => values.map((v) => ({ value: v, label: v }));
+    const groups = [];
+    const roles = distinct("role");
+    const statuses = distinct("status");
+    if (roles.length) groups.push({ id: "role", label: "Role", options: toOptions(roles) });
+    if (statuses.length)
+      groups.push({ id: "status", label: "Status", options: toOptions(statuses) });
+    return groups;
+  }, [users]);
+
+  // The toolbar's date range + role/status filters narrow the feed; the cards
+  // and the table both read from this. Text search stays inside the table and
+  // composes on top of what's left here.
+  const filteredUsers = useMemo(
+    () =>
+      users.filter(
+        (u) =>
+          inRange(u.time, range) &&
+          (!filters.role?.length || filters.role.includes(u.role)) &&
+          (!filters.status?.length || filters.status.includes(u.status)),
+      ),
+    [users, range, filters],
+  );
+
+  // Summary cards, derived from the filtered users rather than hard-coded totals.
+  const total = filteredUsers.length;
+  const countByStatus = (status) => filteredUsers.filter((u) => u.status === status).length;
   const share = (n) => (total ? Math.round((n / total) * 100) : 0);
 
   const active = countByStatus("Active");
@@ -154,6 +215,10 @@ const Users = () => {
               className="w-44 rounded-lg border border-admin-line-2 bg-admin-panel-2 py-1.5 pl-8 pr-2.5 text-[11px] text-admin-fg outline-none transition-colors placeholder:text-admin-fg-dim focus:border-admin-line-strong sm:w-56"
             />
           </div>
+
+          <FilterMenu groups={filterGroups} value={filters} onChange={setFilters} />
+
+          <DateRangeMenu value={range} onChange={setRange} />
 
           <button
             type="button"
@@ -210,7 +275,7 @@ const Users = () => {
 
       <UsersTable
         query={query}
-        users={users}
+        users={filteredUsers}
         loading={loading}
         error={error}
         onRetry={loadUsers}

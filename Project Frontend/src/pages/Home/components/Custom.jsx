@@ -10,7 +10,7 @@ function Custom() {
           varient="h2"
           style="w-full max-w-[320px] sm:max-w-[420px] md:max-w-[500px] mx-auto md:mx-0 font-bold text-white text-xl sm:text-2xl md:text-3xl lg:text-4xl p-0 md:p-10 md:pl-0"
         >
-          Build your Customs Pc NOW
+          Build Your Custom PC Now
         </Typography>
         <Typography varient="small" btn="white" style="inline-block mt-4 md:mt-0 md:mx-10">
           View Details

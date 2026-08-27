@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Plus } from "lucide-react";
 
 import { useToast } from "../../context/ToastContext";
@@ -21,21 +21,58 @@ const resolveImageUrl = (image) => {
   return /^https?:\/\//i.test(value) ? value : `${API_ORIGIN}${value}`;
 };
 
+// A whole 0–100 percentage; anything malformed or <= 0 means "not a deal".
+const normalizeDiscount = (value) => {
+  const pct = Math.round(Number(value));
+  if (!Number.isFinite(pct) || pct <= 0) return 0;
+  return Math.min(pct, 100);
+};
+
+// Resolve the stored gallery to absolute URLs, falling back to the single `image`
+// column for rows created before the images column existed. The admin table only
+// shows the primary thumbnail, but the count is handy context for the deal modal.
+const resolveGallery = (product) => {
+  let raw = product.images;
+  if (typeof raw === "string") {
+    try {
+      raw = JSON.parse(raw);
+    } catch {
+      raw = [];
+    }
+  }
+  const resolved = (Array.isArray(raw) ? raw : [])
+    .map(resolveImageUrl)
+    .filter(Boolean);
+  if (resolved.length > 0) return resolved;
+  const single = resolveImageUrl(product.image);
+  return single ? [single] : [];
+};
+
 // Backend rows -> the shape the table renders. Note mysql2 hands DECIMAL back as
 // a string, so price must be parsed before the table can sort or format it.
-const normalizeProduct = (product, i) => ({
-  id: product.id ?? i + 1,
-  name:
-    (typeof product.name === "string" && product.name.trim()) ||
-    "Untitled product",
-  category:
-    (typeof product.category === "string" && product.category.trim()) ||
-    "Uncategorized",
-  price: Number(product.price) || 0,
-  stock: Number(product.stock) || 0,
-  description: product.description || "",
-  image: resolveImageUrl(product.image),
-});
+const normalizeProduct = (product, i) => {
+  const images = resolveGallery(product);
+  return {
+    id: product.id ?? i + 1,
+    name:
+      (typeof product.name === "string" && product.name.trim()) ||
+      "Untitled product",
+    category:
+      (typeof product.category === "string" && product.category.trim()) ||
+      "Uncategorized",
+    price: Number(product.price) || 0,
+    stock: Number(product.stock) || 0,
+    // Drives the table's Deal badge and the "Manage deal" modal's starting value.
+    discountPercent: normalizeDiscount(product.discountPercent),
+    // Homepage controls: `featured` powers the "Handpicked" section and the row's
+    // Feature toggle; `saleEndsAt` bounds a flash deal and prefills the deal modal.
+    featured: Boolean(product.featured),
+    saleEndsAt: product.saleEndsAt || null,
+    description: product.description || "",
+    image: images[0] || "",
+    images,
+  };
+};
 
 const getErrorMessage = (error) => {
   if (error.name === "TimeoutError" || error.name === "AbortError") {
@@ -132,11 +169,54 @@ const Products = () => {
     [addToast, loadProducts],
   );
 
-  // Existing categories, offered as suggestions in the add form so the catalog
-  // doesn't drift into near-duplicate categories.
-  const categories = useMemo(
-    () => [...new Set(products.map((p) => p.category))].sort(),
-    [products],
+  // Update a product (currently just the "Manage deal" discount control). Sends a
+  // JSON PATCH, then refetches so the table shows persisted truth. Resolves to
+  // {success, error} so the modal can keep itself open and explain a failure.
+  const updateProduct = useCallback(
+    async (id, patch) => {
+      const token = localStorage.getItem("authToken");
+      if (!token) {
+        return {
+          success: false,
+          error: "You must be signed in as an admin to update products.",
+        };
+      }
+
+      try {
+        const response = await fetch(`${API_BASE_URL}/admin/products/${id}`, {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(patch),
+          signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+        });
+        const data = await response.json().catch(() => ({}));
+
+        if (response.status === 401 || response.status === 403) {
+          return {
+            success: false,
+            error:
+              data.message ||
+              "You must be signed in as an admin to update products.",
+          };
+        }
+
+        if (!response.ok || data.success === false) {
+          throw new Error(
+            data.message || data.error || "Failed to update product",
+          );
+        }
+
+        addToast("Product updated", "success");
+        loadProducts();
+        return { success: true };
+      } catch (err) {
+        return { success: false, error: getErrorMessage(err) };
+      }
+    },
+    [addToast, loadProducts],
   );
 
   return (
@@ -161,11 +241,11 @@ const Products = () => {
         error={error}
         onRetry={loadProducts}
         onAddProduct={() => setShowAddModal(true)}
+        onUpdateProduct={updateProduct}
       />
 
       {showAddModal && (
         <AddProductModal
-          categories={categories}
           onClose={() => setShowAddModal(false)}
           onCreate={createProduct}
         />

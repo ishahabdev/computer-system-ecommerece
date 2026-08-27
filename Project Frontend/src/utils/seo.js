@@ -42,6 +42,10 @@ export const PAGE_SEO = {
     title: 'Store',
     description: 'Browse our complete collection of computer systems, gaming PCs, laptops, components, and accessories. Find the perfect tech for your needs.'
   },
+  deals: {
+    title: 'Today\'s Deals',
+    description: 'Save big on computer systems, gaming PCs, components, and accessories. Discover discounted products with limited-time deals updated daily.'
+  },
   about: {
     title: 'About Us',
     description: 'Learn about Computer System eCommerce - your trusted partner for premium computer hardware and gaming equipment since day one.'

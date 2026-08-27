@@ -52,29 +52,95 @@ export const parseStoreId = (routeId) => {
   return Number.isInteger(dbId) && dbId > 0 ? dbId : null;
 };
 
+// Round to cents so the computed sale price never renders as $399.99999998.
+const round2 = (n) => Math.round(n * 100) / 100;
+
+// Money formatting shared across the storefront (cards, detail, deals) so prices
+// read consistently: thousands separators, and cents only when they aren't whole.
+export const formatPrice = (value) => {
+  const num = Number(value) || 0;
+  return num.toLocaleString("en-US", {
+    minimumFractionDigits: Number.isInteger(num) ? 0 : 2,
+    maximumFractionDigits: 2,
+  });
+};
+
+// A whole 0–100 percentage. Anything malformed or <= 0 means "not a deal".
+const normalizeDiscount = (value) => {
+  const pct = Math.round(Number(value));
+  if (!Number.isFinite(pct) || pct <= 0) return 0;
+  return Math.min(pct, 100);
+};
+
+// Resolve the stored gallery into absolute URLs, in order. Falls back to the
+// single `image` column (rows created before the images column existed), then a
+// placeholder — so a product always has at least one image to show. Handles the
+// JSON column arriving already parsed (Sequelize) or as a raw string, defensively.
+const resolveGallery = (row) => {
+  let raw = row.images;
+  if (typeof raw === "string") {
+    try {
+      raw = JSON.parse(raw);
+    } catch {
+      raw = [];
+    }
+  }
+  if (!Array.isArray(raw)) raw = [];
+
+  const resolved = raw
+    .map(resolveImageUrl)
+    .filter((url) => typeof url === "string" && url);
+  if (resolved.length > 0) return resolved;
+
+  const single = resolveImageUrl(row.image);
+  return single ? [single] : [PLACEHOLDER_IMAGE];
+};
+
 // Backend row -> the shape the store card / grid / detail expect. Note mysql2 hands
 // DECIMAL back as a string, so price is parsed before the grid can sort or format it.
-export const mapProduct = (row) => ({
-  id: toStoreId(row.id),
-  dbId: row.id,
-  title:
-    (typeof row.name === "string" && row.name.trim()) || "Untitled product",
-  price: Number(row.price) || 0,
-  currency: "$",
-  img: resolveImageUrl(row.image) || PLACEHOLDER_IMAGE,
-  category:
-    (typeof row.category === "string" && row.category.trim()) ||
-    "Uncategorized",
-  // The products table has no brand column; the store's brand facet is hidden.
-  brand: "",
-  rating: 4.5,
-  // A freshly added product is the newest, so flag it for the "New" badge.
-  isNew: true,
-  stock: Number(row.stock) || 0,
-  description: row.description || "",
-  // Epoch ms so "newest" sorting is stable; 0 if the timestamp is missing.
-  createdAt: row.created_at ? Date.parse(row.created_at) || 0 : 0,
-});
+export const mapProduct = (row) => {
+  const images = resolveGallery(row);
+  // `price` is the list price. A deal charges/displays `salePrice`, computed from
+  // the discount; both live here so every consumer shares one source of truth.
+  const price = Number(row.price) || 0;
+  const discountPercent = normalizeDiscount(row.discountPercent);
+  const hasDeal = discountPercent > 0;
+  const salePrice = hasDeal
+    ? round2(price * (1 - discountPercent / 100))
+    : price;
+
+  return {
+    id: toStoreId(row.id),
+    dbId: row.id,
+    title:
+      (typeof row.name === "string" && row.name.trim()) || "Untitled product",
+    price,
+    salePrice,
+    discountPercent,
+    hasDeal,
+    currency: "$",
+    img: images[0],
+    images,
+    category:
+      (typeof row.category === "string" && row.category.trim()) ||
+      "Uncategorized",
+    // The products table has no brand column; the store's brand facet is hidden.
+    brand: "",
+    rating: 4.5,
+    // A freshly added product is the newest, so flag it for the "New" badge.
+    isNew: true,
+    stock: Number(row.stock) || 0,
+    description: row.description || "",
+    // Epoch ms so "newest" sorting is stable; 0 if the timestamp is missing.
+    createdAt: row.created_at ? Date.parse(row.created_at) || 0 : 0,
+    // Homepage signals. `featured` drives "Handpicked"; `saleEndsAt` bounds a
+    // deal's run in "Flash Sale"; `viewCount` orders "Most Viewed". Kept optional
+    // so any consumer that doesn't need them can ignore them.
+    featured: Boolean(row.featured),
+    saleEndsAt: row.saleEndsAt || null,
+    viewCount: Number(row.viewCount) || 0,
+  };
+};
 
 // Turns fetch/timeout failures into a message worth showing. (Mirrors the admin page.)
 export const getErrorMessage = (error) => {

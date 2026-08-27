@@ -1,6 +1,25 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Search, Settings, RotateCw } from "lucide-react";
 import OrdersTable from "./components/OrdersTable";
+import DateRangeMenu from "../components/filters/DateRangeMenu";
+import FilterMenu from "../components/filters/FilterMenu";
+import { DEFAULT_RANGE, inRange } from "../components/filters/dateRange";
+
+// The Filter panel narrows the table by status; these five values match the
+// normalizeStatus() mapping below.
+const ORDER_FILTER_GROUPS = [
+  {
+    id: "status",
+    label: "Order status",
+    options: [
+      { value: "packing", label: "Packing" },
+      { value: "shipping", label: "Shipping" },
+      { value: "on delivery", label: "On Delivery" },
+      { value: "delivered", label: "Delivered" },
+      { value: "cancelled", label: "Cancelled" },
+    ],
+  },
+];
 
 // Admin reads every customer's orders from the same backend the checkout writes
 // to, so an order placed on the storefront shows up here on the next load.
@@ -59,6 +78,8 @@ const Orders = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [range, setRange] = useState(DEFAULT_RANGE);
+  const [filters, setFilters] = useState({});
 
   const loadOrders = useCallback(async () => {
     setLoading(true);
@@ -105,12 +126,26 @@ const Orders = () => {
     loadOrders();
   }, [loadOrders]);
 
-  // Summary cards, derived from the live orders rather than hard-coded totals.
-  // "Processing" is anything still moving through the pipeline (not yet delivered
-  // and not cancelled); the share bar shows each slice as a % of all orders.
-  const total = orders.length;
-  const cancelled = orders.filter((o) => o.status === "cancelled").length;
-  const completed = orders.filter((o) => o.status === "delivered").length;
+  // The toolbar's date range + status filter narrow the feed; the cards and the
+  // table both read from this, so they always agree. Text search stays inside
+  // the table and composes on top of what's left here.
+  const filteredOrders = useMemo(
+    () =>
+      orders.filter(
+        (o) =>
+          inRange(o.time, range) &&
+          (!filters.status?.length || filters.status.includes(o.status)),
+      ),
+    [orders, range, filters],
+  );
+
+  // Summary cards, derived from the filtered orders rather than hard-coded
+  // totals. "Processing" is anything still moving through the pipeline (not yet
+  // delivered and not cancelled); the share bar shows each slice as a % of the
+  // filtered total.
+  const total = filteredOrders.length;
+  const cancelled = filteredOrders.filter((o) => o.status === "cancelled").length;
+  const completed = filteredOrders.filter((o) => o.status === "delivered").length;
   const processing = total - completed - cancelled;
   const share = (n) => (total ? Math.round((n / total) * 100) : 0);
 
@@ -142,6 +177,10 @@ const Orders = () => {
               className="w-44 rounded-lg border border-admin-line-2 bg-admin-panel-2 py-1.5 pl-8 pr-2.5 text-[11px] text-admin-fg outline-none transition-colors placeholder:text-admin-fg-dim focus:border-admin-line-strong sm:w-56"
             />
           </div>
+
+          <FilterMenu groups={ORDER_FILTER_GROUPS} value={filters} onChange={setFilters} />
+
+          <DateRangeMenu value={range} onChange={setRange} />
 
           <button
             type="button"
@@ -185,7 +224,7 @@ const Orders = () => {
 
       <OrdersTable
         query={query}
-        orders={orders}
+        orders={filteredOrders}
         loading={loading}
         error={error}
         onRetry={loadOrders}

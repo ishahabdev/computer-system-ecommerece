@@ -42,6 +42,11 @@ export const menus = [
         id:8,
         pathName :"/dashboard",
         pathValue:"Dashboard"
+    },
+    {
+        id:8,
+        pathName :"/deals",
+        pathValue:"Deals"
     }
 
 ]

@@ -3,11 +3,12 @@ import { FaMinus, FaPlus } from "react-icons/fa6";
 import { IoClose } from "react-icons/io5";
 import { useCart } from "../../context/CartContext";
 import { useAuth } from "../../context/AuthContext";
+import { formatPrice } from "../Shop/productApi";
 import Checkout from "../Checkout/Checkout.jsx"
 
 const Cart = () => {
   const navigate = useNavigate();
-  const { cartItems, removeFromCart, updateQuantity, getCartSummary, clearCart } = useCart();
+  const { cartItems, removeFromCart, updateQuantity, getCartSummary, clearCart, clearBuyNow } = useCart();
   const { isAuthenticated } = useAuth();
 
 
@@ -29,6 +30,9 @@ const Cart = () => {
   };
 
   const handleCheckout = () => {
+    // This is a cart checkout, so discard any leftover Buy Now session from an
+    // abandoned earlier flow — otherwise Checkout would show that item instead.
+    clearBuyNow();
     if (!isAuthenticated) {
       // Redirect to signin with intended destination
       navigate("/signin", { state: { from: "/checkout" } });
@@ -154,7 +158,7 @@ const Cart = () => {
                         <td className="py-5 px-4 align-middle text-center">
                           <span className="text-sm sm:text-base font-semibold text-[#22262A] whitespace-nowrap">
                             {item.currency}
-                            {item.price}
+                            {formatPrice(item.price)}
                           </span>
                         </td>
 
@@ -167,7 +171,7 @@ const Cart = () => {
                         <td className="py-5 px-4 align-middle text-right">
                           <span className="text-sm sm:text-base font-semibold text-[#22262A] whitespace-nowrap">
                             {item.currency}
-                            {item.price * item.qty}
+                            {formatPrice(item.price * item.qty)}
                           </span>
                         </td>
                       </tr>
@@ -195,7 +199,7 @@ const Cart = () => {
                   <span className="text-sm text-gray-500">Subtotal</span>
                   <span className="text-sm font-semibold text-[#22262A]">
                     {currency}
-                    {subtotal}
+                    {formatPrice(subtotal)}
                   </span>
                 </div>
 
@@ -203,7 +207,7 @@ const Cart = () => {
                   <span className="text-sm text-gray-500">Shipping fee</span>
                   <span className="text-sm font-semibold text-[#22262A]">
                     {currency}
-                    {cartSummary.shippingFee}
+                    {formatPrice(cartSummary.shippingFee)}
                   </span>
                 </div>
               </div>
@@ -212,7 +216,7 @@ const Cart = () => {
                 <span className="text-base font-bold text-[#22262A]">TOTAL</span>
                 <span className="text-lg font-bold text-[#22262A]">
                   {currency}
-                  {total}
+                  {formatPrice(total)}
                 </span>
               </div>
 

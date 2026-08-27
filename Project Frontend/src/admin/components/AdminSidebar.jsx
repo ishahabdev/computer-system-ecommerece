@@ -26,11 +26,8 @@ const mainLinks = [
   { name: "Campaigns", icon: Megaphone, path: "/admin/campaigns" },
 ];
 
-
-
 const settingsLinks = [
   { name: "Settings", icon: Settings, path: "/admin/settings" },
-  { name: "Support", icon: LifeBuoy, path: "/admin/support" },
 ];
 
 // `icon` is read into a capitalized local so it can render as a component
@@ -39,18 +36,19 @@ function NavItem({ icon, label, active = false, dot = false, onClick }) {
   const Icon = icon;
   return (
     <button
-      type="button"
-      onClick={onClick}
-      className={`flex w-full items-center gap-3 rounded-md px-3 py-2 text-[13px] transition-colors ${
-        active
-          ? "bg-admin-active text-admin-fg"
-          : "text-admin-fg-muted hover:bg-admin-hover hover:text-admin-fg"
-      }`}
-    >
-      <Icon size={16} strokeWidth={1.75} />
-      <span>{label}</span>
-      {dot && <span className="ml-auto h-2 w-2 rounded-full bg-emerald-400" />}
-    </button>
+  type="button"
+  onClick={onClick}
+  aria-current={active ? "page" : undefined}
+  className={`flex w-full items-center gap-3 px-3 py-2 text-[13px] border-l-2 transition-colors ${
+    active
+      ? "bg-admin-panel text-blue-500 border-blue-500 font-medium"
+      : "border-transparent hover:bg-admin-hover hover:text-admin-fg"
+  }`}
+>
+  <Icon size={16} strokeWidth={1.75} />
+  <span>{label}</span>
+  {dot && <span className="ml-auto h-2 w-2 rounded-full bg-emerald-400" />}
+</button> 
   );
 }
 
@@ -72,18 +70,15 @@ export default function AdminSidebar() {
       {/* Brand — h-16 + border-b aligns the divider with the top bar */}
       <div className="flex h-16 items-center gap-2 border-b border-admin-line px-4">
         <Triangle size={17} className="fill-emerald-400 text-emerald-400" />
-        <span className="text-[15px] font-semibold text-admin-fg">TECH MART</span>
-        <ChevronDown size={14} className="ml-auto text-admin-fg-dim" />
+        <span className="text-[15px] font-semibold text-admin-fg">
+          TECH MART
+        </span>
       </div>
 
       {/* Body */}
       <div className="flex min-h-0 flex-1 flex-col justify-between overflow-y-auto px-3 py-4">
         {/* Main nav */}
         <div>
-          <p className="mb-2 px-2 text-[10px] font-medium tracking-wider text-admin-fg-faint">
-            NUXTCHARTS.COM
-          </p>
-
           <nav className="space-y-0.5">
             {mainLinks.map((link) => (
               <NavItem
@@ -97,29 +92,18 @@ export default function AdminSidebar() {
           </nav>
         </div>
 
-       
-
-          <div>
-            <SectionLabel>SETTINGS</SectionLabel>
-            {settingsLinks.map((link) => (
-              <NavItem
-                key={link.name}
-                icon={link.icon}
-                label={link.name}
-                onClick={() => link.path && navigate(link.path)}
-              />
-            ))}
-          </div>
-
-          <button
-            type="button"
-            className="flex w-full items-center justify-center gap-2 rounded-lg border border-admin-line-2 py-2 text-[13px] text-admin-fg transition-colors hover:bg-admin-hover"
-          >
-            <Plus size={15} strokeWidth={2} />
-            New dashboard
-          </button>
+        <div>
+          <SectionLabel>SETTINGS</SectionLabel>
+          {settingsLinks.map((link) => (
+            <NavItem
+              key={link.name}
+              icon={link.icon}
+              label={link.name}
+              onClick={() => link.path && navigate(link.path)}
+            />
+          ))}
         </div>
-     
+      </div>
     </aside>
   );
 }

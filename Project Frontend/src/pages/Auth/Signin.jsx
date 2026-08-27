@@ -27,7 +27,7 @@ const Signin = () => {
   const [authError, setAuthError] = useState("")
   const [showPassword, setShowPassword] = useState(false)
 
-  const from = location.state?.from || "/"
+  const from = location.state?.from
 
   const handleSubmit = async (values, { setSubmitting }) => {
     setAuthError("")
@@ -39,8 +39,13 @@ const Signin = () => {
 
     if (result.success) {
       toast.success('Welcome back! Successfully signed in.');
-      // Redirect to the page they tried to visit or home
-      navigate(from, { replace: true })
+      // Admins land on the admin dashboard; customers return to the page they came
+      // from (e.g. checkout) or their account dashboard by default.
+      if (result.user?.role?.toLowerCase() === "admin") {
+        navigate("/admin/overview", { replace: true })
+      } else {
+        navigate(from || "/dashboard", { replace: true })
+      }
     } else {
       setAuthError(result.error)
     }

@@ -48,7 +48,7 @@ A complete authentication system has been successfully added to your React e-com
 - ✅ Redirects to signin if not authenticated
 - ✅ Passes intended destination in route state
 
-### **3. Header.jsx**
+### **3. **
 - ✅ Imports `useAuth()` hook
 - ✅ Shows "Welcome, [Name]" + "Logout" when authenticated
 - ✅ Shows "Sign In" link when not authenticated

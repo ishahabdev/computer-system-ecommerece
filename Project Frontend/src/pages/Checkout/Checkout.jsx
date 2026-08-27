@@ -10,7 +10,7 @@ const API_BASE_URL = "http://localhost:9000/v1";
 
 const Checkout = () => {
   const navigate = useNavigate();
-  const { cartItems, getCartSummary, clearCart, isCartLoading } = useCart();
+  const { cartItems, clearCart, clearBuyNow, buyNowItem, isCartLoading } = useCart();
   const { isAuthenticated, user } = useAuth();
 
   // Redirect to signin if not authenticated
@@ -57,11 +57,18 @@ const Checkout = () => {
   const [couponDiscount, setCouponDiscount] = useState(0);
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
 
-  const cartSummary = getCartSummary();
-  const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.qty, 0);
-  const hasItems = cartItems.length > 0;
-  const total = subtotal + (cartSummary.shippingFee || 0) - couponDiscount;
-  const currency = hasItems ? cartItems[0].currency : "$";
+  // Buy Now runs a fresh, single-item checkout that must not read from or mutate
+  // the cart; a normal checkout uses the cart. Everything below is derived from
+  // this one source, so the total always reflects the current checkout item(s)
+  // and never accumulates across visits.
+  const isBuyNow = Boolean(buyNowItem);
+  const checkoutItems = isBuyNow ? [buyNowItem] : cartItems;
+
+  const subtotal = checkoutItems.reduce((sum, item) => sum + item.price * item.qty, 0);
+  const hasItems = checkoutItems.length > 0;
+  const shippingFee = subtotal > 50 ? 0 : 20; // matches CartContext.getCartSummary
+  const total = subtotal + shippingFee - couponDiscount;
+  const currency = hasItems ? checkoutItems[0].currency : "$";
   const vat = Math.round(subtotal * 0.05); // 5% VAT
 
   const redeemCoupon = () => {
@@ -110,7 +117,8 @@ const Checkout = () => {
   const handleCheckout = async () => {
     // Guard against placing an order before the cart has finished loading
     // from the backend (would otherwise use incomplete/placeholder data).
-    if (isCartLoading) {
+    // A Buy Now order doesn't read the cart, so it isn't gated on that load.
+    if (!isBuyNow && isCartLoading) {
       alert("Please wait, your cart is still loading");
       return;
     }
@@ -136,7 +144,7 @@ const Checkout = () => {
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          products: cartItems.map((item) => ({
+          products: checkoutItems.map((item) => ({
             productId: item.id,
             name: item.title,
             quantity: item.qty,
@@ -171,9 +179,9 @@ const Checkout = () => {
           "en-US",
           { year: "numeric", month: "long", day: "numeric" }
         ),
-        items: cartItems,
+        items: checkoutItems,
         subtotal,
-        shippingFee: cartSummary.shippingFee,
+        shippingFee: shippingFee,
         couponDiscount,
         total,
         shippingAddress: address,
@@ -216,7 +224,13 @@ const Checkout = () => {
         writeCustomerList(user, "addresses", [...savedAddresses, checkoutAddress]);
       }
 
-      await clearCart();
+      // A Buy Now order clears only its transient session, leaving the
+      // customer's cart untouched; a normal checkout empties the cart.
+      if (isBuyNow) {
+        clearBuyNow();
+      } else {
+        await clearCart();
+      }
       navigate("/order-confirmation", { state: { order: orderData } });
     } catch (error) {
       alert(error.message || "Unable to place order. Please try again.");
@@ -407,7 +421,7 @@ const Checkout = () => {
                 <span className="text-sm text-gray-500">Shipping fee</span>
                 <span className="text-sm font-semibold text-[#22262A]">
                   {currency}
-                  {cartSummary.shippingFee}
+                  {shippingFee}
                 </span>
               </div>
               {couponApplied && (
@@ -437,10 +451,10 @@ const Checkout = () => {
 
             <button
               onClick={handleCheckout}
-              disabled={!hasItems || isPlacingOrder || isCartLoading}
+              disabled={!hasItems || isPlacingOrder || (!isBuyNow && isCartLoading)}
               className="w-full bg-[#2196F3] hover:bg-[#1a7fd1] disabled:bg-gray-300 disabled:cursor-not-allowed text-white text-sm font-semibold py-3.5 rounded-md transition-colors mb-4"
             >
-              {isCartLoading
+              {!isBuyNow && isCartLoading
                 ? "Loading cart..."
                 : isPlacingOrder
                 ? "Placing order..."

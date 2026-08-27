@@ -1,11 +1,14 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { SlidersHorizontal, ChevronDown, RotateCw } from "lucide-react";
+import { RotateCw } from "lucide-react";
 
 import {
   AnalyticsTopCards,
   RevenueAndCategoryCharts,
 } from "./components/AnalyticsCharts";
 import { AnalyticsTables } from "./components/AnalyticsTables";
+import DateRangeMenu from "../components/filters/DateRangeMenu";
+import FilterMenu from "../components/filters/FilterMenu";
+import { DEFAULT_RANGE, inRange } from "../components/filters/dateRange";
 import {
   deriveOverview,
   fetchAllOrders,
@@ -16,11 +19,29 @@ import {
 const barBtn =
   "flex items-center gap-1.5 rounded-lg border border-admin-line-2 bg-admin-panel px-3 py-1.5 text-[12px] text-admin-fg-soft transition-colors hover:bg-admin-hover hover:text-admin-fg";
 
+// The Filter panel narrows the dashboard by order status; the five values match
+// the backend's normalised statuses (see overviewData.normalizeStatus).
+const ORDER_FILTER_GROUPS = [
+  {
+    id: "status",
+    label: "Order status",
+    options: [
+      { value: "packing", label: "Packing" },
+      { value: "shipping", label: "Shipping" },
+      { value: "on delivery", label: "On Delivery" },
+      { value: "delivered", label: "Delivered" },
+      { value: "cancelled", label: "Cancelled" },
+    ],
+  },
+];
+
 const Overview = () => {
   const [orders, setOrders] = useState([]);
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [range, setRange] = useState(DEFAULT_RANGE);
+  const [filters, setFilters] = useState({});
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -58,9 +79,25 @@ const Overview = () => {
     load();
   }, [load]);
 
-  // Every figure on the page is derived from the two live feeds; recompute only
-  // when they change.
-  const data = useMemo(() => deriveOverview(orders, products), [orders, products]);
+  // Apply the toolbar's date range + status filter to the raw order feed. The
+  // whole dashboard derives from this, so the cards, charts and tables all move
+  // together. Products are the catalog and aren't date-filtered.
+  const filteredOrders = useMemo(
+    () =>
+      orders.filter(
+        (o) =>
+          inRange(o.time, range) &&
+          (!filters.status?.length || filters.status.includes(o.status)),
+      ),
+    [orders, range, filters],
+  );
+
+  // Every figure on the page is derived from the filtered feed; recompute only
+  // when the inputs change.
+  const data = useMemo(
+    () => deriveOverview(filteredOrders, products),
+    [filteredOrders, products],
+  );
 
   return (
     <div className="p-4 md:p-6">
@@ -69,15 +106,9 @@ const Overview = () => {
         <h1 className="text-[16px] font-semibold text-admin-fg">Analytics</h1>
 
         <div className="flex flex-wrap gap-2">
-          <button type="button" className={barBtn}>
-            <SlidersHorizontal size={13} strokeWidth={1.75} />
-            Filter
-          </button>
+          <FilterMenu groups={ORDER_FILTER_GROUPS} value={filters} onChange={setFilters} />
 
-          <button type="button" className={barBtn}>
-            Last 30 days
-            <ChevronDown size={13} strokeWidth={1.75} />
-          </button>
+          <DateRangeMenu value={range} onChange={setRange} />
 
           <button type="button" onClick={load} className={barBtn}>
             <RotateCw size={13} strokeWidth={1.75} />

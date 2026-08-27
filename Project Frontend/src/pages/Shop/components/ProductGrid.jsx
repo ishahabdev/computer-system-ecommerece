@@ -12,12 +12,15 @@ const ProductGrid = ({ products }) => {
 
   const sorted = useMemo(() => {
     const list = [...products];
+    // Sort on the price customers actually pay, so a discounted product sits
+    // where its sale price puts it, not its list price.
+    const effective = (p) => p.salePrice ?? p.price;
     if (sortBy === "name") {
       list.sort((a, b) => a.title.localeCompare(b.title));
     } else if (sortBy === "priceLow") {
-      list.sort((a, b) => a.price - b.price);
+      list.sort((a, b) => effective(a) - effective(b));
     } else if (sortBy === "priceHigh") {
-      list.sort((a, b) => b.price - a.price);
+      list.sort((a, b) => effective(b) - effective(a));
     } else if (sortBy === "newest") {
       list.sort((a, b) => b.createdAt - a.createdAt);
     }

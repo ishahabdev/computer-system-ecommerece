@@ -9,6 +9,7 @@
 
   const API_BASE_URL = "http://localhost:9000/v1";
   const CART_STORAGE_KEY = "cart";
+  const BUYNOW_STORAGE_KEY = "buyNowCheckout";
   const AUTH_TOKEN_KEY = "authToken";
   const LEGACY_PRODUCT_IDS = {
     "flash-1": 10001,
@@ -34,6 +35,18 @@
     }
   };
 
+  // The Buy Now checkout is a transient, single-product session kept separate from
+  // the cart. sessionStorage (per-tab, auto-cleared when the tab closes) is the
+  // right scope: it survives the navigation to /checkout and a refresh there, but
+  // never lingers across browser sessions the way the persistent cart does.
+  const getStoredBuyNow = () => {
+    try {
+      return JSON.parse(sessionStorage.getItem(BUYNOW_STORAGE_KEY) || "null");
+    } catch {
+      return null;
+    }
+  };
+
   const getAuthHeaders = () => {
     const token = localStorage.getItem(AUTH_TOKEN_KEY);
     return token
@@ -53,6 +66,7 @@
   export const CartProvider = ({ children }) => {
     const { isAuthenticated } = useAuth();
     const [cartItems, setCartItems] = useState(getStoredCart);
+    const [buyNowItem, setBuyNowItem] = useState(getStoredBuyNow);
     const [isCartLoading, setIsCartLoading] = useState(false);
 
     const request = useCallback(async (path, options = {}) => {
@@ -119,6 +133,28 @@
     useEffect(() => {
       localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cartItems));
     }, [cartItems]);
+
+    // Persist / clear the transient Buy Now session alongside its state.
+    useEffect(() => {
+      if (buyNowItem) {
+        sessionStorage.setItem(BUYNOW_STORAGE_KEY, JSON.stringify(buyNowItem));
+      } else {
+        sessionStorage.removeItem(BUYNOW_STORAGE_KEY);
+      }
+    }, [buyNowItem]);
+
+    // Buy Now: start a fresh, single-product checkout session. This REPLACES any
+    // previous Buy Now item (it never accumulates), so clicking Buy Now repeatedly
+    // — or a StrictMode double-invoke — always yields exactly the selected
+    // quantity, and the customer's existing cart is left untouched.
+    const startBuyNow = useCallback((product, quantity = 1) => {
+      const productId = getDatabaseProductId(product.id);
+      setBuyNowItem({ ...product, id: productId, qty: quantity });
+    }, []);
+
+    const clearBuyNow = useCallback(() => {
+      setBuyNowItem(null);
+    }, []);
 
     const addToCart = useCallback(
       async (product, quantity = 1) => {
@@ -231,7 +267,10 @@
         value={{
           cartItems,
           isCartLoading,
+          buyNowItem,
           addToCart,
+          startBuyNow,
+          clearBuyNow,
           removeFromCart,
           updateQuantity,
           clearCart,
