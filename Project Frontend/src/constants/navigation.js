@@ -1,8 +1,3 @@
-/**
- * Navigation Configuration
- * Centralized navigation menu items for the application
- */
-
 export const NAV_MENU_ITEMS = [
   { id: 1, path: "/", label: "Home" },
   { id: 2, path: "/store", label: "Store" },
@@ -32,9 +27,3 @@ export const FOOTER_LINKS = {
   ],
 };
 
-export const SOCIAL_LINKS = [
-  { id: 1, name: "Instagram", url: "https://instagram.com" },
-  { id: 2, name: "YouTube", url: "https://youtube.com" },
-  { id: 3, name: "Facebook", url: "https://facebook.com" },
-  { id: 4, name: "Twitter", url: "https://twitter.com" },
-];

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import {
   FaRegHeart,
@@ -20,6 +20,7 @@ import { IoMdSearch } from "react-icons/io";
 import { IoCartOutline } from "react-icons/io5";
 import { IoChevronDown } from "react-icons/io5";
 import CartDropdown from "../features/cart/CartDropdown";
+import ProfileDropdown from "../features/account/ProfileDropdown";
 import { useCart } from "../../context/CartContext";
 import { useWishlist } from "../../context/WishlistContext";
 import { useAuth } from "../../context/AuthContext";
@@ -76,6 +77,8 @@ const isCategoryActive = (category, location) =>
 const Header = () => {
   const [navOpen, setNavOpen] = useState(false);
   const [cartDropdownOpen, setCartDropdownOpen] = useState(false);
+  const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
+  const profileTriggerRef = useRef(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchCategory, setSearchCategory] = useState("All Categories");
   const [categoryMenuOpen, setCategoryMenuOpen] = useState(false);
@@ -102,12 +105,24 @@ const Header = () => {
       .substring(0, 2)
       .toUpperCase() || "U";
 
+  // The cart and profile menus share the top-right corner, so opening one closes
+  // the other rather than stacking two panels on top of each other.
   const handleCartIconClick = () => {
-    setCartDropdownOpen(!cartDropdownOpen);
+    setCartDropdownOpen((open) => !open);
+    setProfileDropdownOpen(false);
   };
 
   const handleCartDropdownClose = () => {
     setCartDropdownOpen(false);
+  };
+
+  const handleProfileIconClick = () => {
+    setProfileDropdownOpen((open) => !open);
+    setCartDropdownOpen(false);
+  };
+
+  const handleProfileDropdownClose = () => {
+    setProfileDropdownOpen(false);
   };
 
   const handleSearch = (e) => {
@@ -296,30 +311,48 @@ const Header = () => {
             isOpen={cartDropdownOpen}
             onClose={handleCartDropdownClose}
           />
-          <Link
-            to="/dashboard"
-            title="View user account"
-            aria-label="User account"
-            className="relative"
-          >
-            {isAuthenticated && user ? (
-              user.profilePicture ? (
-                <div className="w-8 h-8 rounded-full overflow-hidden border-2 border-[#2196F3] hover:opacity-80 transition-opacity">
-                  <img
-                    src={user.profilePicture}
-                    alt={user.name}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-              ) : (
-                <div className="w-8 h-8 rounded-full bg-[#2196F3] text-white text-sm font-bold flex items-center justify-center hover:opacity-80 transition-opacity cursor-pointer">
-                  {userInitials}
-                </div>
-              )
-            ) : (
+          {isAuthenticated && user ? (
+            <div className="relative">
+              <button
+                ref={profileTriggerRef}
+                type="button"
+                onClick={handleProfileIconClick}
+                title="Account menu"
+                aria-label="Account menu"
+                aria-haspopup="menu"
+                aria-expanded={profileDropdownOpen}
+                className="flex items-center"
+              >
+                {user.profilePicture ? (
+                  <div className="w-8 h-8 rounded-full overflow-hidden border-2 border-[#2196F3] hover:opacity-80 transition-opacity">
+                    <img
+                      src={user.profilePicture}
+                      alt={userName || "Account"}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                ) : (
+                  <div className="w-8 h-8 rounded-full bg-[#2196F3] text-white text-sm font-bold flex items-center justify-center hover:opacity-80 transition-opacity cursor-pointer">
+                    {userInitials}
+                  </div>
+                )}
+              </button>
+              <ProfileDropdown
+                isOpen={profileDropdownOpen}
+                onClose={handleProfileDropdownClose}
+                triggerRef={profileTriggerRef}
+              />
+            </div>
+          ) : (
+            <Link
+              to="/signin"
+              title="Sign in"
+              aria-label="Sign in"
+              className="relative flex items-center"
+            >
               <FaRegUserCircle className="cursor-pointer hover:text-[#007BFF] transition-colors" />
-            )}
-          </Link>
+            </Link>
+          )}
         </div>
       </div>
 

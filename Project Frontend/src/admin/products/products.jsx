@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useState } from "react";
-import { Plus } from "lucide-react";
 
 import { useToast } from "../../context/ToastContext";
 import AddProductModal from "./components/AddProductModal";
@@ -219,22 +218,167 @@ const Products = () => {
     [addToast, loadProducts],
   );
 
+  // Apply one JSON patch to several products at once — powers the selection
+  // toolbar's "Feature" action and the deal modal when it's opened on a
+  // multi-selection. Each id is a separate PATCH (the endpoint is single-id), run
+  // together with allSettled so one failure doesn't abort the rest; the result
+  // reports how many landed so the toolbar / modal can react. Refetches once at
+  // the end so the table shows persisted truth.
+  const bulkUpdateProducts = useCallback(
+    async (ids, patch) => {
+      const token = localStorage.getItem("authToken");
+      if (!token) {
+        return {
+          success: false,
+          error: "You must be signed in as an admin to update products.",
+        };
+      }
+
+      const idList = (Array.isArray(ids) ? ids : [ids]).filter(
+        (id) => id != null,
+      );
+      if (idList.length === 0) {
+        return { success: false, error: "No products selected." };
+      }
+
+      try {
+        const results = await Promise.allSettled(
+          idList.map((id) =>
+            fetch(`${API_BASE_URL}/admin/products/${id}`, {
+              method: "PATCH",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+              },
+              body: JSON.stringify(patch),
+              signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+            }).then(async (response) => {
+              const data = await response.json().catch(() => ({}));
+              if (!response.ok || data.success === false) {
+                throw new Error(
+                  data.message || data.error || "Failed to update product",
+                );
+              }
+              return id;
+            }),
+          ),
+        );
+
+        const ok = results.filter((r) => r.status === "fulfilled").length;
+        const failed = idList.length - ok;
+        if (ok > 0) loadProducts();
+
+        if (failed === 0) {
+          addToast(
+            `Updated ${ok} product${ok !== 1 ? "s" : ""}`,
+            "success",
+          );
+          return { success: true, count: ok };
+        }
+
+        const firstError =
+          results.find((r) => r.status === "rejected")?.reason?.message ||
+          "Failed to update products";
+
+        if (ok === 0) {
+          addToast(firstError, "error");
+          return { success: false, error: firstError };
+        }
+
+        addToast(`Updated ${ok} of ${idList.length}; ${failed} failed`, "error");
+        return {
+          success: false,
+          partial: true,
+          count: ok,
+          error: `${failed} update${failed !== 1 ? "s" : ""} failed`,
+        };
+      } catch (err) {
+        const message = getErrorMessage(err);
+        addToast(message, "error");
+        return { success: false, error: message };
+      }
+    },
+    [addToast, loadProducts],
+  );
+
+  // Delete the selected products. Same single-id-per-request + allSettled shape as
+  // the bulk update so a partial failure still removes the rows that succeeded.
+  const deleteProducts = useCallback(
+    async (ids) => {
+      const token = localStorage.getItem("authToken");
+      if (!token) {
+        return {
+          success: false,
+          error: "You must be signed in as an admin to delete products.",
+        };
+      }
+
+      const idList = (Array.isArray(ids) ? ids : [ids]).filter(
+        (id) => id != null,
+      );
+      if (idList.length === 0) {
+        return { success: false, error: "No products selected." };
+      }
+
+      try {
+        const results = await Promise.allSettled(
+          idList.map((id) =>
+            fetch(`${API_BASE_URL}/admin/products/${id}`, {
+              method: "DELETE",
+              headers: { Authorization: `Bearer ${token}` },
+              signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+            }).then(async (response) => {
+              const data = await response.json().catch(() => ({}));
+              if (!response.ok || data.success === false) {
+                throw new Error(
+                  data.message || data.error || "Failed to delete product",
+                );
+              }
+              return id;
+            }),
+          ),
+        );
+
+        const ok = results.filter((r) => r.status === "fulfilled").length;
+        const failed = idList.length - ok;
+        if (ok > 0) loadProducts();
+
+        if (failed === 0) {
+          addToast(
+            `Deleted ${ok} product${ok !== 1 ? "s" : ""}`,
+            "success",
+          );
+          return { success: true, count: ok };
+        }
+
+        const firstError =
+          results.find((r) => r.status === "rejected")?.reason?.message ||
+          "Failed to delete products";
+
+        if (ok === 0) {
+          addToast(firstError, "error");
+          return { success: false, error: firstError };
+        }
+
+        addToast(`Deleted ${ok} of ${idList.length}; ${failed} failed`, "error");
+        return { success: false, partial: true, count: ok, error: firstError };
+      } catch (err) {
+        const message = getErrorMessage(err);
+        addToast(message, "error");
+        return { success: false, error: message };
+      }
+    },
+    [addToast, loadProducts],
+  );
+
   return (
     <div className="p-4 md:p-6">
-      {/* Header */}
-      <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-[16px] font-semibold text-admin-fg">Products</h1>
-
-        <button
-          type="button"
-          onClick={() => setShowAddModal(true)}
-            className="flex items-center gap-1.5 whitespace-nowrap rounded-lg border border-admin-line-strong bg-admin-invert px-3 py-1.5 text-[11px] font-medium text-admin-invert-fg transition-colors hover:opacity-90"
-        >
-          <Plus size={13} strokeWidth={2.25} />
-          Add Product
-        </button>
-      </div>
-
+      {/* FIX: ProductsTable now renders its own title + search + category
+          filter + "Add product" button in one toolbar row (matching the
+          reference design). The old page-level header (a second "Products"
+          heading and a second "Add Product" button) was removed here — it
+          was stacking on top of the table's own toolbar and rendering
+          everything twice. */}
       <ProductsTable
         products={products}
         loading={loading}
@@ -242,6 +386,8 @@ const Products = () => {
         onRetry={loadProducts}
         onAddProduct={() => setShowAddModal(true)}
         onUpdateProduct={updateProduct}
+        onBulkUpdate={bulkUpdateProducts}
+        onBulkDelete={deleteProducts}
       />
 
       {showAddModal && (

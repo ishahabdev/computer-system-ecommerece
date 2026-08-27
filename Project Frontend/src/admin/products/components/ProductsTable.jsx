@@ -14,6 +14,8 @@ import {
   Trash2,
   ImageOff,
   RotateCw,
+  Loader2,
+  X,
 } from "lucide-react";
 
 import ManageDealModal from "./ManageDealModal";
@@ -283,6 +285,127 @@ const SORTERS = {
 
 const COLUMN_COUNT = 7;
 
+/* ------------------------------------------------------------------ */
+/* Bulk-selection toolbar — replaces the normal toolbar while checked  */
+/* ------------------------------------------------------------------ */
+
+function SelectionBar({ count, busy, onFeature, onAddToDeals, onDelete, onClear }) {
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-3">
+      <span className="text-[13px] font-medium text-blue-500">
+        {count} selected
+      </span>
+
+      <div className="flex flex-wrap items-center gap-2">
+        <button
+          type="button"
+          onClick={onFeature}
+          disabled={busy}
+          className="flex items-center gap-1.5 rounded-lg border border-admin-line-2 px-3 py-1.5 text-[12px] text-admin-fg-soft transition-colors hover:bg-admin-active hover:text-admin-fg disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          <Star size={13} strokeWidth={1.75} />
+          Feature
+        </button>
+
+        <button
+          type="button"
+          onClick={onAddToDeals}
+          disabled={busy}
+          className="flex items-center gap-1.5 rounded-lg border border-admin-line-2 px-3 py-1.5 text-[12px] text-admin-fg-soft transition-colors hover:bg-admin-active hover:text-admin-fg disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          <Tag size={13} strokeWidth={1.75} />
+          Add to deals
+        </button>
+
+        <button
+          type="button"
+          onClick={onDelete}
+          disabled={busy}
+          className="flex items-center gap-1.5 rounded-lg border border-red-500/40 px-3 py-1.5 text-[12px] font-medium text-red-500 transition-colors hover:bg-red-500/10 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          <Trash2 size={13} strokeWidth={1.75} />
+          Delete
+        </button>
+
+        <button
+          type="button"
+          onClick={onClear}
+          disabled={busy}
+          aria-label="Clear selection"
+          className="rounded-md p-1.5 text-admin-fg-dim transition-colors hover:bg-admin-active hover:text-admin-fg disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          <X size={15} />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* Delete confirmation — bulk delete is destructive, so guard it       */
+/* ------------------------------------------------------------------ */
+
+function ConfirmDeleteDialog({ count, busy, onCancel, onConfirm }) {
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.key === "Escape" && !busy) onCancel();
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [busy, onCancel]);
+
+  const label = `${count} product${count !== 1 ? "s" : ""}`;
+
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="confirm-delete-title"
+      onClick={() => !busy && onCancel()}
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="w-full max-w-sm rounded-xl border border-admin-line-2 bg-admin-panel-3 p-5 text-center shadow-2xl shadow-black/50"
+      >
+        <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full border border-red-500/30 bg-red-500/10 text-red-400">
+          <Trash2 size={20} />
+        </div>
+        <h3
+          id="confirm-delete-title"
+          className="text-[14px] font-semibold text-admin-fg"
+        >
+          Delete {label}?
+        </h3>
+        <p className="mt-1.5 text-[12px] text-admin-fg-muted">
+          This permanently removes {count === 1 ? "it" : "them"} from the store
+          and can&apos;t be undone.
+        </p>
+
+        <div className="mt-5 flex gap-2">
+          <button
+            type="button"
+            onClick={onCancel}
+            disabled={busy}
+            className="flex-1 rounded-lg border border-admin-line-2 px-3 py-2 text-[12px] text-admin-fg-soft transition-colors hover:bg-admin-active disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={onConfirm}
+            disabled={busy}
+            className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-red-500 px-3 py-2 text-[12px] font-medium text-white transition-colors hover:bg-red-600 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {busy && <Loader2 size={12} className="animate-spin" />}
+            {busy ? "Deleting…" : "Delete"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function ProductsTable({
   products = [],
   loading = false,
@@ -290,13 +413,21 @@ export default function ProductsTable({
   onRetry,
   onAddProduct,
   onUpdateProduct,
+  onBulkUpdate,
+  onBulkDelete,
 }) {
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("All");
   const [sort, setSort] = useState({ key: null, dir: "asc" });
   const [page, setPage] = useState(1);
   const [selected, setSelected] = useState(() => new Set());
-  const [dealProduct, setDealProduct] = useState(null);
+  // Deal editor targets: a one-element array from a row's menu, or the whole
+  // selection from the bulk bar. `null` when the modal is closed.
+  const [dealTargets, setDealTargets] = useState(null);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  // True while a bulk update/delete is in flight — disables the toolbar and the
+  // confirm dialog's buttons so the action can't be fired twice.
+  const [busy, setBusy] = useState(false);
 
   const categories = useMemo(
     () => ["All", ...new Set(products.map((p) => p.category))],
@@ -354,6 +485,49 @@ export default function ProductsTable({
       prev.key === key ? { key, dir: prev.dir === "asc" ? "desc" : "asc" } : { key, dir: "asc" },
     );
 
+  // The actual product objects behind the checked ids. Derived from the full list
+  // (not just the visible page) so a selection survives paging, searching and
+  // filtering — and self-heals when a deleted row drops out of `products`.
+  const selectedProducts = useMemo(
+    () => products.filter((p) => selected.has(p.id)),
+    [products, selected],
+  );
+
+  const clearSelection = () => setSelected(new Set());
+
+  // Feature every selected product on the homepage in one shot.
+  const handleBulkFeature = async () => {
+    if (busy || !onBulkUpdate || selectedProducts.length === 0) return;
+    setBusy(true);
+    const result = await onBulkUpdate(
+      selectedProducts.map((p) => p.id),
+      { featured: true },
+    );
+    setBusy(false);
+    if (result?.success) clearSelection();
+  };
+
+  // Open the deal editor on the whole selection (one discount for all of them).
+  const handleBulkAddToDeals = () => {
+    if (busy || selectedProducts.length === 0) return;
+    setDealTargets(selectedProducts);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!onBulkDelete) {
+      setConfirmDelete(false);
+      return;
+    }
+    setBusy(true);
+    const result = await onBulkDelete(selectedProducts.map((p) => p.id));
+    setBusy(false);
+    setConfirmDelete(false);
+    // On full success clear the selection outright. On a partial failure the
+    // deleted rows fall out of `selectedProducts` when the list refetches,
+    // leaving only the survivors checked so they can be retried.
+    if (result?.success) clearSelection();
+  };
+
   const renderStateRow = () => {
     if (loading) {
       return (
@@ -409,58 +583,75 @@ export default function ProductsTable({
 
   return (
     <div className="rounded-xl border border-admin-line bg-admin-panel">
-      {/* Toolbar — title + search + category filter + add product, all in one row */}
-      <div className="flex flex-wrap items-center gap-3 border-b border-admin-line px-5 py-4">
-        <h2 className="text-[20px] font-bold text-admin-fg">Products</h2>
-
-        <div className="relative ml-2">
-          <Search
-            size={14}
-            className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-admin-fg-dim"
+      {/* Toolbar — normally the title + search + category filter + add-product
+          row, but while any products are checked it's replaced by the
+          bulk-action bar (matching the reference design). */}
+      <div className="border-b border-admin-line px-5 py-4">
+        {selectedProducts.length > 0 ? (
+          <SelectionBar
+            count={selectedProducts.length}
+            busy={busy}
+            onFeature={handleBulkFeature}
+            onAddToDeals={handleBulkAddToDeals}
+            onDelete={() => setConfirmDelete(true)}
+            onClear={clearSelection}
           />
-          <input
-            type="search"
-            value={query}
-            onChange={(e) => {
-              setQuery(e.target.value);
-              setPage(1);
-            }}
-            placeholder="Search..."
-            aria-label="Search products"
-            className="w-48 rounded-lg border border-admin-line-2 bg-admin-panel-2 py-2 pl-9 pr-3 text-[12px] text-admin-fg outline-none transition-colors placeholder:text-admin-fg-dim focus:border-admin-line-strong"
-          />
-        </div>
+        ) : (
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h2 className="text-[20px] font-bold text-admin-fg">Products</h2>
 
-        <div className="relative">
-          <select
-            value={activeCategory}
-            onChange={(e) => {
-              setCategory(e.target.value);
-              setPage(1);
-            }}
-            aria-label="Filter by category"
-            className="cursor-pointer appearance-none rounded-lg border border-admin-line-2 bg-admin-panel-2 py-2 pl-3 pr-8 text-[12px] text-admin-fg outline-none transition-colors focus:border-admin-line-strong"
-          >
-            {categories.map((c) => (
-              <option key={c} value={c} className="bg-admin-panel-3">
-                {c === "All" ? "All categories" : c}
-              </option>
-            ))}
-          </select>
-          <ChevronDown
-            size={14}
-            className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-admin-fg-dim"
-          />
-        </div>
+  <div className="flex flex-wrap items-center gap-3">
+    <div className="relative">
+      <Search
+        size={14}
+        className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-admin-fg-dim"
+      />
+      <input
+        type="search"
+        value={query}
+        onChange={(e) => {
+          setQuery(e.target.value);
+          setPage(1);
+        }}
+        placeholder="Search..."
+        aria-label="Search products"
+        className="w-48 rounded-lg border border-admin-line-2 bg-admin-panel-2 py-2 pl-9 pr-3 text-[12px] text-admin-fg outline-none transition-colors placeholder:text-admin-fg-dim focus:border-admin-line-strong"
+      />
+    </div>
 
-        <button
-          type="button"
-          onClick={onAddProduct}
-          className="ml-auto flex items-center gap-1.5 whitespace-nowrap rounded-lg bg-white px-4 py-2 text-[12px] font-medium text-admin-bg transition-colors hover:bg-zinc-200"
-        >
-          <Plus size={14} strokeWidth={2.5} />
-          Add product
-        </button>
+    <div className="relative">
+      <select
+        value={activeCategory}
+        onChange={(e) => {
+          setCategory(e.target.value);
+          setPage(1);
+        }}
+        aria-label="Filter by category"
+        className="cursor-pointer appearance-none rounded-lg border border-admin-line-2 bg-admin-panel-2 py-2 pl-3 pr-8 text-[12px] text-admin-fg outline-none transition-colors focus:border-admin-line-strong"
+      >
+        {categories.map((c) => (
+          <option key={c} value={c} className="bg-admin-panel-3">
+            {c === "All" ? "All categories" : c}
+          </option>
+        ))}
+      </select>
+      <ChevronDown
+        size={14}
+        className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-admin-fg-dim"
+      />
+    </div>
+
+    <button
+      type="button"
+      onClick={onAddProduct}
+      className="flex items-center gap-1.5 whitespace-nowrap rounded-lg bg-white px-4 py-2 text-[12px] font-medium text-admin-bg transition-colors hover:bg-zinc-200"
+    >
+      <Plus size={14} strokeWidth={2.5} />
+      Add product
+    </button>
+  </div>
+          </div>
+        )}
       </div>
 
       {/* Table */}
@@ -552,7 +743,7 @@ export default function ProductsTable({
                       <td className="px-4 py-3">
                         <RowActions
                           product={product}
-                          onManageDeal={setDealProduct}
+                          onManageDeal={(p) => setDealTargets([p])}
                           onToggleFeatured={
                             onUpdateProduct
                               ? (p) => onUpdateProduct(p.id, { featured: !p.featured })
@@ -571,18 +762,27 @@ export default function ProductsTable({
         <Pagination page={safePage} pageCount={pageCount} totalCount={rows.length} onPage={setPage} />
       )}
 
-      {dealProduct && (
+      {dealTargets && dealTargets.length > 0 && (
         <ManageDealModal
-          product={dealProduct}
-          onClose={() => setDealProduct(null)}
-          onUpdate={async (id, patch) => {
-            if (!onUpdateProduct) {
+          targets={dealTargets}
+          onClose={() => setDealTargets(null)}
+          onUpdate={async (ids, patch) => {
+            if (!onBulkUpdate) {
               return { success: false, error: "Updating is unavailable." };
             }
-            const result = await onUpdateProduct(id, patch);
-            if (result?.success) setDealProduct(null);
+            const result = await onBulkUpdate(ids, patch);
+            if (result?.success) setDealTargets(null);
             return result;
           }}
+        />
+      )}
+
+      {confirmDelete && selectedProducts.length > 0 && (
+        <ConfirmDeleteDialog
+          count={selectedProducts.length}
+          busy={busy}
+          onCancel={() => setConfirmDelete(false)}
+          onConfirm={handleConfirmDelete}
         />
       )}
     </div>

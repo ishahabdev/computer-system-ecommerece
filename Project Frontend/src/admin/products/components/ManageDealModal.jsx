@@ -31,6 +31,12 @@ const toDatetimeLocalValue = (value) => {
   return new Date(date.getTime() - offsetMs).toISOString().slice(0, 16);
 };
 
+// "A", "A and B", or "A, B and 3 more" — the secondary line of the bulk summary.
+const summarizeNames = (names) => {
+  if (names.length <= 2) return names.join(" and ");
+  return `${names.slice(0, 2).join(", ")} and ${names.length - 2} more`;
+};
+
 const inputClass =
   "w-full rounded-lg border border-admin-line-2 bg-admin-panel-2 px-2.5 py-1.5 text-[11px] text-admin-fg outline-none transition-colors placeholder:text-admin-fg-dim focus:border-admin-line-strong disabled:cursor-not-allowed disabled:opacity-50";
 
@@ -38,15 +44,25 @@ const inputClass =
 /* Modal                                                               */
 /* ------------------------------------------------------------------ */
 
-// Lightweight discount editor reached from a product row's actions menu. The
-// only field it writes is discountPercent; `price` stays the list price and the
-// store derives the sale price from the percentage (same math previewed here).
-export default function ManageDealModal({ product, onClose, onUpdate }) {
-  // String state so the field can be emptied while typing without snapping to 0.
-  const [percent, setPercent] = useState(String(product.discountPercent || 0));
-  // Optional flash-sale end. Prefilled from the product; blank = open-ended.
+// Discount editor reached from a product row's actions menu (one product) or from
+// the table's bulk-selection toolbar (many). The only fields it writes are
+// discountPercent and saleEndsAt; `price` stays the list price and the store
+// derives the sale price from the percentage (same math previewed here). It
+// resolves through `onUpdate(ids, patch)` so a single-row edit is just the
+// one-element case of the same path.
+export default function ManageDealModal({ targets, onClose, onUpdate }) {
+  const items = Array.isArray(targets) ? targets.filter(Boolean) : [];
+  const isBulk = items.length > 1;
+  const primary = items[0] || null;
+
+  // Single product: prefill from its current deal. Multi-select: the products can
+  // each be on a different deal, so start blank rather than pick one arbitrarily.
+  const [percent, setPercent] = useState(() =>
+    isBulk ? "" : String(primary?.discountPercent || 0),
+  );
+  // Optional flash-sale end. Prefilled for a single product; blank = open-ended.
   const [endsAt, setEndsAt] = useState(() =>
-    toDatetimeLocalValue(product.saleEndsAt),
+    isBulk ? "" : toDatetimeLocalValue(primary?.saleEndsAt),
   );
   const [formError, setFormError] = useState("");
   const [saving, setSaving] = useState(false);
@@ -64,13 +80,18 @@ export default function ManageDealModal({ product, onClose, onUpdate }) {
     return () => document.removeEventListener("keydown", onKey);
   }, [onClose, saving]);
 
-  const price = Number(product.price) || 0;
+  // Nothing to edit (shouldn't happen — the table only opens this with targets).
+  if (!primary) return null;
+
+  const price = Number(primary.price) || 0;
   const previewPct = clampPercent(percent);
   const hasDeal = previewPct > 0;
   const salePrice = hasDeal ? round2(price * (1 - previewPct / 100)) : price;
   const savings = round2(price - salePrice);
 
-  const alreadyOnDeal = product.discountPercent > 0;
+  // "Remove from deals" is only meaningful once something is actually on deal.
+  const alreadyOnDeal = items.some((p) => p.discountPercent > 0);
+  const names = items.map((p) => p.name).filter(Boolean);
 
   // Shared submit path for both Save (typed value) and Remove (explicit 0), so the
   // saving/valid/error handling lives in one place. Validates like the server.
@@ -104,10 +125,10 @@ export default function ManageDealModal({ product, onClose, onUpdate }) {
     setSaving(true);
     setFormError("");
 
-    const result = await onUpdate(product.id, {
-      discountPercent: value,
-      saleEndsAt,
-    });
+    const result = await onUpdate(
+      items.map((p) => p.id),
+      { discountPercent: value, saleEndsAt },
+    );
 
     // The parent closes this modal and refetches on success, so only a failure
     // lands back here — leaving `saving` set avoids a state update after unmount.
@@ -152,7 +173,9 @@ export default function ManageDealModal({ product, onClose, onUpdate }) {
               Manage deal
             </h3>
             <p className="mt-0.5 text-[11px] text-admin-fg-muted">
-              Set a discount to list this product in Deals.
+              {isBulk
+                ? `Apply one discount to ${items.length} selected products.`
+                : "Set a discount to list this product in Deals."}
             </p>
           </div>
 
@@ -166,26 +189,35 @@ export default function ManageDealModal({ product, onClose, onUpdate }) {
           </button>
         </div>
 
-        {/* Product identity */}
+        {/* Target identity — a single product's card, or a summary of the set */}
         <div className="mb-4 flex items-center gap-3 rounded-lg border border-admin-line-2 bg-admin-panel-2 p-2.5">
           <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-admin-line-2 bg-admin-panel-3">
-            {product.image ? (
-              <img
-                src={product.image}
-                alt=""
-                className="h-full w-full object-cover"
-              />
+            {!isBulk && primary.image ? (
+              <img src={primary.image} alt="" className="h-full w-full object-cover" />
             ) : (
               <Package size={16} className="text-admin-fg-faint" />
             )}
           </div>
           <div className="min-w-0 flex-1">
-            <p className="truncate text-[11px] font-medium text-admin-fg">
-              {product.name}
-            </p>
-            <p className="mt-0.5 text-[10px] text-admin-fg-dim">
-              List price {money(price)}
-            </p>
+            {isBulk ? (
+              <>
+                <p className="text-[11px] font-medium text-admin-fg">
+                  {items.length} products selected
+                </p>
+                <p className="mt-0.5 truncate text-[10px] text-admin-fg-dim">
+                  {summarizeNames(names)}
+                </p>
+              </>
+            ) : (
+              <>
+                <p className="truncate text-[11px] font-medium text-admin-fg">
+                  {primary.name}
+                </p>
+                <p className="mt-0.5 text-[10px] text-admin-fg-dim">
+                  List price {money(price)}
+                </p>
+              </>
+            )}
           </div>
         </div>
 
@@ -216,12 +248,35 @@ export default function ManageDealModal({ product, onClose, onUpdate }) {
           />
         </div>
         <p className="mt-1 text-[10px] text-admin-fg-dim">
-          0 removes it from Deals. Any value above 0 lists it there.
+          {isBulk
+            ? "0 removes the deal from every selected product. Any value above 0 lists them in Deals."
+            : "0 removes it from Deals. Any value above 0 lists it there."}
         </p>
 
-        {/* Live price preview */}
+        {/* Live preview — an exact price for one product, a summary for many */}
         <div className="mt-3 rounded-lg border border-admin-line-2 bg-admin-panel-2 p-3">
-          {hasDeal ? (
+          {isBulk ? (
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-[11px] text-admin-fg-muted">
+                {hasDeal ? (
+                  <>
+                    Marks all{" "}
+                    <span className="font-medium text-admin-fg">
+                      {items.length} products
+                    </span>{" "}
+                    down by this much off each list price.
+                  </>
+                ) : (
+                  <>Clears any existing deal on the selected products.</>
+                )}
+              </p>
+              {hasDeal && (
+                <span className="inline-flex items-center rounded-md border border-red-500/30 bg-red-500/10 px-2 py-1 text-[11px] font-bold leading-none text-red-400">
+                  -{previewPct}%
+                </span>
+              )}
+            </div>
+          ) : hasDeal ? (
             <div className="flex items-center justify-between gap-3">
               <div>
                 <div className="flex items-baseline gap-2">
@@ -283,7 +338,7 @@ export default function ManageDealModal({ product, onClose, onUpdate }) {
 
         {/* Actions */}
         <div className="mt-5 flex items-center justify-between gap-2">
-          {/* Only meaningful once a product is actually on deal. */}
+          {/* Only meaningful once something in the set is actually on deal. */}
           {alreadyOnDeal ? (
             <button
               type="button"

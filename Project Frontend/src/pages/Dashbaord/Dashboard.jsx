@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { FiLock, FiLogOut, FiMapPin, FiShoppingBag, FiUser } from "react-icons/fi";
 import { MdHome } from "react-icons/md";
@@ -19,12 +19,19 @@ const dashboardTabs = [
   { id: "change-password", label: "Change Password", icon: FiLock },
 ];
 
+// Tabs the header account menu (and any deep link) may open via ?tab=.
+const TAB_IDS = dashboardTabs.map((tab) => tab.id);
+
 const API_BASE_URL = "http://localhost:9000/v1";
 
 const Dashboard = () => {
   const navigate = useNavigate();
   const { user, isAuthenticated, logout, updateProfile, updateProfilePicture } = useAuth();
-  const [activeTab, setActiveTab] = useState("overview");
+  const [searchParams] = useSearchParams();
+  const requestedTab = searchParams.get("tab");
+  const [activeTab, setActiveTab] = useState(() =>
+    TAB_IDS.includes(requestedTab) ? requestedTab : "overview"
+  );
   const [addresses, setAddresses] = useState([]);
   const [orders, setOrders] = useState([]);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
@@ -34,6 +41,16 @@ const Dashboard = () => {
       navigate("/signin", { state: { from: "/dashboard" } });
     }
   }, [isAuthenticated, navigate]);
+
+  // Keep the open tab in sync with ?tab= so the header account menu can jump
+  // straight to Orders / Profile even when the dashboard is already mounted.
+  // Depending on the string value (not the params object) means switching tabs
+  // from the sidebar — which doesn't touch the URL — isn't overridden.
+  useEffect(() => {
+    if (requestedTab && TAB_IDS.includes(requestedTab)) {
+      setActiveTab(requestedTab);
+    }
+  }, [requestedTab]);
 
   useEffect(() => {
     setAddresses(readCustomerList(user, "addresses"));
