@@ -60,6 +60,36 @@ const saveStoredProfile = (user) => {
   localStorage.setItem(storageKey, JSON.stringify(profileFields))
 }
 
+// --- Response-shape normalization -----------------------------------------
+// Different backends (and different endpoints on the same backend) return the
+// user object and JWT nested differently. Rather than assuming one exact shape
+// (which silently drops the token when the assumption is wrong, and then causes
+// every protected request to 401 right after a "successful" login), we walk the
+// common shapes explicitly. This is the actual fix for the login->auto-logout bug.
+const extractToken = (data) => {
+  return (
+    data?.token ||
+    data?.accessToken ||
+    data?.jwt ||
+    data?.data?.token ||
+    data?.data?.accessToken ||
+    data?.data?.jwt ||
+    data?.user?.token ||
+    null
+  )
+}
+
+const extractUser = (data) => {
+  // Prefer an explicit user object; fall back to `data.data` only if it looks
+  // like a user record (not a wrapper that itself contains `.user`/`.token`).
+  if (data?.user && typeof data.user === "object") return data.user
+  if (data?.data?.user && typeof data.data.user === "object") return data.data.user
+  if (data?.data && typeof data.data === "object" && !data.data.token && !data.data.user) {
+    return data.data
+  }
+  return data
+}
+
 // eslint-disable-next-line react-refresh/only-export-components
 export const useAuth = () => {
   const context = useContext(AuthContext)
@@ -121,7 +151,7 @@ export const AuthProvider = ({ children }) => {
         }
 
         const data = await response.json().catch(() => ({}))
-        const freshUser = data.data || storedUserData
+        const freshUser = extractUser(data) || storedUserData
         const mergedUser = { ...storedUserData, ...freshUser, ...getStoredProfile(freshUser) }
         setUser(mergedUser)
         persistCurrentUser(mergedUser)
@@ -195,14 +225,35 @@ export const AuthProvider = ({ children }) => {
         throw new Error(data.message || data.error || "Login failed")
       }
 
-      // Adjust this based on your actual API response shape.
-      const userForState = data.user || data.data || data
+      const authToken = extractToken(data)
+      const userForState = extractUser(data)
+
+      // If the backend didn't return a token at all, every subsequent protected
+      // request (cart, wishlist, /me) will 401 and the app will look like it
+      // "logs in then immediately logs out." Fail loudly here instead, so the
+      // real problem (backend not issuing a token, or an unrecognized response
+      // shape) surfaces immediately instead of masquerading as a random logout.
+      if (!authToken) {
+        console.error(
+          "Login succeeded but no auth token was found in the response. " +
+          "Update extractToken() in AuthContext.jsx to match your backend's actual response shape:",
+          data
+        )
+        return {
+          success: false,
+          error: "Login succeeded but no session token was returned. Please contact support."
+        }
+      }
+
       const mergedUser = { ...userForState, ...getStoredProfile(userForState) }
 
+      // Save the token BEFORE flipping isAuthenticated, so any effect that
+      // fires off of isAuthenticated (CartContext/WishlistContext loads) is
+      // guaranteed to find the token already in localStorage.
+      localStorage.setItem("authToken", authToken)
       setUser(mergedUser)
-      setIsAuthenticated(true)
       persistCurrentUser(mergedUser)
-      if (data.token) localStorage.setItem("authToken", data.token)
+      setIsAuthenticated(true)
 
       return { success: true, user: mergedUser }
     } catch (error) {

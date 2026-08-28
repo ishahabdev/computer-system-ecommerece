@@ -104,7 +104,7 @@ export default function Contact() {
               </div>
               <div>
                 <p className="text-sm font-semibold text-slate-800">Email Address</p>
-                <p className="text-sm text-slate-500">ishahabdevv@gmail.com</p>
+                <p className="text-sm text-slate-500">ishahabdev@gmail.com</p>
               </div>
             </div>
 

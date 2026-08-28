@@ -12,6 +12,7 @@ import { UPLOADS_DIR } from "./middleware/UploadMiddleware.js";
 import { syncActiveOrderStatuses } from "./controllers/OrderController.js";
 
 const app = express();
+
 const port = 9000;
 
 // How often the server re-checks active orders and advances their status.

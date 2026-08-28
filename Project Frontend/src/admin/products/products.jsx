@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 
 import { useToast } from "../../context/ToastContext";
 import AddProductModal from "./components/AddProductModal";
+import EditProductModal from "./components/EditProductModal";
 import ProductsTable from "./components/ProductsTable";
 
 // Same backend the store grid reads from, so a product added here appears on the
@@ -88,6 +89,7 @@ const Products = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [showAddModal, setShowAddModal] = useState(false);
+  const [editingProduct, setEditingProduct] = useState(null);
   const { addToast } = useToast();
 
   const loadProducts = useCallback(async () => {
@@ -209,6 +211,55 @@ const Products = () => {
         }
 
         addToast("Product updated", "success");
+        loadProducts();
+        return { success: true };
+      } catch (err) {
+        return { success: false, error: getErrorMessage(err) };
+      }
+    },
+    [addToast, loadProducts],
+  );
+
+  // Edit a product - sends JSON data (images not supported yet in backend PATCH).
+  const editProduct = useCallback(
+    async (id, updates) => {
+      const token = localStorage.getItem("authToken");
+      if (!token) {
+        return {
+          success: false,
+          error: "You must be signed in as an admin to edit products.",
+        };
+      }
+
+      try {
+        const response = await fetch(`${API_BASE_URL}/admin/products/${id}`, {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(updates),
+          signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+        });
+        const data = await response.json().catch(() => ({}));
+
+        if (response.status === 401 || response.status === 403) {
+          return {
+            success: false,
+            error:
+              data.message ||
+              "You must be signed in as an admin to edit products.",
+          };
+        }
+
+        if (!response.ok || data.success === false) {
+          throw new Error(
+            data.message || data.error || "Failed to update product",
+          );
+        }
+
+        addToast("Product updated successfully", "success");
+        setEditingProduct(null);
         loadProducts();
         return { success: true };
       } catch (err) {
@@ -385,6 +436,7 @@ const Products = () => {
         error={error}
         onRetry={loadProducts}
         onAddProduct={() => setShowAddModal(true)}
+        onEditProduct={setEditingProduct}
         onUpdateProduct={updateProduct}
         onBulkUpdate={bulkUpdateProducts}
         onBulkDelete={deleteProducts}
@@ -394,6 +446,14 @@ const Products = () => {
         <AddProductModal
           onClose={() => setShowAddModal(false)}
           onCreate={createProduct}
+        />
+      )}
+
+      {editingProduct && (
+        <EditProductModal
+          product={editingProduct}
+          onClose={() => setEditingProduct(null)}
+          onUpdate={editProduct}
         />
       )}
     </div>

@@ -2,7 +2,7 @@ import nodemailer from "nodemailer";
 import contactEmailTemplate from "../utils/contact-email-template.js";
 
 // Every message from the Contact Us page lands in this inbox.
-const CONTACT_RECEIVER_EMAIL = process.env.CONTACT_RECEIVER_EMAIL || "ishahabdevv@gmail.com";
+const CONTACT_RECEIVER_EMAIL = process.env.CONTACT_RECEIVER_EMAIL || "ishahabdev@gmail.com";
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 

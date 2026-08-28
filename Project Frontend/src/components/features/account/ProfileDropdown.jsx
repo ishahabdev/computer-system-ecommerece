@@ -6,6 +6,8 @@ import {
   FiHeart,
   FiSettings,
   FiLogOut,
+  FiLogIn,
+  FiUserPlus,
   FiPackage,
   FiClipboard,
 } from "react-icons/fi";
@@ -28,6 +30,13 @@ const ADMIN_LINKS = [
   { label: "Manage products", to: "/admin/products", icon: FiPackage },
   { label: "Manage orders", to: "/admin/orders", icon: FiClipboard },
   { label: "Account settings", to: "/admin/settings", icon: FiSettings },
+];
+
+// Shown while signed out. The profile icon opens a menu offering the two ways in
+// rather than jumping straight to /signin, so "create account" is one click away.
+const GUEST_LINKS = [
+  { label: "Log in", to: "/signin", icon: FiLogIn },
+  { label: "Create account", to: "/signup", icon: FiUserPlus },
 ];
 
 // Anchored under the header's profile icon. `triggerRef` is the toggle button so
@@ -62,8 +71,60 @@ const ProfileDropdown = ({ isOpen, onClose, triggerRef }) => {
     };
   }, [isOpen, onClose, triggerRef]);
 
-  // Nothing to show when signed out — the header renders a sign-in link instead.
-  if (!user) return null;
+  // Both menus share one shell: same anchor under the profile icon, same
+  // open/close animation, same dismiss behaviour — only the contents differ.
+  const panelClasses = `absolute right-0 top-full mt-2 bg-white rounded-xl shadow-2xl border border-gray-200 z-50 transition-all duration-300 transform origin-top-right ${
+    isOpen
+      ? "opacity-100 scale-100 visible"
+      : "opacity-0 scale-95 invisible pointer-events-none"
+  }`;
+
+  // Backdrop so a click anywhere dismisses the menu.
+  const backdrop = isOpen && (
+    <div
+      className="fixed inset-0 bg-black/20 z-40 transition-opacity duration-300"
+      onClick={onClose}
+      aria-hidden="true"
+    />
+  );
+
+  // Signed out: no identity header and no account links to show — just Log in
+  // and Create account, split by a divider.
+  if (!user) {
+    return (
+      <>
+        {backdrop}
+
+        <div
+          ref={dropdownRef}
+          // overflow-hidden clips each row's hover fill to the rounded corners.
+          className={`${panelClasses} w-56 overflow-hidden`}
+          role="menu"
+          aria-label="Account menu"
+        >
+          {GUEST_LINKS.map((link, index) => {
+            // Capitalized local so it renders as a component — see the note on
+            // the signed-in list below.
+            const Icon = link.icon;
+            return (
+              <Link
+                key={link.label}
+                to={link.to}
+                role="menuitem"
+                onClick={onClose}
+                className={`flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-[#F7F7F5] hover:text-[#22262A] transition-colors ${
+                  index > 0 ? "border-t border-gray-200" : ""
+                }`}
+              >
+                <Icon className="text-lg shrink-0 text-gray-500" />
+                <span>{link.label}</span>
+              </Link>
+            );
+          })}
+        </div>
+      </>
+    );
+  }
 
   // Still drives which link set is shown (Admin dashboard vs. Dashboard, etc.) —
   // only the visible "Admin"/"Customer" badge next to the name was removed.
@@ -89,22 +150,11 @@ const ProfileDropdown = ({ isOpen, onClose, triggerRef }) => {
 
   return (
     <>
-      {/* Backdrop so a click anywhere dismisses the menu */}
-      {isOpen && (
-        <div
-          className="fixed inset-0 bg-black/20 z-40 transition-opacity duration-300"
-          onClick={onClose}
-          aria-hidden="true"
-        />
-      )}
+      {backdrop}
 
       <div
         ref={dropdownRef}
-        className={`absolute right-0 top-full mt-2 w-72 bg-white rounded-xl shadow-2xl border border-gray-200 z-50 transition-all duration-300 transform origin-top-right ${
-          isOpen
-            ? "opacity-100 scale-100 visible"
-            : "opacity-0 scale-95 invisible pointer-events-none"
-        }`}
+        className={`${panelClasses} w-72`}
         role="menu"
         aria-label="Account menu"
       >

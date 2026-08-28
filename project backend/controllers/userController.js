@@ -3,6 +3,12 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import otpEmailTemplate from "../utils/otp-email-template.js";
 import nodemailer from "nodemailer";
+import {
+  AUTH_COOKIE_NAME,
+  JWT_EXPIRES_IN,
+  JWT_SECRET,
+  authCookieOptions,
+} from "../config/auth.js";
 // Temporary in-memory OTP store (production mein Redis/DB better hai)
 const otpStore = {};
 
@@ -64,11 +70,14 @@ export const loginUser = async (req, res) => {
       role: user.role,
     };
 
-    const token = await jwt.sign(
-      excludePassword,
-      "e9qV3fnYNfBA•••••••••••••••••••pQswM1SpBsJD",
-      { expiresIn: "2d" },
-    );
+    const token = jwt.sign(excludePassword, JWT_SECRET, {
+      expiresIn: JWT_EXPIRES_IN,
+    });
+
+    // The token goes out as an httpOnly cookie for secure transmission, and also
+    // in the response body so the frontend can store it in localStorage for
+    // accessing protected routes (like the admin analytics dashboard).
+    res.cookie(AUTH_COOKIE_NAME, token, authCookieOptions);
 
     res.json({
       status: true,

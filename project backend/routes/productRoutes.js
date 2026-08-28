@@ -2,6 +2,7 @@ import express from "express";
 
 import {
   createProduct,
+  deleteProduct,
   getProducts,
   getSingleProduct,
   updateProduct,
@@ -29,5 +30,9 @@ router.post(
 // Admin update (currently the "Manage deal" discount control). JSON body, so no
 // upload middleware — the global express.json() parser handles it.
 router.patch("/admin/products/:id", authMiddleware, adminOnly, updateProduct);
+
+// Admin delete — used by the Products table's bulk-selection toolbar. A
+// multi-select delete calls this once per id from the client.
+router.delete("/admin/products/:id", authMiddleware, adminOnly, deleteProduct);
 
 export default router;

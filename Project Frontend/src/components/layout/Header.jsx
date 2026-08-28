@@ -137,6 +137,34 @@ const Header = () => {
     }
   };
 
+  // The profile icon's face: uploaded picture, then initials, then a plain
+  // outline icon for guests. The menu it opens is ProfileDropdown either way.
+  const renderProfileTrigger = () => {
+    if (!isAuthenticated || !user) {
+      return (
+        <FaRegUserCircle className="cursor-pointer hover:text-[#007BFF] transition-colors" />
+      );
+    }
+
+    if (user.profilePicture) {
+      return (
+        <div className="w-8 h-8 rounded-full overflow-hidden border-2 border-[#2196F3] hover:opacity-80 transition-opacity">
+          <img
+            src={user.profilePicture}
+            alt={userName || "Account"}
+            className="w-full h-full object-cover"
+          />
+        </div>
+      );
+    }
+
+    return (
+      <div className="w-8 h-8 rounded-full bg-[#2196F3] text-white text-sm font-bold flex items-center justify-center hover:opacity-80 transition-opacity cursor-pointer">
+        {userInitials}
+      </div>
+    );
+  };
+
   return (
     <header className="bg-white shadow-sm" role="banner">
       {/* TOP BAR */}
@@ -311,48 +339,27 @@ const Header = () => {
             isOpen={cartDropdownOpen}
             onClose={handleCartDropdownClose}
           />
-          {isAuthenticated && user ? (
-            <div className="relative">
-              <button
-                ref={profileTriggerRef}
-                type="button"
-                onClick={handleProfileIconClick}
-                title="Account menu"
-                aria-label="Account menu"
-                aria-haspopup="menu"
-                aria-expanded={profileDropdownOpen}
-                className="flex items-center"
-              >
-                {user.profilePicture ? (
-                  <div className="w-8 h-8 rounded-full overflow-hidden border-2 border-[#2196F3] hover:opacity-80 transition-opacity">
-                    <img
-                      src={user.profilePicture}
-                      alt={userName || "Account"}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                ) : (
-                  <div className="w-8 h-8 rounded-full bg-[#2196F3] text-white text-sm font-bold flex items-center justify-center hover:opacity-80 transition-opacity cursor-pointer">
-                    {userInitials}
-                  </div>
-                )}
-              </button>
-              <ProfileDropdown
-                isOpen={profileDropdownOpen}
-                onClose={handleProfileDropdownClose}
-                triggerRef={profileTriggerRef}
-              />
-            </div>
-          ) : (
-            <Link
-              to="/signin"
-              title="Sign in"
-              aria-label="Sign in"
-              className="relative flex items-center"
+          {/* One trigger for both states: signed in it opens the account menu,
+              signed out it opens Log in / Create account. */}
+          <div className="relative">
+            <button
+              ref={profileTriggerRef}
+              type="button"
+              onClick={handleProfileIconClick}
+              title="Account menu"
+              aria-label="Account menu"
+              aria-haspopup="menu"
+              aria-expanded={profileDropdownOpen}
+              className="flex items-center"
             >
-              <FaRegUserCircle className="cursor-pointer hover:text-[#007BFF] transition-colors" />
-            </Link>
-          )}
+              {renderProfileTrigger()}
+            </button>
+            <ProfileDropdown
+              isOpen={profileDropdownOpen}
+              onClose={handleProfileDropdownClose}
+              triggerRef={profileTriggerRef}
+            />
+          </div>
         </div>
       </div>
 

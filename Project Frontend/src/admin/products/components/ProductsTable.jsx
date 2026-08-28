@@ -12,6 +12,7 @@ import {
   Star,
   Copy,
   Trash2,
+  Edit3,
   ImageOff,
   RotateCw,
   Loader2,
@@ -149,7 +150,7 @@ const INERT_ACTIONS = [
   { label: "Delete", icon: Trash2, danger: true },
 ];
 
-function RowActions({ product, onManageDeal, onToggleFeatured }) {
+function RowActions({ product, onEdit, onManageDeal, onToggleFeatured }) {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
 
@@ -181,6 +182,20 @@ function RowActions({ product, onManageDeal, onToggleFeatured }) {
 
       {open && (
         <div className="absolute right-0 top-full z-20 mt-1 w-40 overflow-hidden rounded-lg border border-admin-line-2 bg-admin-panel-3 py-1 shadow-xl shadow-black/40">
+          {onEdit && (
+            <button
+              type="button"
+              onClick={() => {
+                setOpen(false);
+                onEdit(product);
+              }}
+              className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-[12px] text-admin-fg-soft transition-colors hover:bg-admin-active hover:text-admin-fg"
+            >
+              <Edit3 size={13} strokeWidth={1.75} />
+              Edit product
+            </button>
+          )}
+
           <button
             type="button"
             onClick={() => {
@@ -412,6 +427,7 @@ export default function ProductsTable({
   error = "",
   onRetry,
   onAddProduct,
+  onEditProduct,
   onUpdateProduct,
   onBulkUpdate,
   onBulkDelete,
@@ -743,6 +759,7 @@ export default function ProductsTable({
                       <td className="px-4 py-3">
                         <RowActions
                           product={product}
+                          onEdit={onEditProduct}
                           onManageDeal={(p) => setDealTargets([p])}
                           onToggleFeatured={
                             onUpdateProduct

@@ -1,8 +1,12 @@
 import jwt from "jsonwebtoken";
 import User from "../model/userModel.js";
-
-// Same secret used in loginUser when signing the token
-const JWT_SECRET = "e9qV3fnYNfBA•••••••••••••••••••pQswM1SpBsJD";
+// FIX: Previously this file hardcoded its own JWT_SECRET string, separate from
+// the one loginUser (authController.js) imports from config/auth.js. Any drift
+// between the two (a stale hardcoded copy vs. an updated/env-driven value)
+// means every freshly-issued token fails verification here with "invalid
+// signature" — which is exactly the "login succeeds, then instantly logs out"
+// bug. Importing the single shared secret makes that class of bug impossible.
+import { JWT_SECRET } from "../config/auth.js";
 
 export const authMiddleware = async (req, res, next) => {
   try {

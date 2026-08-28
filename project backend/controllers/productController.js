@@ -1,7 +1,8 @@
 import fs from "fs";
+import path from "path";
 
 import Product from "../model/productModel.js";
-import { MAX_IMAGES } from "../middleware/UploadMiddleware.js";
+import { MAX_IMAGES, UPLOADS_DIR } from "../middleware/UploadMiddleware.js";
 
 // Newest first, so a freshly added product appears at the top of both the admin
 // Products table and the store grid without either side re-sorting.
@@ -13,6 +14,33 @@ const discardUploads = (files) => {
   if (!Array.isArray(files)) return;
   files.forEach((file) => {
     if (file?.path) fs.unlink(file.path, () => {});
+  });
+};
+
+// Deleting a product would otherwise orphan its uploaded image files. Remove the
+// ones that actually live in UPLOADS_DIR (resolved via basename, so a stored path
+// can never escape that directory) and leave pasted remote URLs untouched.
+const removeStoredImages = (product) => {
+  const candidates = [];
+  if (typeof product.image === "string") candidates.push(product.image);
+
+  let gallery = product.images;
+  if (typeof gallery === "string") {
+    try {
+      gallery = JSON.parse(gallery);
+    } catch {
+      gallery = [];
+    }
+  }
+  if (Array.isArray(gallery)) candidates.push(...gallery);
+
+  const uploaded = new Set(
+    candidates.filter(
+      (value) => typeof value === "string" && value.startsWith("/uploads/"),
+    ),
+  );
+  uploaded.forEach((stored) => {
+    fs.unlink(path.join(UPLOADS_DIR, path.basename(stored)), () => {});
   });
 };
 
@@ -367,6 +395,50 @@ export const updateProduct = async (req, res) => {
       success: true,
       message: "Product updated successfully",
       data: product,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "internal server error",
+      error: error.message,
+    });
+  }
+};
+
+// DELETE PRODUCT
+// Admin action from the Products table's bulk-selection toolbar. Deletes one
+// product by id; the frontend removes a multi-selection by calling this once per
+// id (Promise.allSettled) so a partial failure can report exactly which rows
+// survived. Uploaded image files are cleaned up so a delete doesn't orphan them.
+export const deleteProduct = async (req, res) => {
+  try {
+    const productId = Number(req.params.id);
+    if (!Number.isInteger(productId) || productId < 1) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid product id",
+      });
+    }
+
+    const product = await Product.findByPk(productId);
+    if (!product) {
+      return res.status(404).json({
+        success: false,
+        message: "Product not found",
+      });
+    }
+
+    // Read image paths off the row before it's gone, then unlink after the DB
+    // delete succeeds so a failed destroy() can't leave the row pointing at
+    // files that are already gone.
+    const storedProduct = product.get({ plain: true });
+    await product.destroy();
+    removeStoredImages(storedProduct);
+
+    res.json({
+      success: true,
+      message: "Product deleted successfully",
+      data: { id: productId },
     });
   } catch (error) {
     res.status(500).json({

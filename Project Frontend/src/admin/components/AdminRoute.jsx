@@ -38,10 +38,11 @@ export default function AdminRoute() {
     );
   }
 
-  // Not logged in → admin login, remembering the intended page so we can return
-  // there after a successful sign-in.
+  // Not logged in → shared sign-in page, remembering the intended page so we can
+  // return there after a successful sign-in. Signin.jsx redirects admins straight
+  // to /admin/overview on success.
   if (!isAuthenticated) {
-    return <Navigate to="/admin/login" replace state={{ from: location.pathname }} />;
+    return <Navigate to="/signin" replace state={{ from: location.pathname }} />;
   }
 
   // Logged in but not an admin → back to the customer dashboard.

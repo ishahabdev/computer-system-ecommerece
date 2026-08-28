@@ -37,7 +37,6 @@ const Checkout = lazy(() => import("./pages/Checkout/Checkout"))
 const OrderConfirmation = lazy(() => import("./pages/Order/OrderConfirmation"))
 const Signin = lazy(() => import("./pages/Auth/Signin"))
 const Signup = lazy(() => import("./pages/Auth/Signup"))
-const AdminLogin = lazy(() => import("./pages/Auth/AdminLogin"))
 const ForgotPassword = lazy(() => import("./pages/Auth/ForgotPassword"))
 const TrackOrder = lazy(() => import("./pages/Order/TrackOrder"))
 
@@ -98,9 +97,6 @@ function App() {
                     <Route path="/signup" element={<Signup />} />
                     <Route path="/forgot-password" element={<ForgotPassword />} />
                     <Route path="/track-order" element={<TrackOrder />} />
-
-                    {/* Admin auth — public so an unauthenticated user can reach it */}
-                    <Route path="/admin/login" element={<AdminLogin />} />
 
                     {/* Admin Routes — gated by AdminRoute (validates JWT session +
                         role). AdminRoute renders its <Outlet/> only for admins;
